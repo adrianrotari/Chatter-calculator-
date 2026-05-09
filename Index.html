@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ChatterCalc">
+<title>CHATTER.CALC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--surface:#141414;--surface-2:#1c1c1c;--line:#2a2a2a;--text:#f0f0f0;--dim:#888;--accent:#ffd60a;--accent-2:#00d4ff}
+html,body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+.header{border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:20px}
+.title{font-family:'Archivo Black',sans-serif;font-size:30px;letter-spacing:-1px;line-height:1}
+.title .dot{color:var(--accent)}
+.subtitle{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:2.5px;margin-top:8px}
+.formula{background:var(--surface-2);border:1px solid var(--line);padding:14px 16px;font-size:13px;color:var(--text);margin-bottom:22px;text-align:center}
+.formula .label-text{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.formula .eq strong{color:var(--accent);font-weight:700}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.input-group{display:flex;flex-direction:column}
+.input-group.full{grid-column:1/-1}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between}
+.label .unit{color:var(--accent);font-weight:700}
+input{background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;padding:18px 14px;width:100%;text-align:center;-webkit-appearance:none;border-radius:0;transition:border-color .15s}
+input:focus{outline:none;border-color:var(--accent)}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+.section{margin-bottom:22px}
+.results-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.results-header h2{font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:2px}
+.results-header .count{font-size:11px;color:var(--dim);letter-spacing:1.5px}
+.results{display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:56px 1fr auto;align-items:center;background:var(--surface);padding:16px 14px;border-left:3px solid var(--line)}
+.row.preferred{border-left-color:var(--accent);background:var(--surface-2)}
+.row.high-speed{border-left-color:var(--accent-2);background:var(--surface-2)}
+.lobe-num{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--dim)}
+.row.preferred .lobe-num{color:var(--accent)}
+.row.high-speed .lobe-num{color:var(--accent-2);font-size:18px}
+.lobe-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+.rpm-value{font-size:22px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.rpm-unit{font-size:10px;color:var(--dim);margin-left:5px;text-transform:uppercase;letter-spacing:1px}
+.empty{text-align:center;padding:30px 20px;color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:2.5px;background:var(--surface)}
+.footer-note{margin-top:22px;padding-top:14px;font-size:10px;color:var(--dim);line-height:1.7;border-top:1px solid var(--line);text-align:center;text-transform:uppercase;letter-spacing:1px}
+.footer-note .a1{color:var(--accent)}
+.footer-note .a2{color:var(--accent-2)}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="title">CHATTER<span class="dot">.</span>CALC</div>
+<div class="subtitle">Tap Test - Stable RPM</div>
+</div>
+<div class="formula">
+<span class="label-text">Tooth-pass matches natural freq</span>
+<span class="eq">RPM = (60 x <strong>Hz</strong>) / (Flutes x Lobe)</span>
+</div>
+<div class="input-grid">
+<div class="input-group full">
+<div class="label"><span>Natural Frequency</span><span class="unit">Hz</span></div>
+<input type="number" id="hz" inputmode="decimal" placeholder="0" step="0.1">
+</div>
+<div class="input-group">
+<div class="label"><span>Flutes</span><span class="unit">N</span></div>
+<input type="number" id="flutes" inputmode="numeric" value="2" min="1" step="1">
+</div>
+<div class="input-group">
+<div class="label"><span>Max Lobe</span><span class="unit">L</span></div>
+<input type="number" id="maxLobe" inputmode="numeric" value="6" min="1" max="10" step="1">
+</div>
+</div>
+<div class="section">
+<div class="results-header">
+<h2>STABLE SPEEDS</h2>
+<span class="count" id="count">-</span>
+</div>
+<div class="results" id="results"><div class="empty">Enter Frequency</div></div>
+</div>
+<div class="section">
+<div class="results-header">
+<h2>HIGH-SPEED ZONE</h2>
+<span class="count">Above Lobe 1</span>
+</div>
+<div class="results" id="hsResults"><div class="empty">-</div></div>
+</div>
+<div class="footer-note">
+<span class="a1">Lobe 1</span> = highest RPM, most aggressive cut<br>
+Higher lobes = lower RPM, more conservative<br>
+<span class="a2">High-speed zone</span> = HSM / aluminum territory<br>
+For end milling - Not for drilling or reaming
+</div>
+<script>
+const hz=document.getElementById('hz');
+const flutes=document.getElementById('flutes');
+const maxLobe=document.getElementById('maxLobe');
+const results=document.getElementById('results');
+const hsResults=document.getElementById('hsResults');
+const countEl=document.getElementById('count');
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function calculate(){
+const f=parseFloat(hz.value);
+const N=parseInt(flutes.value);
+let lMax=parseInt(maxLobe.value);
+if(isNaN(lMax))lMax=6;
+lMax=Math.max(1,Math.min(lMax,10));
+if(!f||!N||f<=0||N<=0){
+results.innerHTML='<div class="empty">Enter Frequency</div>';
+hsResults.innerHTML='<div class="empty">-</div>';
+countEl.textContent='-';
+return;
+}
+let html='';
+for(let lobe=1;lobe<=lMax;lobe++){
+const rpm=(60*f)/(N*lobe);
+const preferred=(lobe===1);
+html+='<div class="row '+(preferred?'preferred':'')+'"><div class="lobe-num">'+lobe+'</div><div class="lobe-label">Lobe '+lobe+(preferred?' - Preferred':'')+'</div><div class="rpm-value">'+fmt(rpm)+'<span class="rpm-unit">rpm</span></div></div>';
+}
+results.innerHTML=html;
+countEl.textContent=lMax+' '+(lMax===1?'LOBE':'LOBES');
+const lobe1=(60*f)/N;
+const hs2=lobe1*2;
+const hs3=lobe1*3;
+hsResults.innerHTML='<div class="row high-speed"><div class="lobe-num">2x</div><div class="lobe-label">2x Lobe 1</div><div class="rpm-value">'+fmt(hs2)+'<span class="rpm-unit">rpm</span></div></div><div class="row high-speed"><div class="lobe-num">3x</div><div class="lobe-label">3x Lobe 1</div><div class="rpm-value">'+fmt(hs3)+'<span class="rpm-unit">rpm</span></div></div>';
+}
+[hz,flutes,maxLobe].forEach(el=>el.addEventListener('input',calculate));
+calculate();
+</script>
+</body>
+</html>
