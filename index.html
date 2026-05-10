@@ -28,15 +28,16 @@ body{padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:
 .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
 .input-group{display:flex;flex-direction:column}
 .input-group.full{grid-column:1/-1}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.input-group.disabled{pointer-events:none;animation:blinkPulse 1.5s ease-in-out infinite}
+.input-group.disabled input{cursor:not-allowed}
+@keyframes blinkPulse{0%,100%{opacity:0.25}50%{opacity:0.55}}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .label .unit{color:var(--accent);font-weight:700}
 .unit-toggle{display:inline-flex;border:1px solid var(--line);background:var(--surface)}
 .unit-toggle button{background:transparent;border:0;color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:4px 10px;cursor:pointer;text-transform:uppercase}
 .unit-toggle button.active{background:var(--accent);color:#000}
 input{background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;padding:18px 14px;width:100%;text-align:center;-webkit-appearance:none;border-radius:0;transition:border-color .15s}
 input:focus{outline:none;border-color:var(--accent)}
-input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-input[type="number"]{-moz-appearance:textfield}
 .section{margin-bottom:22px}
 .results-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .results-header h2{font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:2px}
@@ -75,29 +76,29 @@ input[type="number"]{-moz-appearance:textfield}
 <div id="viewChatter">
 <div class="formula">
 <span class="label-text">Tooth-pass matches natural freq</span>
-<span class="eq">RPM = (60 x <strong>Hz</strong>) / (Flutes x Lobe)</span>
+<span class="eq">RPM = (60 x <strong>Hz</strong>) / (Teeth x Lobe)</span>
 </div>
 <div class="input-grid">
 <div class="input-group full">
 <div class="label"><span>Natural Frequency</span><span class="unit">Hz</span></div>
-<input type="number" id="hz" inputmode="decimal" placeholder="0" step="0.1">
+<input type="text" id="hz" inputmode="decimal" placeholder="0">
 </div>
 <div class="input-group">
-<div class="label"><span>Flutes</span><span class="unit">N</span></div>
-<input type="number" id="flutes" inputmode="numeric" value="2" min="1" step="1">
+<div class="label"><span>No. of teeth</span><span class="unit">z</span></div>
+<input type="text" id="flutes" inputmode="numeric" value="2">
 </div>
 <div class="input-group">
 <div class="label"><span>Max Lobe</span><span class="unit">L</span></div>
-<input type="number" id="maxLobe" inputmode="numeric" value="6" min="1" max="10" step="1">
+<input type="text" id="maxLobe" inputmode="numeric" value="6">
 </div>
 <div class="input-group full">
-<div class="label"><span>Tool Diameter</span>
+<div class="label"><span>Cutting diameter DC</span>
 <span class="unit-toggle">
 <button type="button" id="unitMm" class="active">MM</button>
 <button type="button" id="unitIn">IN</button>
 </span>
 </div>
-<input type="number" id="diameter" inputmode="decimal" placeholder="0" step="0.1">
+<input type="text" id="diameter" inputmode="decimal" placeholder="0">
 </div>
 </div>
 <div class="section">
@@ -125,29 +126,34 @@ For end milling - Not for drilling or reaming
 <div id="viewSF" class="hidden">
 <div class="formula">
 <span class="label-text">Cutting speed → RPM → feed rate</span>
-<span class="eq">n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;D) &nbsp; Vf = fz&middot;z&middot;n</span>
+<span class="eq" id="sfFormulaEq">n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fz&middot;z&middot;n</span>
 </div>
 <div class="input-grid">
 <div class="input-group full">
-<div class="label"><span>Tool Diameter</span>
+<div class="label"><span>Cutting diameter DC</span>
 <span class="unit-toggle">
 <button type="button" id="unitMm2" class="active">MM</button>
 <button type="button" id="unitIn2">IN</button>
 </span>
 </div>
-<input type="number" id="diameter2" inputmode="decimal" placeholder="0" step="0.1">
+<input type="text" id="diameter2" inputmode="decimal" placeholder="0">
 </div>
 <div class="input-group full">
 <div class="label"><span>Cutting Speed</span><span class="unit">m/min</span></div>
-<input type="number" id="vc" inputmode="decimal" placeholder="0" step="1">
+<input type="text" id="vc" inputmode="decimal" placeholder="0">
 </div>
 <div class="input-group">
-<div class="label"><span>Flutes</span><span class="unit">z</span></div>
-<input type="number" id="flutes2" inputmode="numeric" value="2" min="1" step="1">
+<div class="label"><span id="feedLabel">Feed/Tooth</span>
+<span class="unit-toggle">
+<button type="button" id="modeFz" class="active">FZ</button>
+<button type="button" id="modeFn">FN</button>
+</span>
 </div>
-<div class="input-group">
-<div class="label"><span>Feed/Tooth</span><span class="unit">mm</span></div>
-<input type="number" id="fz" inputmode="decimal" placeholder="0" step="0.01">
+<input type="text" id="feed" inputmode="decimal" placeholder="0">
+</div>
+<div class="input-group" id="teethGroup">
+<div class="label"><span>No. of teeth</span><span class="unit">z</span></div>
+<input type="text" id="flutes2" inputmode="numeric" value="2">
 </div>
 </div>
 <div class="section">
@@ -160,14 +166,15 @@ For end milling - Not for drilling or reaming
 <div class="footer-note">
 Cutting speed (Vc) from your tool catalog<br>
 <span class="a1">RPM</span> derived from Vc and diameter<br>
-<span class="a2">Feed rate</span> = feed/tooth x flutes x RPM<br>
-For end milling, face milling, slotting
+<span class="a2">Fz</span> = feed per tooth (milling, slotting)<br>
+<span class="a2">Fn</span> = feed per revolution (drilling, reaming)
 </div>
 </div>
 
 <script>
 let dUnit='mm';
 let mode='chatter';
+let feedMode='fz';
 const hz=document.getElementById('hz');
 const flutes=document.getElementById('flutes');
 const maxLobe=document.getElementById('maxLobe');
@@ -179,7 +186,12 @@ const unitMm2=document.getElementById('unitMm2');
 const unitIn2=document.getElementById('unitIn2');
 const vc=document.getElementById('vc');
 const flutes2=document.getElementById('flutes2');
-const fz=document.getElementById('fz');
+const feed=document.getElementById('feed');
+const modeFz=document.getElementById('modeFz');
+const modeFn=document.getElementById('modeFn');
+const feedLabel=document.getElementById('feedLabel');
+const teethGroup=document.getElementById('teethGroup');
+const sfFormulaEq=document.getElementById('sfFormulaEq');
 const results=document.getElementById('results');
 const hsResults=document.getElementById('hsResults');
 const countEl=document.getElementById('count');
@@ -190,12 +202,15 @@ const viewChatter=document.getElementById('viewChatter');
 const viewSF=document.getElementById('viewSF');
 const modeChatter=document.getElementById('modeChatter');
 const modeSF=document.getElementById('modeSF');
+function num(s){const x=parseFloat(String(s||'').replace(',','.'));return isNaN(x)?NaN:x;}
+function nint(s){const x=parseInt(String(s||'').replace(',','.'));return isNaN(x)?NaN:x;}
 function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
 function fmt1(n){return n.toLocaleString('en-US',{maximumFractionDigits:1})}
 function fmt2(n){return n.toLocaleString('en-US',{maximumFractionDigits:2})}
 function diameterMm(){
-const d=parseFloat(mode==='chatter'?diameter.value:diameter2.value);
-if(!d||d<=0)return null;
+const raw=mode==='chatter'?diameter.value:diameter2.value;
+const d=num(raw);
+if(isNaN(d)||d<=0)return null;
 return dUnit==='in'?d*25.4:d;
 }
 function vcLine(rpm){
@@ -206,12 +221,12 @@ const sfm=v*3.28084;
 return '<div class="vc-line">'+fmt1(v)+' m/min &middot; '+fmt(sfm)+' sfm</div>';
 }
 function calculateChatter(){
-const f=parseFloat(hz.value);
-const N=parseInt(flutes.value);
-let lMax=parseInt(maxLobe.value);
+const f=num(hz.value);
+const N=nint(flutes.value);
+let lMax=nint(maxLobe.value);
 if(isNaN(lMax))lMax=6;
 lMax=Math.max(1,Math.min(lMax,10));
-if(!f||!N||f<=0||N<=0){
+if(isNaN(f)||isNaN(N)||f<=0||N<=0){
 results.innerHTML='<div class="empty">Enter Frequency</div>';
 hsResults.innerHTML='<div class="empty">-</div>';
 countEl.textContent='-';
@@ -232,10 +247,10 @@ hsResults.innerHTML='<div class="row high-speed"><div class="lobe-num">2x</div><
 }
 function calculateSF(){
 const dMm=diameterMm();
-const v=parseFloat(vc.value);
-const z=parseInt(flutes2.value);
-const f=parseFloat(fz.value);
-if(dMm===null||!v||v<=0||!z||z<=0){
+const v=num(vc.value);
+const z=nint(flutes2.value);
+const f=num(feed.value);
+if(dMm===null||isNaN(v)||v<=0){
 sfResults.innerHTML='<div class="empty">Enter Diameter &amp; Speed</div>';
 sfCount.textContent='-';
 return;
@@ -243,12 +258,19 @@ return;
 const rpm=1000*v/(Math.PI*dMm);
 const sfm=v*3.28084;
 let html='<div class="row preferred"><div class="lobe-num">n</div><div class="lobe-label">Spindle Speed</div><div class="rpm-stack"><div class="rpm-value">'+fmt(rpm)+'<span class="rpm-unit">rpm</span></div><div class="vc-line">'+fmt1(v)+' m/min &middot; '+fmt(sfm)+' sfm</div></div></div>';
-if(f&&f>0){
-const vf=f*z*rpm;
+let vf=null,msg='';
+if(feedMode==='fz'){
+if(!isNaN(f)&&f>0&&!isNaN(z)&&z>0)vf=f*z*rpm;
+else msg=(isNaN(f)||f<=0)?'enter feed/tooth':'enter no. of teeth';
+}else{
+if(!isNaN(f)&&f>0)vf=f*rpm;
+else msg='enter feed/rev';
+}
+if(vf!==null){
 const ipm=vf/25.4;
 html+='<div class="row feed"><div class="lobe-num">Vf</div><div class="lobe-label">Feed Rate</div><div class="rpm-stack"><div class="rpm-value">'+fmt(vf)+'<span class="rpm-unit">mm/min</span></div><div class="vc-line">'+fmt2(ipm)+' ipm</div></div></div>';
 }else{
-html+='<div class="row feed"><div class="lobe-num">Vf</div><div class="lobe-label">Feed Rate</div><div class="rpm-stack"><div class="rpm-value">&mdash;<span class="rpm-unit">mm/min</span></div><div class="vc-line">enter feed/tooth</div></div></div>';
+html+='<div class="row feed"><div class="lobe-num">Vf</div><div class="lobe-label">Feed Rate</div><div class="rpm-stack"><div class="rpm-value">&mdash;<span class="rpm-unit">mm/min</span></div><div class="vc-line">'+msg+'</div></div></div>';
 }
 sfResults.innerHTML=html;
 sfCount.textContent='OUTPUTS';
@@ -258,10 +280,11 @@ diameter.addEventListener('input',()=>{diameter2.value=diameter.value;calculate(
 diameter2.addEventListener('input',()=>{diameter.value=diameter2.value;calculate();});
 flutes.addEventListener('input',()=>{flutes2.value=flutes.value;calculate();});
 flutes2.addEventListener('input',()=>{flutes.value=flutes2.value;calculate();});
-[hz,maxLobe,vc,fz].forEach(el=>el.addEventListener('input',calculate));
+[hz,maxLobe,vc,feed].forEach(el=>el.addEventListener('input',calculate));
 function setUnit(u){
 if(u===dUnit)return;
-const v=parseFloat(mode==='chatter'?diameter.value:diameter2.value);
+const raw=mode==='chatter'?diameter.value:diameter2.value;
+const v=num(raw);
 if(!isNaN(v)&&v>0){
 let newV;
 if(u==='in'&&dUnit==='mm')newV=(v/25.4).toFixed(3);
@@ -279,6 +302,28 @@ unitMm.addEventListener('click',()=>setUnit('mm'));
 unitIn.addEventListener('click',()=>setUnit('in'));
 unitMm2.addEventListener('click',()=>setUnit('mm'));
 unitIn2.addEventListener('click',()=>setUnit('in'));
+function setFeedMode(m){
+if(m===feedMode)return;
+feedMode=m;
+if(m==='fz'){
+modeFz.classList.add('active');
+modeFn.classList.remove('active');
+feedLabel.textContent='Feed/Tooth';
+teethGroup.classList.remove('disabled');
+flutes2.disabled=false;
+sfFormulaEq.innerHTML='n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fz&middot;z&middot;n';
+}else{
+modeFn.classList.add('active');
+modeFz.classList.remove('active');
+feedLabel.textContent='Feed/Rev';
+teethGroup.classList.add('disabled');
+flutes2.disabled=true;
+sfFormulaEq.innerHTML='n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fn&middot;n';
+}
+calculate();
+}
+modeFz.addEventListener('click',()=>setFeedMode('fz'));
+modeFn.addEventListener('click',()=>setFeedMode('fn'));
 function setMode(m){
 if(m===mode)return;
 mode=m;
