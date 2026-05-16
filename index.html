@@ -2,349 +2,467 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ChatterCalc">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CHATTER.CALC</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0a0a;--surface:#141414;--surface-2:#1c1c1c;--line:#2a2a2a;--text:#f0f0f0;--dim:#888;--accent:#ffd60a;--accent-2:#00d4ff}
-html,body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
-body{padding:20px;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
-.header{border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:20px}
-.title{font-family:'Archivo Black',sans-serif;font-size:30px;letter-spacing:-1px;line-height:1}
-.title .dot{color:var(--accent)}
-.subtitle{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:2.5px;margin-top:8px}
-.mode-toggle{display:flex;border:1px solid var(--line);background:var(--surface);margin-bottom:22px}
-.mode-toggle button{flex:1;background:transparent;border:0;color:var(--dim);font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:2px;padding:14px 0;cursor:pointer;text-transform:uppercase}
-.mode-toggle button.active{background:var(--accent);color:#000}
-.formula{background:var(--surface-2);border:1px solid var(--line);padding:14px 16px;font-size:13px;color:var(--text);margin-bottom:22px;text-align:center}
-.formula .label-text{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
-.formula .eq strong{color:var(--accent);font-weight:700}
-.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
-.input-group{display:flex;flex-direction:column}
-.input-group.full{grid-column:1/-1}
-.input-group.disabled{pointer-events:none;animation:blinkPulse 1.5s ease-in-out infinite}
-.input-group.disabled input{cursor:not-allowed}
-@keyframes blinkPulse{0%,100%{opacity:0.25}50%{opacity:0.55}}
-.label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.label .unit{color:var(--accent);font-weight:700}
-.unit-toggle{display:inline-flex;border:1px solid var(--line);background:var(--surface)}
-.unit-toggle button{background:transparent;border:0;color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:4px 10px;cursor:pointer;text-transform:uppercase}
-.unit-toggle button.active{background:var(--accent);color:#000}
-input{background:var(--surface);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;padding:18px 14px;width:100%;text-align:center;-webkit-appearance:none;border-radius:0;transition:border-color .15s}
-input:focus{outline:none;border-color:var(--accent)}
-.section{margin-bottom:22px}
-.results-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
-.results-header h2{font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:2px}
-.results-header .count{font-size:11px;color:var(--dim);letter-spacing:1.5px}
-.results{display:flex;flex-direction:column;gap:2px}
-.row{display:grid;grid-template-columns:56px 1fr auto;align-items:center;background:var(--surface);padding:16px 14px;border-left:3px solid var(--line)}
-.row.preferred{border-left-color:var(--accent);background:var(--surface-2)}
-.row.high-speed,.row.feed{border-left-color:var(--accent-2);background:var(--surface-2)}
-.lobe-num{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--dim)}
-.row.preferred .lobe-num{color:var(--accent)}
-.row.high-speed .lobe-num,.row.feed .lobe-num{color:var(--accent-2);font-size:18px}
-.lobe-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
-.rpm-stack{text-align:right}
-.rpm-value{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
-.rpm-unit{font-size:10px;color:var(--dim);margin-left:5px;text-transform:uppercase;letter-spacing:1px}
-.vc-line{font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:0.5px;font-variant-numeric:tabular-nums;text-transform:uppercase}
-.row.preferred .vc-line,.row.high-speed .vc-line,.row.feed .vc-line{color:var(--text)}
-.empty{text-align:center;padding:30px 20px;color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:2.5px;background:var(--surface)}
-.footer-note{margin-top:22px;padding-top:14px;font-size:10px;color:var(--dim);line-height:1.7;border-top:1px solid var(--line);text-align:center;text-transform:uppercase;letter-spacing:1px}
-.footer-note .a1{color:var(--accent)}
-.footer-note .a2{color:var(--accent-2)}
-.hidden{display:none}
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --accent: #f5c518;
+    --accent-soft: rgba(245,197,24,0.10);
+  }
+  html, body {
+    background: #000; color: #fff;
+    font-family: 'Helvetica Neue', 'Arial Narrow', sans-serif;
+    font-stretch: condensed;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  body { padding: 10px 16px 10px; max-width: 480px; margin: 0 auto; transition: background 0.25s ease; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    color: #888; margin-bottom: 6px; text-transform: uppercase;
+  }
+  .section-label.outputs { color: #fff; font-size: 13px; font-weight: 900; letter-spacing: 0.5px; }
+  .divider { height: 2px; background: var(--accent); margin-bottom: 12px; transition: background 0.25s ease; }
+
+  .op-tabs {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    background: #161616; border-radius: 4px; padding: 3px;
+    margin-bottom: 12px; gap: 2px;
+  }
+  .op-tab {
+    padding: 9px 6px; text-align: center;
+    font-size: 12px; font-weight: 800; letter-spacing: 1px;
+    color: #888; background: transparent; border: none;
+    border-radius: 3px; cursor: pointer; transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .op-tab.active { background: var(--accent); color: #000; }
+
+  .mode-tabs { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 10px; }
+  .mode-tab {
+    padding: 10px; text-align: center;
+    font-size: 13px; font-weight: 800; letter-spacing: 1.5px;
+    color: #888; background: transparent; border: none;
+    cursor: pointer; font-family: inherit;
+  }
+  .mode-tab.active { background: var(--accent); color: #000; }
+
+  .field-group { margin-bottom: 10px; transition: opacity 0.2s ease; }
+  .field-group.dimmed { opacity: 0.15; pointer-events: none; }
+
+  .field-label-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px;
+    min-height: 18px;
+  }
+  .field-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    color: #888; text-transform: uppercase;
+  }
+
+  .unit-toggle {
+    display: inline-flex; background: #222; border-radius: 3px;
+    padding: 2px; font-size: 10px; font-weight: 800; cursor: pointer;
+    user-select: none;
+  }
+  .unit-toggle span {
+    padding: 3px 8px; border-radius: 2px; color: #888;
+    transition: all 0.15s ease;
+  }
+  .unit-toggle span.on { background: var(--accent); color: #000; }
+
+  .input-box {
+    background: #161616; border: 1px solid transparent; border-radius: 4px;
+    padding: 12px 14px; width: 100%; color: #fff;
+    font-size: 22px; font-weight: 700; font-family: inherit; text-align: center;
+    transition: border-color 0.15s ease;
+  }
+  .input-box:focus { outline: none; border-color: var(--accent); }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-group.ghost .field-label-row { visibility: hidden; }
+  .field-group.ghost .input-box {
+    background: #f0f0f0;
+    color: #f0f0f0;
+    pointer-events: none;
+    border: 1px solid #ddd;
+  }
+
+  .outputs-divider { height: 1px; background: #222; margin: 10px 0 8px; }
+
+  .output-row {
+    display: grid; grid-template-columns: 50px 1fr auto;
+    align-items: center; background: #0a0a0a;
+    padding: 10px 12px; border-radius: 4px;
+    border-left: 3px solid; margin-bottom: 6px; gap: 10px;
+  }
+  .output-row.n { border-left-color: var(--accent); }
+  .output-row.vf { border-left-color: #4ab3f0; }
+
+  .badge { font-size: 24px; font-weight: 900; font-style: italic; }
+  .badge.n { color: var(--accent); transition: color 0.25s ease; }
+  .badge.vf { color: #4ab3f0; }
+
+  .output-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    color: #888; text-transform: uppercase;
+  }
+  .output-value { text-align: right; }
+  .output-value .main { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+  .output-value .unit { font-size: 10px; color: #888; font-weight: 700; margin-left: 4px; }
+  .output-value .sub { font-size: 10px; color: #666; margin-top: 1px; }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
 </style>
 </head>
 <body>
-<div class="header">
-<div class="title">CHATTER<span class="dot">.</span>CALC</div>
-<div class="subtitle" id="subtitle">Tap Test - Stable RPM</div>
+
+<div class="divider"></div>
+
+<div class="mode-tabs">
+  <button class="mode-tab" data-mode="chatter">CHATTER</button>
+  <button class="mode-tab active" data-mode="speeds">SPEEDS/FEEDS</button>
 </div>
 
-<div class="mode-toggle">
-<button id="modeChatter" class="active">CHATTER</button>
-<button id="modeSF">SPEEDS/FEEDS</button>
+<div id="chatterView" style="display:none;">
+
+  <div class="section-label" style="margin-top: 4px; color:#aaa;">Tap Test - Stable RPM</div>
+
+  <div style="background:#161616; border-radius:4px; padding:12px 14px; margin-bottom:14px; text-align:center;">
+    <div style="font-size:10px; letter-spacing:1.5px; color:#888; margin-bottom:6px; text-transform:uppercase;">Tooth-pass matches natural freq</div>
+    <div style="font-size:14px; color:#ccc; font-weight:600;">RPM = (60 x <span style="color:var(--accent);font-weight:800;">Hz</span>) / (Teeth x Lobe)</div>
+  </div>
+
+  <div class="field-group">
+    <div class="field-label-row">
+      <span class="field-label">Natural Frequency</span>
+      <span style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">HZ</span>
+    </div>
+    <input type="number" class="input-box" id="chHz" value="300" step="1">
+  </div>
+
+  <div class="pair">
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">No. of Teeth</span>
+        <span style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">Z</span>
+      </div>
+      <input type="number" class="input-box" id="chZ" value="2" step="1">
+    </div>
+    <div class="field-group">
+      <div class="field-label-row">
+        <span class="field-label">Max Lobe</span>
+        <span style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">L</span>
+      </div>
+      <input type="number" class="input-box" id="chMaxLobe" value="6" step="1" min="1" max="10">
+    </div>
+  </div>
+
+  <div class="field-group">
+    <div class="field-label-row">
+      <span class="field-label">Cutting Diameter DC</span>
+      <span class="unit-toggle uni" data-field="dc">
+        <span class="on" data-unit="mm">MM</span>
+        <span data-unit="in">IN</span>
+      </span>
+    </div>
+    <input type="number" class="input-box" id="chDc" value="10" step="0.1">
+  </div>
+
+  <div class="section-label outputs" style="margin-top: 14px;">
+    Stable Speeds
+    <span id="chLobeCount" style="float:right; color:#666; font-weight:700; font-size:10px; letter-spacing:1.5px;">6 LOBES</span>
+  </div>
+  <div class="outputs-divider"></div>
+  <div id="chStableResults"></div>
+
+  <div class="section-label outputs" style="margin-top: 14px;">
+    High-Speed Zone
+    <span style="float:right; color:#666; font-weight:700; font-size:10px; letter-spacing:1.5px;">Above Lobe 1</span>
+  </div>
+  <div class="outputs-divider"></div>
+  <div id="chHsResults"></div>
+
+  <div style="margin-top: 14px; text-align:center; font-size:9px; letter-spacing:1px; line-height:1.7; text-transform:uppercase;">
+    <div style="color:#888;"><span style="color:var(--accent);">Lobe 1</span> = Highest RPM, Most Aggressive Cut</div>
+    <div style="color:#888;">Higher Lobes = Lower RPM, More Conservative</div>
+    <div style="color:#888;"><span style="color:#4ab3f0;">High-Speed Zone</span> = HSM / Aluminum Territory</div>
+    <div style="color:#888;">For End Milling - Not For Drilling or Reaming</div>
+  </div>
+
 </div>
 
-<div id="viewChatter">
-<div class="formula">
-<span class="label-text">Tooth-pass matches natural freq</span>
-<span class="eq">RPM = (60 x <strong>Hz</strong>) / (Teeth x Lobe)</span>
-</div>
-<div class="input-grid">
-<div class="input-group full">
-<div class="label"><span>Natural Frequency</span><span class="unit">Hz</span></div>
-<input type="text" id="hz" inputmode="decimal" placeholder="0">
-</div>
-<div class="input-group">
-<div class="label"><span>No. of teeth</span><span class="unit">z</span></div>
-<input type="text" id="flutes" inputmode="numeric" value="2">
-</div>
-<div class="input-group">
-<div class="label"><span>Max Lobe</span><span class="unit">L</span></div>
-<input type="text" id="maxLobe" inputmode="numeric" value="6">
-</div>
-<div class="input-group full">
-<div class="label"><span>Cutting diameter DC</span>
-<span class="unit-toggle">
-<button type="button" id="unitMm" class="active">MM</button>
-<button type="button" id="unitIn">IN</button>
-</span>
-</div>
-<input type="text" id="diameter" inputmode="decimal" placeholder="0">
-</div>
-</div>
-<div class="section">
-<div class="results-header">
-<h2>STABLE SPEEDS</h2>
-<span class="count" id="count">-</span>
-</div>
-<div class="results" id="results"><div class="empty">Enter Frequency</div></div>
-</div>
-<div class="section">
-<div class="results-header">
-<h2>HIGH-SPEED ZONE</h2>
-<span class="count">Above Lobe 1</span>
-</div>
-<div class="results" id="hsResults"><div class="empty">-</div></div>
-</div>
-<div class="footer-note">
-<span class="a1">Lobe 1</span> = highest RPM, most aggressive cut<br>
-Higher lobes = lower RPM, more conservative<br>
-<span class="a2">High-speed zone</span> = HSM / aluminum territory<br>
-For end milling - Not for drilling or reaming
-</div>
+<div id="speedsView">
+
+<div class="op-tabs">
+  <button class="op-tab active" data-op="milling">MILLING</button>
+  <button class="op-tab" data-op="drilling">DRILLING</button>
+  <button class="op-tab" data-op="tapping">TAPPING</button>
 </div>
 
-<div id="viewSF" class="hidden">
-<div class="formula">
-<span class="label-text">Cutting speed → RPM → feed rate</span>
-<span class="eq" id="sfFormulaEq">n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fz&middot;z&middot;n</span>
+<div class="field-group">
+  <div class="field-label-row">
+    <span class="field-label">Cutting Diameter DC</span>
+    <span class="unit-toggle uni" data-field="dc">
+      <span class="on" data-unit="mm">MM</span>
+      <span data-unit="in">IN</span>
+    </span>
+  </div>
+  <input type="number" class="input-box" id="dc" value="10" step="0.1">
 </div>
-<div class="input-grid">
-<div class="input-group full">
-<div class="label"><span>Cutting diameter DC</span>
-<span class="unit-toggle">
-<button type="button" id="unitMm2" class="active">MM</button>
-<button type="button" id="unitIn2">IN</button>
-</span>
+
+<div class="field-group">
+  <div class="pair">
+    <div>
+      <div class="field-label-row">
+        <span class="field-label">Vc</span>
+        <span id="vcUnit" style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">M/MIN</span>
+      </div>
+      <input type="number" class="input-box" id="vc" value="100" step="1">
+    </div>
+    <div>
+      <div class="field-label-row">
+        <span class="field-label">RPM (n)</span>
+        <span style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">1/MIN</span>
+      </div>
+      <input type="number" class="input-box" id="rpm" value="3183" step="1">
+    </div>
+  </div>
 </div>
-<input type="text" id="diameter2" inputmode="decimal" placeholder="0">
+
+<div class="pair" id="feedPair">
+  <div class="field-group" id="feedGroup">
+    <div class="field-label-row">
+      <span class="field-label" id="feedLabel">Feed/Tooth</span>
+      <span style="display:flex; align-items:center; gap:10px;">
+        <span id="feedBadge" style="font-size:14px; font-style:italic; font-weight:900; color:var(--accent); letter-spacing:0;">Fz</span>
+        <span id="feedUnit" style="font-size:10px; letter-spacing:1.5px; color:#888; font-weight:700;">MM</span>
+      </span>
+    </div>
+    <input type="number" class="input-box" id="feed" value="0.005" step="0.001">
+  </div>
+  <div class="field-group" id="teethGroup">
+    <div class="field-label-row">
+      <span class="field-label">No. of Teeth</span>
+      <span style="font-size:10px; letter-spacing:1.5px; color:var(--accent); font-weight:700;">Z</span>
+    </div>
+    <input type="number" class="input-box" id="teeth" value="3" step="1">
+  </div>
 </div>
-<div class="input-group full">
-<div class="label"><span>Cutting Speed</span><span class="unit">m/min</span></div>
-<input type="text" id="vc" inputmode="decimal" placeholder="0">
+
+<div class="section-label outputs" style="margin-top: 8px;">
+  SPEEDS &amp; FEEDS
+  <span style="float:right; color:#666; font-weight:700; font-size:10px; letter-spacing:1.5px;">OUTPUTS</span>
 </div>
-<div class="input-group">
-<div class="label"><span id="feedLabel">Feed/Tooth</span>
-<span class="unit-toggle">
-<button type="button" id="modeFz" class="active">FZ</button>
-<button type="button" id="modeFn">FN</button>
-</span>
+<div class="outputs-divider"></div>
+
+<div class="output-row vf">
+  <div class="badge vf">Vf</div>
+  <div class="output-label">Feed Rate</div>
+  <div class="output-value">
+    <div><span class="main" id="outVf">48</span><span class="unit" id="outVfUnit">MM/MIN</span></div>
+    <div class="sub" id="outVfSub">1.88 IPM</div>
+  </div>
 </div>
-<input type="text" id="feed" inputmode="decimal" placeholder="0">
-</div>
-<div class="input-group" id="teethGroup">
-<div class="label"><span>No. of teeth</span><span class="unit">z</span></div>
-<input type="text" id="flutes2" inputmode="numeric" value="2">
-</div>
-</div>
-<div class="section">
-<div class="results-header">
-<h2>SPEEDS &amp; FEEDS</h2>
-<span class="count" id="sfCount">-</span>
-</div>
-<div class="results" id="sfResults"><div class="empty">Enter Diameter &amp; Speed</div></div>
-</div>
-<div class="footer-note">
-Cutting speed (Vc) from your tool catalog<br>
-<span class="a1">RPM</span> derived from Vc and diameter<br>
-<span class="a2">Fz</span> = feed per tooth (milling, slotting)<br>
-<span class="a2">Fn</span> = feed per revolution (drilling, reaming)
-</div>
+
 </div>
 
 <script>
-let dUnit='mm';
-let mode='chatter';
-let feedMode='fz';
-const hz=document.getElementById('hz');
-const flutes=document.getElementById('flutes');
-const maxLobe=document.getElementById('maxLobe');
-const diameter=document.getElementById('diameter');
-const unitMm=document.getElementById('unitMm');
-const unitIn=document.getElementById('unitIn');
-const diameter2=document.getElementById('diameter2');
-const unitMm2=document.getElementById('unitMm2');
-const unitIn2=document.getElementById('unitIn2');
-const vc=document.getElementById('vc');
-const flutes2=document.getElementById('flutes2');
-const feed=document.getElementById('feed');
-const modeFz=document.getElementById('modeFz');
-const modeFn=document.getElementById('modeFn');
-const feedLabel=document.getElementById('feedLabel');
-const teethGroup=document.getElementById('teethGroup');
-const sfFormulaEq=document.getElementById('sfFormulaEq');
-const results=document.getElementById('results');
-const hsResults=document.getElementById('hsResults');
-const countEl=document.getElementById('count');
-const sfResults=document.getElementById('sfResults');
-const sfCount=document.getElementById('sfCount');
-const subtitle=document.getElementById('subtitle');
-const viewChatter=document.getElementById('viewChatter');
-const viewSF=document.getElementById('viewSF');
-const modeChatter=document.getElementById('modeChatter');
-const modeSF=document.getElementById('modeSF');
-function num(s){const x=parseFloat(String(s||'').replace(',','.'));return isNaN(x)?NaN:x;}
-function nint(s){const x=parseInt(String(s||'').replace(',','.'));return isNaN(x)?NaN:x;}
-function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
-function fmt1(n){return n.toLocaleString('en-US',{maximumFractionDigits:1})}
-function fmt2(n){return n.toLocaleString('en-US',{maximumFractionDigits:2})}
-function diameterMm(){
-const raw=mode==='chatter'?diameter.value:diameter2.value;
-const d=num(raw);
-if(isNaN(d)||d<=0)return null;
-return dUnit==='in'?d*25.4:d;
-}
-function vcLine(rpm){
-const dMm=diameterMm();
-if(dMm===null||!rpm||rpm<=0)return '';
-const v=Math.PI*dMm*rpm/1000;
-const sfm=v*3.28084;
-return '<div class="vc-line">'+fmt1(v)+' m/min &middot; '+fmt(sfm)+' sfm</div>';
-}
-function calculateChatter(){
-const f=num(hz.value);
-const N=nint(flutes.value);
-let lMax=nint(maxLobe.value);
-if(isNaN(lMax))lMax=6;
-lMax=Math.max(1,Math.min(lMax,10));
-if(isNaN(f)||isNaN(N)||f<=0||N<=0){
-results.innerHTML='<div class="empty">Enter Frequency</div>';
-hsResults.innerHTML='<div class="empty">-</div>';
-countEl.textContent='-';
-return;
-}
-let html='';
-for(let lobe=1;lobe<=lMax;lobe++){
-const rpm=(60*f)/(N*lobe);
-const preferred=(lobe===1);
-html+='<div class="row '+(preferred?'preferred':'')+'"><div class="lobe-num">'+lobe+'</div><div class="lobe-label">Lobe '+lobe+(preferred?' - Preferred':'')+'</div><div class="rpm-stack"><div class="rpm-value">'+fmt(rpm)+'<span class="rpm-unit">rpm</span></div>'+vcLine(rpm)+'</div></div>';
-}
-results.innerHTML=html;
-countEl.textContent=lMax+' '+(lMax===1?'LOBE':'LOBES');
-const lobe1=(60*f)/N;
-const hs2=lobe1*2;
-const hs3=lobe1*3;
-hsResults.innerHTML='<div class="row high-speed"><div class="lobe-num">2x</div><div class="lobe-label">2x Lobe 1</div><div class="rpm-stack"><div class="rpm-value">'+fmt(hs2)+'<span class="rpm-unit">rpm</span></div>'+vcLine(hs2)+'</div></div><div class="row high-speed"><div class="lobe-num">3x</div><div class="lobe-label">3x Lobe 1</div><div class="rpm-stack"><div class="rpm-value">'+fmt(hs3)+'<span class="rpm-unit">rpm</span></div>'+vcLine(hs3)+'</div></div>';
-}
-function calculateSF(){
-const dMm=diameterMm();
-const v=num(vc.value);
-const z=nint(flutes2.value);
-const f=num(feed.value);
-if(dMm===null||isNaN(v)||v<=0){
-sfResults.innerHTML='<div class="empty">Enter Diameter &amp; Speed</div>';
-sfCount.textContent='-';
-return;
-}
-const rpm=1000*v/(Math.PI*dMm);
-const sfm=v*3.28084;
-let html='<div class="row preferred"><div class="lobe-num">n</div><div class="lobe-label">Spindle Speed</div><div class="rpm-stack"><div class="rpm-value">'+fmt(rpm)+'<span class="rpm-unit">rpm</span></div><div class="vc-line">'+fmt1(v)+' m/min &middot; '+fmt(sfm)+' sfm</div></div></div>';
-let vf=null,msg='';
-if(feedMode==='fz'){
-if(!isNaN(f)&&f>0&&!isNaN(z)&&z>0)vf=f*z*rpm;
-else msg=(isNaN(f)||f<=0)?'enter feed/tooth':'enter no. of teeth';
-}else{
-if(!isNaN(f)&&f>0)vf=f*rpm;
-else msg='enter feed/rev';
-}
-if(vf!==null){
-const ipm=vf/25.4;
-html+='<div class="row feed"><div class="lobe-num">Vf</div><div class="lobe-label">Feed Rate</div><div class="rpm-stack"><div class="rpm-value">'+fmt(vf)+'<span class="rpm-unit">mm/min</span></div><div class="vc-line">'+fmt2(ipm)+' ipm</div></div></div>';
-}else{
-html+='<div class="row feed"><div class="lobe-num">Vf</div><div class="lobe-label">Feed Rate</div><div class="rpm-stack"><div class="rpm-value">&mdash;<span class="rpm-unit">mm/min</span></div><div class="vc-line">'+msg+'</div></div></div>';
-}
-sfResults.innerHTML=html;
-sfCount.textContent='OUTPUTS';
-}
-function calculate(){if(mode==='chatter')calculateChatter();else calculateSF();}
-diameter.addEventListener('input',()=>{diameter2.value=diameter.value;calculate();});
-diameter2.addEventListener('input',()=>{diameter.value=diameter2.value;calculate();});
-flutes.addEventListener('input',()=>{flutes2.value=flutes.value;calculate();});
-flutes2.addEventListener('input',()=>{flutes.value=flutes2.value;calculate();});
-[hz,maxLobe,vc,feed].forEach(el=>el.addEventListener('input',calculate));
-function setUnit(u){
-if(u===dUnit)return;
-const raw=mode==='chatter'?diameter.value:diameter2.value;
-const v=num(raw);
-if(!isNaN(v)&&v>0){
-let newV;
-if(u==='in'&&dUnit==='mm')newV=(v/25.4).toFixed(3);
-else if(u==='mm'&&dUnit==='in')newV=(v*25.4).toFixed(2);
-diameter.value=newV;diameter2.value=newV;
-}
-dUnit=u;
-unitMm.classList.toggle('active',u==='mm');
-unitIn.classList.toggle('active',u==='in');
-unitMm2.classList.toggle('active',u==='mm');
-unitIn2.classList.toggle('active',u==='in');
-calculate();
-}
-unitMm.addEventListener('click',()=>setUnit('mm'));
-unitIn.addEventListener('click',()=>setUnit('in'));
-unitMm2.addEventListener('click',()=>setUnit('mm'));
-unitIn2.addEventListener('click',()=>setUnit('in'));
-function setFeedMode(m){
-if(m===feedMode)return;
-feedMode=m;
-if(m==='fz'){
-modeFz.classList.add('active');
-modeFn.classList.remove('active');
-feedLabel.textContent='Feed/Tooth';
-teethGroup.classList.remove('disabled');
-flutes2.disabled=false;
-sfFormulaEq.innerHTML='n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fz&middot;z&middot;n';
-}else{
-modeFn.classList.add('active');
-modeFz.classList.remove('active');
-feedLabel.textContent='Feed/Rev';
-teethGroup.classList.add('disabled');
-flutes2.disabled=true;
-sfFormulaEq.innerHTML='n = 1000&middot;<strong>Vc</strong> / (&pi;&middot;DC) &nbsp; Vf = fn&middot;n';
-}
-calculate();
-}
-modeFz.addEventListener('click',()=>setFeedMode('fz'));
-modeFn.addEventListener('click',()=>setFeedMode('fn'));
-function setMode(m){
-if(m===mode)return;
-mode=m;
-if(m==='chatter'){
-viewChatter.classList.remove('hidden');
-viewSF.classList.add('hidden');
-modeChatter.classList.add('active');
-modeSF.classList.remove('active');
-subtitle.textContent='Tap Test - Stable RPM';
-}else{
-viewChatter.classList.add('hidden');
-viewSF.classList.remove('hidden');
-modeChatter.classList.remove('active');
-modeSF.classList.add('active');
-subtitle.textContent='Speeds & Feeds';
-}
-calculate();
-}
-modeChatter.addEventListener('click',()=>setMode('chatter'));
-modeSF.addEventListener('click',()=>setMode('sf'));
-calculate();
+(function() {
+  const $ = id => document.getElementById(id);
+  const dc = $('dc'), vc = $('vc'), rpm = $('rpm'),
+        feed = $('feed'), teeth = $('teeth'),
+        outVf = $('outVf'), outVfSub = $('outVfSub'), outVfUnit = $('outVfUnit'),
+        feedLabel = $('feedLabel'),
+        vcUnit = $('vcUnit'), feedUnit = $('feedUnit'),
+        feedGroup = $('feedGroup'), teethGroup = $('teethGroup'),
+        feedPair = $('feedPair');
+
+  let op = 'milling';
+  let units = 'mm';
+
+  const defaults = {
+    milling:  { feed: 0.005, teeth: 3 },
+    drilling: { feed: 0.1 },
+    tapping:  { feed: 0.8 }
+  };
+
+  const num = el => parseFloat(el.value) || 0;
+  const fmt = (n, d) => { d = d || 0; return isFinite(n) ? n.toLocaleString('en-US', {maximumFractionDigits:d, minimumFractionDigits: d===0?0:d}) : '-'; };
+
+  function dcMM()   { return units === 'in' ? num(dc) * 25.4 : num(dc); }
+  function vcMMin() { return units === 'in' ? num(vc) / 3.281 : num(vc); }
+  function feedMM() { return units === 'in' ? num(feed) * 25.4 : num(feed); }
+
+  function recalcRPM() {
+    const d = dcMM(), v = vcMMin();
+    if (d > 0) rpm.value = Math.round(1000 * v / (Math.PI * d));
+  }
+  function recalcVc() {
+    const d = dcMM(), n = num(rpm);
+    const vMet = (Math.PI * d * n) / 1000;
+    vc.value = +(units === 'in' ? vMet * 3.281 : vMet).toFixed(2);
+  }
+  function recalcOutputs() {
+    const n = num(rpm);
+    const fMet = feedMM();
+    let vfMet = (op === 'milling') ? fMet * num(teeth) * n : fMet * n;
+    if (units === 'mm') {
+      outVf.textContent = fmt(vfMet);
+      outVfUnit.textContent = 'MM/MIN';
+      outVfSub.textContent  = fmt(vfMet/25.4, 2) + ' IPM';
+    } else {
+      outVf.textContent = fmt(vfMet/25.4, 2);
+      outVfUnit.textContent = 'IPM';
+      outVfSub.textContent  = fmt(vfMet) + ' MM/MIN';
+    }
+  }
+
+  function syncUnitToggles() {
+    document.querySelectorAll('.uni').forEach(tog => {
+      tog.querySelectorAll('span').forEach(s => s.classList.toggle('on', s.dataset.unit === units));
+    });
+    vcUnit.textContent   = units === 'in' ? 'SFM' : 'M/MIN';
+    feedUnit.textContent = units === 'in' ? 'IN'  : 'MM';
+  }
+
+  function applyOpVisuals() {
+    document.querySelectorAll('.op-tab').forEach(t => t.classList.toggle('active', t.dataset.op === op));
+    feedGroup.classList.remove('dimmed');
+    teethGroup.classList.remove('dimmed', 'ghost');
+    const feedBadge = $('feedBadge');
+    if (op === 'milling') {
+      feedLabel.textContent = 'Feed/Tooth';
+      feedBadge.textContent = 'Fz';
+    } else if (op === 'drilling') {
+      feedLabel.textContent = 'Feed/Rev';
+      feedBadge.textContent = 'Fn';
+      teethGroup.classList.add('ghost');
+    } else if (op === 'tapping') {
+      feedLabel.textContent = 'Pitch';
+      feedBadge.textContent = 'P';
+      teethGroup.classList.add('ghost');
+    }
+  }
+
+  function setOp(newOp) {
+    op = newOp;
+    const d = defaults[op];
+    let f = d.feed;
+    if (units === 'in') f = f / 25.4;
+    feed.value = +f.toFixed(units === 'in' ? 4 : 3);
+    if (d.teeth !== undefined) teeth.value = d.teeth;
+    applyOpVisuals();
+    recalcOutputs();
+  }
+
+  function setUnits(newUnits) {
+    if (newUnits === units) return;
+    const dcMet = dcMM(), vcMet = vcMMin(), fMet = feedMM();
+    const chDcMet = chDcMM();
+    units = newUnits;
+    if (units === 'in') {
+      dc.value   = +(dcMet/25.4).toFixed(4);
+      vc.value   = +(vcMet*3.281).toFixed(1);
+      feed.value = +(fMet/25.4).toFixed(4);
+      chDc.value = +(chDcMet/25.4).toFixed(4);
+    } else {
+      dc.value   = +dcMet.toFixed(2);
+      vc.value   = +vcMet.toFixed(2);
+      feed.value = +fMet.toFixed(3);
+      chDc.value = +chDcMet.toFixed(2);
+    }
+    syncUnitToggles();
+    recalcOutputs();
+    if (typeof recalcChatter === 'function') recalcChatter();
+  }
+
+  document.querySelectorAll('.op-tab').forEach(t => {
+    t.addEventListener('click', () => setOp(t.dataset.op));
+  });
+
+  const chHz = $('chHz'), chZ = $('chZ'), chMaxLobe = $('chMaxLobe'), chDc = $('chDc'),
+        chLobeCount = $('chLobeCount'),
+        chStableResults = $('chStableResults'), chHsResults = $('chHsResults');
+
+  function chDcMM() { return units === 'in' ? num(chDc) * 25.4 : num(chDc); }
+
+  function recalcChatter() {
+    const hz = num(chHz);
+    const z = Math.max(1, num(chZ));
+    const maxLobe = Math.max(1, Math.min(10, parseInt(chMaxLobe.value) || 6));
+    const dMM = chDcMM();
+    chLobeCount.textContent = maxLobe + ' LOBES';
+
+    let html = '';
+    for (let k = 1; k <= maxLobe; k++) {
+      const n = (60 * hz) / (z * k);
+      const vcMet = (Math.PI * dMM * n) / 1000;
+      const sfm = vcMet * 3.281;
+      const preferred = k === 1;
+      const labelText = preferred ? 'Lobe 1 - Preferred' : 'Lobe ' + k;
+      const rowStyle = preferred ? '' : 'border-left-color:#333;background:#080808;';
+      const badgeStyle = preferred ? '' : 'color:#555;';
+      html += '<div class="output-row n" style="margin-bottom:6px;' + rowStyle + '">' +
+        '<div class="badge n" style="font-size:22px;' + badgeStyle + '">' + k + '</div>' +
+        '<div class="output-label">' + labelText + '</div>' +
+        '<div class="output-value">' +
+          '<div><span class="main" style="font-size:22px;">' + fmt(n) + '</span><span class="unit">RPM</span></div>' +
+          '<div class="sub">' + fmt(vcMet, 1) + ' M/MIN &middot; ' + fmt(sfm) + ' SFM</div>' +
+        '</div></div>';
+    }
+    chStableResults.innerHTML = html;
+
+    const lobe1 = (60 * hz) / (z * 1);
+    let hsHtml = '';
+    [2, 3].forEach(m => {
+      const n = lobe1 * m;
+      const vcMet = (Math.PI * dMM * n) / 1000;
+      const sfm = vcMet * 3.281;
+      hsHtml += '<div class="output-row vf" style="margin-bottom:6px;">' +
+        '<div class="badge vf" style="font-size:22px;">' + m + 'x</div>' +
+        '<div class="output-label">' + m + 'x Lobe 1</div>' +
+        '<div class="output-value">' +
+          '<div><span class="main" style="font-size:22px;">' + fmt(n) + '</span><span class="unit">RPM</span></div>' +
+          '<div class="sub">' + fmt(vcMet, 1) + ' M/MIN &middot; ' + fmt(sfm) + ' SFM</div>' +
+        '</div></div>';
+    });
+    chHsResults.innerHTML = hsHtml;
+  }
+
+  chHz.addEventListener('input', recalcChatter);
+  chZ.addEventListener('input', recalcChatter);
+  chMaxLobe.addEventListener('input', recalcChatter);
+  chDc.addEventListener('input', recalcChatter);
+  recalcChatter();
+
+  document.querySelectorAll('.mode-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach(x => x.classList.toggle('active', x === t));
+      const mode = t.dataset.mode;
+      $('chatterView').style.display = mode === 'chatter' ? 'block' : 'none';
+      $('speedsView').style.display  = mode === 'speeds'  ? 'block' : 'none';
+    });
+  });
+
+  document.querySelectorAll('.uni span').forEach(s => {
+    s.addEventListener('click', () => setUnits(s.dataset.unit));
+  });
+
+  vc.addEventListener('input',  () => { recalcRPM(); recalcOutputs(); });
+  rpm.addEventListener('input', () => { recalcVc(); recalcOutputs(); });
+  dc.addEventListener('input',  () => { recalcRPM(); recalcOutputs(); });
+  feed.addEventListener('input', recalcOutputs);
+  teeth.addEventListener('input', recalcOutputs);
+
+  syncUnitToggles();
+  setOp('milling');
+})();
 </script>
+
 </body>
 </html>
