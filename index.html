@@ -110,6 +110,29 @@
   .badge.n { color: var(--accent); }
   .badge.vf { color: #4ab3f0; }
 
+  .output-row.engage {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    border-left-color: var(--accent);
+    padding: 8px 8px; gap: 4px;
+  }
+  .output-row.engage .cell {
+    text-align: center;
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+  }
+  .output-row.engage .cell .lbl {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .output-row.engage .cell .val {
+    font-size: 16px; font-weight: 900; letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+  .output-row.engage .cell .u {
+    font-size: 9px; color: var(--muted); font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
   .output-label {
     font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
     color: var(--muted); text-transform: uppercase;
@@ -187,17 +210,9 @@
 
   <div class="section-label outputs" style="margin-top: 14px;">
     High-Speed Zone
-    <span style="float:right; color:#888; font-weight:700; font-size:10px; letter-spacing:1.5px;">Above Lobe 1</span>
   </div>
   <div class="outputs-divider"></div>
   <div id="chHsResults"></div>
-
-  <div style="margin-top: 14px; text-align:center; font-size:9px; letter-spacing:1px; line-height:1.7; text-transform:uppercase;">
-    <div style="color:#777;"><span style="color:#b89400;">Lobe 1</span> = Highest RPM, Most Aggressive Cut</div>
-    <div style="color:#777;">Higher Lobes = Lower RPM, More Conservative</div>
-    <div style="color:#777;"><span style="color:#2a8fc7;">High-Speed Zone</span> = HSM / Aluminum Territory</div>
-    <div style="color:#777;">For End Milling - Not For Drilling or Reaming</div>
-  </div>
 
 </div>
 
@@ -259,6 +274,29 @@
   </div>
 </div>
 
+<div class="pair" id="engagePair">
+  <div class="field-group">
+    <div class="field-label-row">
+      <span class="field-label">Radial DOC</span>
+      <span style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:14px; font-style:italic; font-weight:900; color:#b89400; letter-spacing:0;">ae</span>
+        <span id="aeUnit" style="font-size:10px; letter-spacing:1.5px; color:#888; font-weight:700;">MM</span>
+      </span>
+    </div>
+    <input type="number" class="input-box" id="ae" value="3" step="0.1">
+  </div>
+  <div class="field-group">
+    <div class="field-label-row">
+      <span class="field-label">Axial DOC</span>
+      <span style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:14px; font-style:italic; font-weight:900; color:#b89400; letter-spacing:0;">ap</span>
+        <span id="apUnit" style="font-size:10px; letter-spacing:1.5px; color:#888; font-weight:700;">MM</span>
+      </span>
+    </div>
+    <input type="number" class="input-box" id="ap" value="10" step="0.1">
+  </div>
+</div>
+
 <div class="section-label outputs" style="margin-top: 8px;">
   SPEEDS &amp; FEEDS
   <span style="float:right; color:#888; font-weight:700; font-size:10px; letter-spacing:1.5px;">OUTPUTS</span>
@@ -274,6 +312,29 @@
   </div>
 </div>
 
+<div class="output-row engage" id="engageRow">
+  <div class="cell">
+    <div class="lbl">hex</div>
+    <div><span class="val" id="outHex">-</span></div>
+    <div class="u" id="outHexUnit">MM</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">φ angle</div>
+    <div><span class="val" id="outPhi">-</span></div>
+    <div class="u">DEG</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ae/D</div>
+    <div><span class="val" id="outAeD">-</span></div>
+    <div class="u">%</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Q (MRR)</div>
+    <div><span class="val" id="outQ">-</span></div>
+    <div class="u" id="outQUnit">CM³/MIN</div>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -281,7 +342,13 @@
   const $ = id => document.getElementById(id);
   const dc = $('dc'), vc = $('vc'), rpm = $('rpm'),
         feed = $('feed'), teeth = $('teeth'),
+        ae = $('ae'), ap = $('ap'),
         outVf = $('outVf'), outVfSub = $('outVfSub'), outVfUnit = $('outVfUnit'),
+        outHex = $('outHex'), outHexUnit = $('outHexUnit'),
+        outPhi = $('outPhi'), outAeD = $('outAeD'),
+        outQ = $('outQ'), outQUnit = $('outQUnit'),
+        engagePair = $('engagePair'), engageRow = $('engageRow'),
+        aeUnit = $('aeUnit'), apUnit = $('apUnit'),
         feedLabel = $('feedLabel'),
         vcUnit = $('vcUnit'), feedUnit = $('feedUnit'),
         feedGroup = $('feedGroup'), teethGroup = $('teethGroup'),
@@ -302,6 +369,8 @@
   function dcMM()   { return units === 'in' ? num(dc) * 25.4 : num(dc); }
   function vcMMin() { return units === 'in' ? num(vc) / 3.281 : num(vc); }
   function feedMM() { return units === 'in' ? num(feed) * 25.4 : num(feed); }
+  function aeMM()   { return units === 'in' ? num(ae) * 25.4 : num(ae); }
+  function apMM()   { return units === 'in' ? num(ap) * 25.4 : num(ap); }
 
   function recalcRPM() {
     const d = dcMM(), v = vcMMin();
@@ -325,6 +394,27 @@
       outVfUnit.textContent = 'IPM';
       outVfSub.textContent  = fmt(vfMet) + ' MM/MIN';
     }
+
+    if (op === 'milling') {
+      const dMet = dcMM(), aeMet = aeMM(), apMet = apMM();
+      const r = dMet > 0 ? Math.min(Math.max(aeMet / dMet, 0), 1) : 0;
+      const phiDeg = Math.acos(1 - 2*r) * 180 / Math.PI;
+      const hexMet = r <= 0.5 ? 2 * fMet * Math.sqrt(r * (1-r)) : fMet;
+      const qMMmin = aeMet * apMet * vfMet;
+      if (units === 'mm') {
+        outHex.textContent  = fmt(hexMet, 3);
+        outHexUnit.textContent = 'MM';
+        outQ.textContent    = fmt(qMMmin/1000, 2);
+        outQUnit.textContent = 'CM³/MIN';
+      } else {
+        outHex.textContent  = fmt(hexMet/25.4, 4);
+        outHexUnit.textContent = 'IN';
+        outQ.textContent    = fmt(qMMmin/16387.064, 3);
+        outQUnit.textContent = 'IN³/MIN';
+      }
+      outPhi.textContent = fmt(phiDeg, 1);
+      outAeD.textContent = fmt(r*100, 0);
+    }
   }
 
   function syncUnitToggles() {
@@ -333,6 +423,8 @@
     });
     vcUnit.textContent   = units === 'in' ? 'SFM' : 'M/MIN';
     feedUnit.textContent = units === 'in' ? 'IN'  : 'MM';
+    aeUnit.textContent   = units === 'in' ? 'IN'  : 'MM';
+    apUnit.textContent   = units === 'in' ? 'IN'  : 'MM';
   }
 
   function applyOpVisuals() {
@@ -343,14 +435,20 @@
     if (op === 'milling') {
       feedLabel.textContent = 'Feed/Tooth';
       feedBadge.textContent = 'Fz';
+      engagePair.style.display = '';
+      engageRow.style.display = '';
     } else if (op === 'drilling') {
       feedLabel.textContent = 'Feed/Rev';
       feedBadge.textContent = 'Fn';
       teethGroup.classList.add('ghost');
+      engagePair.style.display = 'none';
+      engageRow.style.display = 'none';
     } else if (op === 'tapping') {
       feedLabel.textContent = 'Pitch';
       feedBadge.textContent = 'P';
       teethGroup.classList.add('ghost');
+      engagePair.style.display = 'none';
+      engageRow.style.display = 'none';
     }
   }
 
@@ -368,17 +466,22 @@
   function setUnits(newUnits) {
     if (newUnits === units) return;
     const dcMet = dcMM(), vcMet = vcMMin(), fMet = feedMM();
+    const aeMet = aeMM(), apMet = apMM();
     const chDcMet = chDcMM();
     units = newUnits;
     if (units === 'in') {
       dc.value   = +(dcMet/25.4).toFixed(4);
       vc.value   = +(vcMet*3.281).toFixed(1);
       feed.value = +(fMet/25.4).toFixed(4);
+      ae.value   = +(aeMet/25.4).toFixed(3);
+      ap.value   = +(apMet/25.4).toFixed(3);
       chDc.value = +(chDcMet/25.4).toFixed(4);
     } else {
       dc.value   = +dcMet.toFixed(2);
       vc.value   = +vcMet.toFixed(2);
       feed.value = +fMet.toFixed(3);
+      ae.value   = +aeMet.toFixed(2);
+      ap.value   = +apMet.toFixed(2);
       chDc.value = +chDcMet.toFixed(2);
     }
     syncUnitToggles();
@@ -463,6 +566,8 @@
   dc.addEventListener('input',  () => { recalcRPM(); recalcOutputs(); });
   feed.addEventListener('input', recalcOutputs);
   teeth.addEventListener('input', recalcOutputs);
+  ae.addEventListener('input', recalcOutputs);
+  ap.addEventListener('input', recalcOutputs);
 
   syncUnitToggles();
   setOp('milling');
