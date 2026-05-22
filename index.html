@@ -580,7 +580,8 @@
 
   // ---- Tap test (mic capture) ----
   (function tapTest(){
-    const FFT = 32768, LEVEL_GATE = -63, RELEASE_GATE = -67;
+    const FFT = 32768;
+    const TRIGGER_MARGIN = 14, RELEASE_MARGIN = 6, FLOOR_RISE = 0.05;
     const MIN_RING_MS = 60, CLUSTER_FRAC = 0.02;
     const MIN_FREQ = 80, MAX_FREQ = 12000;
     const GREEN = 1.0, ORANGE = 4.0;
@@ -612,6 +613,7 @@
       an = ctx.createAnalyser(); an.fftSize = FFT; an.smoothingTimeConstant = 0;
       src.connect(an);
       readings = []; idx = 0; winBuf = []; released = true; running = true;
+      let noiseFloor = null;
       btn.textContent = 'CANCEL'; btn.classList.add('listening');
       resetBoxes(); armBox(0);
       const bins = new Float32Array(an.frequencyBinCount);
@@ -630,13 +632,19 @@
         const f = (bi + p) * sr / FFT;
         const now = performance.now();
 
+        // adaptive noise floor: follows quiet level fast, creeps up slowly
+        if (noiseFloor === null || max < noiseFloor) noiseFloor = max;
+        else noiseFloor += FLOOR_RISE;
+        const gate = noiseFloor + TRIGGER_MARGIN;
+        const rel  = noiseFloor + RELEASE_MARGIN;
+
         statusEl.textContent = 'Tap ' + (idx+1) + ' of 3  \u00b7  ' +
-          (max>LEVEL_GATE ? f.toFixed(1)+' Hz  '+max.toFixed(0)+' dB' : 'listening\u2026 '+max.toFixed(0)+' dB');
+          (max>gate ? f.toFixed(1)+' Hz  '+max.toFixed(0)+' dB' : 'listening\u2026 '+max.toFixed(0)+' dB');
 
         if (!released){
-          // wait for silence before arming the next tap
-          if (max < RELEASE_GATE) released = true;
-        } else if (max > LEVEL_GATE){
+          // wait for near-silence before arming the next tap
+          if (max < rel) released = true;
+        } else if (max > gate){
           // ring in progress — collect freq + level
           winBuf.push({t:now, f:f, l:max});
         } else if (winBuf.length){
