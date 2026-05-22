@@ -1,0 +1,18 @@
+<button onclick="test()">Test Mic</button>
+<pre id="out"></pre>
+<script>
+async function test() {
+  const o = document.getElementById('out');
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const t = s.getAudioTracks()[0];
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    o.textContent =
+      'Device: ' + t.label + '\n' +
+      'Sample rate: ' + ctx.sampleRate + ' Hz';
+    s.getTracks().forEach(x => x.stop());
+  } catch (e) {
+    o.textContent = 'FAILED: ' + e.name + ' — ' + e.message;
+  }
+}
+</script>
