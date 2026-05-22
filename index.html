@@ -580,14 +580,14 @@
 
   // ---- Tap test (mic capture) ----
   (function tapTest(){
-    const FFT = 32768, LEVEL_GATE = -60, RELEASE_GATE = -68;
-    const HOLD_MS = 600, STABILITY_TOL = 2.0;
+    const FFT = 32768, LEVEL_GATE = -60, RELEASE_GATE = -66;
+    const MIN_RING_MS = 90, CORE_DB = 8;
     const GREEN = 1.0, ORANGE = 4.0;
 
     const btn = $('tapBtn'), statusEl = $('tapStatus');
     const boxes = [$('tapBox1'), $('tapBox2'), $('tapBox3')];
     let running = false, ctx, stream, an, raf;
-    let readings, idx, buf, released;
+    let readings, idx, winBuf, released;
 
     function setBox(i, cls, txt){
       boxes[i].className = 'tap-box' + (cls ? ' ' + cls : '');
@@ -610,7 +610,7 @@
       const src = ctx.createMediaStreamSource(stream);
       an = ctx.createAnalyser(); an.fftSize = FFT; an.smoothingTimeConstant = 0;
       src.connect(an);
-      readings = []; idx = 0; buf = []; released = true; running = true;
+      readings = []; idx = 0; winBuf = []; released = true; running = true;
       btn.textContent = 'CANCEL'; btn.classList.add('listening');
       resetBoxes(); armBox(0);
       const bins = new Float32Array(an.frequencyBinCount);
@@ -631,24 +631,28 @@
           (max>LEVEL_GATE ? f.toFixed(1)+' Hz  '+max.toFixed(0)+' dB' : 'listening\u2026 '+max.toFixed(0)+' dB');
 
         if (!released){
+          // wait for silence before arming the next tap
           if (max < RELEASE_GATE) released = true;
         } else if (max > LEVEL_GATE){
-          buf.push({t:now, f:f});
-          while (buf.length && now - buf[0].t > HOLD_MS) buf.shift();
-          if (buf.length > 3 && (now - buf[0].t) >= HOLD_MS){
-            let mn=Infinity, mx=-Infinity, sum=0;
-            buf.forEach(s=>{ if(s.f<mn)mn=s.f; if(s.f>mx)mx=s.f; sum+=s.f; });
-            if (mx-mn <= STABILITY_TOL){
-              const val = sum/buf.length;
-              readings.push(val);
-              setBox(idx, '', val.toFixed(1)+' Hz');
-              idx++; buf=[]; released=false;
-              if (idx>=3){ finish(); return; }
-              armBox(idx);
-            }
+          // ring in progress — collect freq + level
+          winBuf.push({t:now, f:f, l:max});
+        } else if (winBuf.length){
+          // ring just decayed — evaluate this tap
+          const span = winBuf[winBuf.length-1].t - winBuf[0].t;
+          if (span >= MIN_RING_MS && winBuf.length >= 3){
+            let lmax = -Infinity;
+            winBuf.forEach(s=>{ if(s.l>lmax) lmax=s.l; });
+            const core = winBuf.filter(s=> s.l >= lmax - CORE_DB)
+                               .map(s=> s.f).sort((x,y)=>x-y);
+            const val = core[Math.floor(core.length/2)];   // median of loudest part
+            readings.push(val);
+            setBox(idx, '', val.toFixed(1)+' Hz');
+            idx++; winBuf = []; released = false;
+            if (idx>=3){ finish(); return; }
+            armBox(idx);
+          } else {
+            winBuf = [];   // too short — discard noise blip
           }
-        } else {
-          buf = [];
         }
         raf = requestAnimationFrame(frame);
       }
