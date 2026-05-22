@@ -580,9 +580,9 @@
 
   // ---- Tap test (mic capture) ----
   (function tapTest(){
-    const FFT = 32768, LEVEL_GATE = -60, RELEASE_GATE = -66;
-    const MIN_RING_MS = 90, CORE_DB = 8;
-    const MIN_FREQ = 80, MAX_FREQ = 8000;
+    const FFT = 32768, LEVEL_GATE = -63, RELEASE_GATE = -67;
+    const MIN_RING_MS = 60, CLUSTER_FRAC = 0.02;
+    const MIN_FREQ = 80, MAX_FREQ = 12000;
     const GREEN = 1.0, ORANGE = 4.0;
 
     const btn = $('tapBtn'), statusEl = $('tapStatus');
@@ -643,11 +643,21 @@
           // ring just decayed — evaluate this tap
           const span = winBuf[winBuf.length-1].t - winBuf[0].t;
           if (span >= MIN_RING_MS && winBuf.length >= 3){
-            let lmax = -Infinity;
-            winBuf.forEach(s=>{ if(s.l>lmax) lmax=s.l; });
-            const core = winBuf.filter(s=> s.l >= lmax - CORE_DB)
-                               .map(s=> s.f).sort((x,y)=>x-y);
-            const val = core[Math.floor(core.length/2)];   // median of loudest part
+            // Lock the frequency that rings LONGEST (most frames), not loudest.
+            // Overtones (e.g. a hard metal strike's high clang) die fast; the
+            // fundamental sustains. Find the densest cluster of per-frame peaks.
+            const fs = winBuf.map(s=> s.f).sort((x,y)=>x-y);
+            let bestI = 0, bestCount = -1, bestLo = 0, bestHi = 0;
+            for (let i=0;i<fs.length;i++){
+              const tol = fs[i] * CLUSTER_FRAC;       // ±2% window scales with freq
+              let lo = i, hi = i;
+              while (lo > 0 && fs[i]-fs[lo-1] <= tol) lo--;
+              while (hi < fs.length-1 && fs[hi+1]-fs[i] <= tol) hi++;
+              const count = hi - lo + 1;
+              if (count > bestCount){ bestCount = count; bestI = i; bestLo = lo; bestHi = hi; }
+            }
+            const cluster = fs.slice(bestLo, bestHi+1);
+            const val = cluster[Math.floor(cluster.length/2)];   // median of the persistent cluster
             readings.push(val);
             setBox(idx, '', val.toFixed(1)+' Hz');
             idx++; winBuf = []; released = false;
