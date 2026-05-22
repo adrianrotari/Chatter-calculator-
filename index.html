@@ -655,21 +655,26 @@
           // ring just decayed — evaluate this tap
           const span = winBuf[winBuf.length-1].t - winBuf[0].t;
           if (span >= MIN_RING_MS && winBuf.length >= 3){
-            // Lock the frequency that rings LONGEST (most frames), not loudest.
-            // Overtones (e.g. a hard metal strike's high clang) die fast; the
-            // fundamental sustains. Find the densest cluster of per-frame peaks.
-            const fs = winBuf.map(s=> s.f).sort((x,y)=>x-y);
-            let bestI = 0, bestCount = -1, bestLo = 0, bestHi = 0;
+            // Read the TAIL of the ring. Fast-decaying overtones die first; the
+            // dominant mode (fork fundamental, or a tool's chatter mode) rings on.
+            // So the frequency surviving late in the decay is the one we want.
+            const t0 = winBuf[0].t, t1 = winBuf[winBuf.length-1].t;
+            const cutoff = t0 + (t1 - t0) * 0.5;
+            let fs = winBuf.filter(s=> s.t >= cutoff).map(s=> s.f);
+            if (fs.length < 3) fs = winBuf.map(s=> s.f);
+            fs.sort((x,y)=>x-y);
+            // densest cluster within the tail
+            let bestCount = -1, bestLo = 0, bestHi = 0;
             for (let i=0;i<fs.length;i++){
               const tol = fs[i] * CLUSTER_FRAC;       // ±2% window scales with freq
               let lo = i, hi = i;
               while (lo > 0 && fs[i]-fs[lo-1] <= tol) lo--;
               while (hi < fs.length-1 && fs[hi+1]-fs[i] <= tol) hi++;
               const count = hi - lo + 1;
-              if (count > bestCount){ bestCount = count; bestI = i; bestLo = lo; bestHi = hi; }
+              if (count > bestCount){ bestCount = count; bestLo = lo; bestHi = hi; }
             }
             const cluster = fs.slice(bestLo, bestHi+1);
-            const val = cluster[Math.floor(cluster.length/2)];   // median of the persistent cluster
+            const val = cluster[Math.floor(cluster.length/2)];   // median of surviving cluster
             readings.push(val);
             setBox(idx, '', val.toFixed(1)+' Hz');
             idx++; winBuf = []; released = false;
