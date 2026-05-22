@@ -582,6 +582,7 @@
   (function tapTest(){
     const FFT = 32768, LEVEL_GATE = -60, RELEASE_GATE = -66;
     const MIN_RING_MS = 90, CORE_DB = 8;
+    const MIN_FREQ = 80, MAX_FREQ = 8000;
     const GREEN = 1.0, ORANGE = 4.0;
 
     const btn = $('tapBtn'), statusEl = $('tapStatus');
@@ -615,12 +616,14 @@
       resetBoxes(); armBox(0);
       const bins = new Float32Array(an.frequencyBinCount);
       const sr = ctx.sampleRate;
+      const binLo = Math.max(1, Math.ceil(MIN_FREQ * FFT / sr));
+      const binHi = Math.min(bins.length-2, Math.floor(MAX_FREQ * FFT / sr));
 
       function frame(){
         if (!running) return;
         an.getFloatFrequencyData(bins);
-        let max=-Infinity, bi=1;
-        for (let i=1;i<bins.length-1;i++){ if(bins[i]>max){max=bins[i];bi=i;} }
+        let max=-Infinity, bi=binLo;
+        for (let i=binLo;i<=binHi;i++){ if(bins[i]>max){max=bins[i];bi=i;} }
         const a=bins[bi-1], b=bins[bi], c=bins[bi+1];
         let p = 0.5*(a-c)/(a-2*b+c);
         if (!isFinite(p)) p = 0;
