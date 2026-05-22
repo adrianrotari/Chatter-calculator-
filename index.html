@@ -145,6 +145,32 @@
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
+
+  .tap-btn {
+    width: 100%; padding: 14px; font-family: inherit;
+    font-size: 14px; font-weight: 800; letter-spacing: 1.5px;
+    color: #000; background: var(--accent); border: none; border-radius: 4px;
+    cursor: pointer; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .tap-btn.listening { background: #fff; color: var(--text); border: 2px solid var(--accent); }
+  .tap-status {
+    font-size: 10px; letter-spacing: 1px; color: var(--muted);
+    text-align: center; margin-bottom: 10px; min-height: 13px; text-transform: uppercase;
+  }
+  .tap-boxes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .tap-box {
+    background: #ececec; border-radius: 4px; padding: 10px 4px; text-align: center;
+    min-height: 58px; display: flex; flex-direction: column; justify-content: center; gap: 3px;
+    transition: background 0.2s ease;
+  }
+  .tap-box .tb-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .tap-box .tb-val { font-size: 17px; font-weight: 900; letter-spacing: -0.3px; }
+  .tap-box.green  { background: #8cc63f; }
+  .tap-box.orange { background: #f5a623; }
+  .tap-box.red    { background: #e35b5b; }
+  .tap-box.green .tb-lbl, .tap-box.orange .tb-lbl, .tap-box.red .tb-lbl { color: rgba(0,0,0,0.55); }
+  .tap-box.green .tb-val, .tap-box.orange .tb-val, .tap-box.red .tb-val { color: #fff; }
+  .tap-box.armed { outline: 2px solid var(--accent); outline-offset: -2px; }
 </style>
 </head>
 <body>
@@ -160,9 +186,13 @@
 
   <div class="section-label" style="margin-top: 4px;">Tap Test - Stable RPM</div>
 
-  <div style="background:#f0f0f0; border-radius:4px; padding:12px 14px; margin-bottom:14px; text-align:center;">
-    <div style="font-size:10px; letter-spacing:1.5px; color:#777; margin-bottom:6px; text-transform:uppercase;">Tooth-pass matches natural freq</div>
-    <div style="font-size:14px; color:#444; font-weight:600;">RPM = (60 x <span style="color:#b89400;font-weight:800;">Hz</span>) / (Teeth x Lobe)</div>
+  <button id="tapBtn" class="tap-btn">START TAP TEST</button>
+  <div id="tapStatus" class="tap-status">Plug mic in &middot; tap to begin</div>
+
+  <div class="tap-boxes">
+    <div class="tap-box" id="tapBox1"><div class="tb-lbl">Tap 1</div><div class="tb-val">&mdash;</div></div>
+    <div class="tap-box" id="tapBox2"><div class="tb-lbl">Tap 2</div><div class="tb-val">&mdash;</div></div>
+    <div class="tap-box" id="tapBox3"><div class="tb-lbl">Tap 3</div><div class="tb-val">&mdash;</div></div>
   </div>
 
   <div class="field-group">
@@ -547,6 +577,125 @@
   chMaxLobe.addEventListener('input', recalcChatter);
   chDc.addEventListener('input', recalcChatter);
   recalcChatter();
+
+  // ---- Tap test (mic capture) ----
+  (function tapTest(){
+    const FFT = 32768, LEVEL_GATE = -60, RELEASE_GATE = -68;
+    const HOLD_MS = 600, STABILITY_TOL = 2.0;
+    const GREEN = 1.0, ORANGE = 4.0;
+
+    const btn = $('tapBtn'), statusEl = $('tapStatus');
+    const boxes = [$('tapBox1'), $('tapBox2'), $('tapBox3')];
+    let running = false, ctx, stream, an, raf;
+    let readings, idx, buf, released;
+
+    function setBox(i, cls, txt){
+      boxes[i].className = 'tap-box' + (cls ? ' ' + cls : '');
+      boxes[i].querySelector('.tb-val').innerHTML = txt;
+    }
+    function armBox(i){
+      boxes.forEach((b,j)=> b.classList.toggle('armed', j===i && running));
+    }
+    function resetBoxes(){
+      for (let i=0;i<3;i++) setBox(i,'', '&mdash;');
+    }
+
+    async function start(){
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio:{
+          echoCancellation:false, noiseSuppression:false, autoGainControl:false }});
+      } catch(e){ statusEl.textContent = 'MIC BLOCKED: ' + e.name; return; }
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      if (ctx.state === 'suspended') await ctx.resume();
+      const src = ctx.createMediaStreamSource(stream);
+      an = ctx.createAnalyser(); an.fftSize = FFT; an.smoothingTimeConstant = 0;
+      src.connect(an);
+      readings = []; idx = 0; buf = []; released = true; running = true;
+      btn.textContent = 'CANCEL'; btn.classList.add('listening');
+      resetBoxes(); armBox(0);
+      const bins = new Float32Array(an.frequencyBinCount);
+      const sr = ctx.sampleRate;
+
+      function frame(){
+        if (!running) return;
+        an.getFloatFrequencyData(bins);
+        let max=-Infinity, bi=1;
+        for (let i=1;i<bins.length-1;i++){ if(bins[i]>max){max=bins[i];bi=i;} }
+        const a=bins[bi-1], b=bins[bi], c=bins[bi+1];
+        let p = 0.5*(a-c)/(a-2*b+c);
+        if (!isFinite(p)) p = 0;
+        const f = (bi + p) * sr / FFT;
+        const now = performance.now();
+
+        statusEl.textContent = 'Tap ' + (idx+1) + ' of 3  \u00b7  ' +
+          (max>LEVEL_GATE ? f.toFixed(1)+' Hz  '+max.toFixed(0)+' dB' : 'listening\u2026 '+max.toFixed(0)+' dB');
+
+        if (!released){
+          if (max < RELEASE_GATE) released = true;
+        } else if (max > LEVEL_GATE){
+          buf.push({t:now, f:f});
+          while (buf.length && now - buf[0].t > HOLD_MS) buf.shift();
+          if (buf.length > 3 && (now - buf[0].t) >= HOLD_MS){
+            let mn=Infinity, mx=-Infinity, sum=0;
+            buf.forEach(s=>{ if(s.f<mn)mn=s.f; if(s.f>mx)mx=s.f; sum+=s.f; });
+            if (mx-mn <= STABILITY_TOL){
+              const val = sum/buf.length;
+              readings.push(val);
+              setBox(idx, '', val.toFixed(1)+' Hz');
+              idx++; buf=[]; released=false;
+              if (idx>=3){ finish(); return; }
+              armBox(idx);
+            }
+          }
+        } else {
+          buf = [];
+        }
+        raf = requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
+    function stopMic(){
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      if (stream) stream.getTracks().forEach(t=>t.stop());
+      if (ctx) ctx.close();
+    }
+
+    function finish(){
+      stopMic();
+      armBox(-1);
+      btn.textContent = 'START NEW TAP TEST'; btn.classList.remove('listening');
+      const sorted = [...readings].sort((x,y)=>x-y);
+      const ref = sorted[1];
+      const greens = [];
+      readings.forEach((r,i)=>{
+        const d = Math.abs(r-ref);
+        const cls = d<=GREEN ? 'green' : d<=ORANGE ? 'orange' : 'red';
+        setBox(i, cls, r.toFixed(1)+' Hz');
+        if (cls==='green') greens.push(r);
+      });
+      if (greens.length>=2){
+        const hz = greens.reduce((s,v)=>s+v,0)/greens.length;
+        chHz.value = +hz.toFixed(1);
+        recalcChatter();
+        statusEl.textContent = 'Result \u00b7 ' + hz.toFixed(1) + ' Hz';
+      } else {
+        chStableResults.innerHTML = '';
+        chHsResults.innerHTML = '';
+        statusEl.textContent = 'Inconsistent \u2014 retap';
+      }
+    }
+
+    function cancel(){
+      stopMic();
+      btn.textContent = 'START TAP TEST'; btn.classList.remove('listening');
+      armBox(-1);
+      statusEl.textContent = 'Cancelled';
+    }
+
+    btn.addEventListener('click', ()=>{ running ? cancel() : start(); });
+  })();
 
   document.querySelectorAll('.mode-tab').forEach(t => {
     t.addEventListener('click', () => {
