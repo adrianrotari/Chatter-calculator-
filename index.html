@@ -581,7 +581,8 @@
   // ---- Tap test (mic capture) ----
   (function tapTest(){
     const FFT = 32768;
-    const TRIGGER_MARGIN = 14, RELEASE_MARGIN = 6, FLOOR_RISE = 0.05;
+    const TRIGGER_MARGIN = 12, RELEASE_MARGIN = 5;
+    const FLOOR_RISE = 0.05, FLOOR_FALL = 0.08, FLOOR_MIN = -95;
     const MIN_RING_MS = 60, CLUSTER_FRAC = 0.02;
     const MIN_FREQ = 80, MAX_FREQ = 12000;
     const GREEN = 1.0, ORANGE = 4.0;
@@ -632,9 +633,12 @@
         const f = (bi + p) * sr / FFT;
         const now = performance.now();
 
-        // adaptive noise floor: follows quiet level fast, creeps up slowly
-        if (noiseFloor === null || max < noiseFloor) noiseFloor = max;
+        // adaptive noise floor: eases toward quiet level (won't snap to a silent
+        // frame), creeps up slowly under sound, and is clamped so the gate can't collapse
+        if (noiseFloor === null) noiseFloor = max;
+        else if (max < noiseFloor) noiseFloor += (max - noiseFloor) * FLOOR_FALL;
         else noiseFloor += FLOOR_RISE;
+        if (noiseFloor < FLOOR_MIN) noiseFloor = FLOOR_MIN;
         const gate = noiseFloor + TRIGGER_MARGIN;
         const rel  = noiseFloor + RELEASE_MARGIN;
 
