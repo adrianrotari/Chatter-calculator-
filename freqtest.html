@@ -1,0 +1,47 @@
+<style>
+  body { font-family: -apple-system, sans-serif; text-align: center; padding: 20px; }
+  #freq { font-size: 64px; font-weight: 700; margin: 30px 0 0; }
+  #lvl { font-size: 18px; color: #888; }
+  button { font-size: 20px; padding: 14px 28px; }
+</style>
+<button onclick="start()">Start</button>
+<div id="freq">—</div>
+<div id="lvl">tap Start, then strike the fork</div>
+<script>
+async function start() {
+  const s = await navigator.mediaDevices.getUserMedia({ audio: {
+    echoCancellation: false, noiseSuppression: false, autoGainControl: false
+  }});
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(s);
+  const an = ctx.createAnalyser();
+  an.fftSize = 32768;
+  src.connect(an);
+  const sr = ctx.sampleRate;
+  const buf = new Float32Array(an.frequencyBinCount);
+  const fEl = document.getElementById('freq');
+  const lEl = document.getElementById('lvl');
+
+  function loop() {
+    an.getFloatFrequencyData(buf);
+    // find peak bin
+    let max = -Infinity, idx = 0;
+    for (let i = 1; i < buf.length; i++) {
+      if (buf[i] > max) { max = buf[i]; idx = i; }
+    }
+    // parabolic interpolation for sub-bin accuracy
+    const a = buf[idx-1], b = buf[idx], c = buf[idx+1];
+    const p = (a && c) ? 0.5 * (a - c) / (a - 2*b + c) : 0;
+    const freq = (idx + p) * sr / an.fftSize;
+
+    if (max > -90) {
+      fEl.textContent = freq.toFixed(1) + ' Hz';
+      lEl.textContent = 'level ' + max.toFixed(0) + ' dB';
+    } else {
+      lEl.textContent = 'listening… (quiet)';
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+</script>
