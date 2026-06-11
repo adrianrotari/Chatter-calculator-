@@ -408,6 +408,17 @@ let deb = null;
 
 window.addEventListener('resize', sizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(sizeCanvas, 300));
+
+// prefill from the tap test page: chatter-lobes.html?fn1=1187&fn2=2340
+(function applyParams(){
+  const q = new URLSearchParams(location.search);
+  const fn1 = parseFloat(q.get('fn1')), fn2 = parseFloat(q.get('fn2'));
+  if (fn1 > 0) ui.fn1.value = Math.round(fn1);
+  if (fn2 > 0){
+    ui.fn2.value = Math.round(fn2);
+    if (!(+ui.k2.value > 0)) ui.k2.value = 5;   // engage M2 with the default stiffness
+  }
+})();
 sizeCanvas(); recompute(); requestAnimationFrame(render);
 </script>
 </body>

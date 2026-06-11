@@ -36,6 +36,8 @@
   .btn.go{background:var(--green);}
   .btn.ghost{background:#fff; color:var(--muted); border:1px solid var(--border);}
   .btn:disabled{opacity:.4;}
+  a.btn{text-decoration:none; display:inline-block;}
+  a.btn.lobes{background:var(--yellow); color:var(--ink);}
   label.f{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px;}
   label.f input{width:64px; padding:6px 7px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-weight:700; color:var(--ink); text-align:right;}
   .controls .spacer{flex:1 1 auto;}
@@ -60,6 +62,7 @@
   .tap .lab{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
   .tap .hz{font-size:22px; font-weight:800; line-height:1.05; margin-top:3px; white-space:nowrap;}
   .tap .hz small{font-size:11px; font-weight:600; color:var(--muted);}
+  .tap .hz2{font-size:11px; font-weight:700; color:var(--muted); margin-top:2px; min-height:13px;}
   .tap.empty .hz{color:#cfcfcf;}
   .tap.armed{border-color:var(--blue); box-shadow:0 0 0 3px rgba(74,179,240,.16); animation:pulse 1.1s ease-in-out infinite;}
   .tap.green{border-color:var(--green); background:var(--green-bg);} .tap.green .hz{color:var(--green);}
@@ -67,13 +70,15 @@
   .tap.red{border-color:var(--red); background:var(--red-bg);} .tap.red .hz{color:var(--red);}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(74,179,240,.16);}50%{box-shadow:0 0 0 6px rgba(74,179,240,.05);}}
 
-  .result{padding:10px 12px; display:flex; align-items:center; gap:14px; flex:0 0 auto;}
+  .result{padding:10px 12px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; flex:0 0 auto;}
   .result .rk{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
   .result .rv{font-size:30px; font-weight:800; line-height:1; white-space:nowrap;}
   .result .rv small{font-size:13px; font-weight:600; color:var(--muted);}
+  .result .rv2{font-size:20px; font-weight:800; line-height:1; white-space:nowrap; color:var(--blue-ink);}
+  .result .rv2 small{font-size:12px; font-weight:600; color:var(--muted);}
   .result.ok .rv{color:var(--green);}
   .result .spread{font-size:11px; color:var(--muted); line-height:1.4;}
-  .result.idle .rv{color:#cfcfcf;}
+  .result.idle .rv,.result.idle .rv2{color:#cfcfcf;}
 
   footer{font-size:10px; color:var(--muted); text-align:center; flex:0 0 auto; line-height:1.45;}
 </style>
@@ -108,33 +113,35 @@
   </div>
 
   <div class="taps" id="taps">
-    <div class="tap empty" id="t0"><div class="lab">tap 1</div><div class="hz">—</div></div>
-    <div class="tap empty" id="t1"><div class="lab">tap 2</div><div class="hz">—</div></div>
-    <div class="tap empty" id="t2"><div class="lab">tap 3</div><div class="hz">—</div></div>
+    <div class="tap empty" id="t0"><div class="lab">tap 1</div><div class="hz">—</div><div class="hz2"></div></div>
+    <div class="tap empty" id="t1"><div class="lab">tap 2</div><div class="hz">—</div><div class="hz2"></div></div>
+    <div class="tap empty" id="t2"><div class="lab">tap 3</div><div class="hz">—</div><div class="hz2"></div></div>
   </div>
 </div>
 
 <div class="card result idle" id="resultCard">
-  <div><div class="rk">natural frequency f<sub>n</sub></div><div class="rv" id="fnVal">—</div></div>
+  <div><div class="rk">natural frequency f<sub>n</sub> (M1)</div><div class="rv" id="fnVal">—</div></div>
+  <div><div class="rk">second mode (M2)</div><div class="rv2" id="fn2Val">—</div></div>
   <div class="spread" id="spread"></div>
+  <a id="toLobes" class="btn lobes" href="#" style="display:none">Open in Lobes →</a>
 </div>
 
 <footer id="foot">
-  Open over <b>https</b> (e.g. GitHub Pages) and allow the mic. Uses the iMM-6C raw, no AGC. Gate: 5&nbsp;s learns the noise floor (aborts if the shop is too noisy) → keeps only a sharp hit that rings down to one tone → tap 1 sets the target, taps 2 &amp; 3 must agree.
+  Open over <b>https</b> (e.g. GitHub Pages) and allow the mic. Uses the iMM-6C raw, no AGC. Gate: 5&nbsp;s learns the noise floor (aborts if the shop is too noisy) → keeps only a sharp hit that rings down to one or two clean tones → tap 1 sets the target, taps 2 &amp; 3 must agree. A second tone that repeats across taps is reported as <b>M2</b>; a forest of tones is rejected as noise.
 </footer>
 
 <script>
 "use strict";
-/* Chatter.calc — noise-robust tap test (natural-frequency readout).
+/* Chatter.calc — noise-robust tap test (two-mode natural-frequency readout).
    Pipeline: (A) 5 s noise-floor learn + abort if the room is too noisy.
    (B) capture 3 taps; each candidate must look like a tap — sharp onset,
-   clean decay (returns toward the floor; NOT "rings >= X ms"), and one
-   narrow peak well above the band floor. Talk (broadband) and hum (never
-   decays) are rejected and do NOT consume a slot. (C) tap 1 sets the target
-   frequency; taps 2 & 3 must agree (green/orange/red vs the running median).
-   On >=2 greens it reports fn = mean of the green taps.
-   Frequency is read from the TAIL of the ring (overtones decay first, the
-   fundamental sustains). Tune the thresholds below against real iMM-6C data. */
+   clean decay (returns toward the floor), and one or two NARROW peaks well
+   above the band floor. Talk/rattle (three or more comparable tones, i.e.
+   broadband) is rejected and does NOT consume a slot. (C) tap 1 sets the
+   target; taps 2 & 3 must agree (green/orange/red vs the running median).
+   On >=2 greens it reports fn (M1) = mean of the green taps. A second
+   distinct tone that appears in >=2 taps and agrees becomes M2.
+   Frequency is read from the ring after the impact transient.            */
 
 const CONFIG = {
   CALIB_S:        5,      // noise-learn duration (s)
@@ -147,8 +154,15 @@ const CONFIG = {
   REFRACTORY_MS:  300,    // dead time after any capture
   ATTACK_MAX_MS:  9,      // onset->peak must be this fast
   DECAY_RATIO_MAX:0.50,   // energy(last third)/energy(first third) after the peak
-  PROMINENCE_DB:  12,     // peak must clear the band-median by this much
-  SECOND_PEAK_MAX:0.50,   // 2nd peak / main peak (power) must be below this
+  PROMINENCE_DB:  12,     // the main peak must clear the band-median by this much
+  MODE_SEP_PCT:   0.15,   // M2 must sit at least 15% of f1 away from f1: closer pairs
+                          // are one effective mode for the lobe chart, and unresolved
+                          // pairs throw skirt artifacts that fake a false M2
+  MODE_SEP_HZ:    30,     // ... and never closer than 30 Hz
+  SECOND_MODE_MIN:1e-5,   // sanity floor vs the main peak (-50 dB); the real gates are
+                          // MODE2_PROM_DB and the cross-tap repeat requirement
+  MODE2_PROM_DB:  20,     // M2 must clear the band-median floor by this much
+  THIRD_PEAK_MAX: 0.35,   // a 3rd distinct tone above 35% of main = broadband, reject
   SEARCH_LO:      120,    // default search band (Hz)
   SEARCH_HI:      6000,
   TOL_GREEN:      0.03,   // <=3% from median = green
@@ -158,12 +172,89 @@ const CONFIG = {
 const FFTSIZE = 8192, HALF = FFTSIZE/2, HOP = 256;
 let SR = 44100;
 
+/*TAPCORE-START*/
+function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
+ for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+
+function median(a){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+
+/* Validate one candidate window. Pure: pass sample rate and search band.
+   Returns {ok, freq, freq2} — freq2 is null unless a clean second tone exists. */
+function validateTap(win, sr, band, cfg){
+  const pre = Math.round(cfg.PRE_MS/1000*sr), N = win.length;
+  // peak within ~30 ms of onset
+  const look = Math.min(N-1, pre + Math.round(0.030*sr));
+  let pIdx=pre, pv=0;
+  for(let i=pre;i<=look;i++){ const a=Math.abs(win[i]); if(a>pv){pv=a; pIdx=i;} }
+  if(pv<=0) return {ok:false};
+  // 1) sharp onset
+  const attackMs = Math.max(0,(pIdx-pre))/sr*1000;
+  if(attackMs > cfg.ATTACK_MAX_MS) return {ok:false, why:'slow onset'};
+  // 2) decay: returns toward the floor (not sustained)
+  const post=N-pIdx; if(post<Math.round(0.04*sr)) return {ok:false};
+  const third=Math.floor(post/3);
+  let e1=0,e3=0; for(let i=0;i<third;i++){ const a=win[pIdx+i], b=win[pIdx+post-1-i]; e1+=a*a; e3+=b*b; }
+  if(!(e1>0)) return {ok:false};
+  if(e3/e1 > cfg.DECAY_RATIO_MAX) return {ok:false, why:'sustained'};
+  // 3) spectral: ring after the impact transient (skip first 5% post-peak) ->
+  //    one or two narrow tones above floor. Fast-decaying second modes only
+  //    survive near the front of the ring; the Hann ramp suppresses whatever
+  //    impact splash remains at the window edge. (Was 50%, then 20%: both
+  //    erased real M2 peaks in synthetic two-mode tests.)
+  const tailStart = pIdx + Math.floor(post*0.05), tailLen = N - tailStart;
+  const re=new Float32Array(FFTSIZE), im=new Float32Array(FFTSIZE);
+  for(let i=0;i<FFTSIZE;i++){ im[i]=0; re[i]=(i<tailLen)? win[tailStart+i]*(0.5*(1-Math.cos(2*Math.PI*i/Math.max(1,tailLen-1)))) : 0; }
+  fft(re,im);
+  const binHz=sr/FFTSIZE, lo=band[0], hi=band[1];
+  const lk=Math.max(2,Math.floor(lo/binHz)), hk=Math.min(HALF-2,Math.floor(hi/binHz));
+  const pow=new Float32Array(HALF); for(let k=lk;k<=hk;k++) pow[k]=re[k]*re[k]+im[k]*im[k];
+  const maxima=[];
+  for(let k=lk+1;k<hk;k++){ if(pow[k]>=pow[k-1] && pow[k]>=pow[k+1] && pow[k]>0) maxima.push(k); }
+  if(!maxima.length) return {ok:false};
+  maxima.sort((a,b)=>pow[b]-pow[a]);
+  const p1=maxima[0], main=pow[p1];
+  const bandPow=[]; for(let k=lk;k<=hk;k++) bandPow.push(pow[k]); const bandMed=median(bandPow)||1e-12;
+  if(10*Math.log10(main/bandMed) < cfg.PROMINENCE_DB) return {ok:false, why:'no clear peak'};
+  const interp = k => { let off=0; const a=pow[k-1],b=pow[k],c=pow[k+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd; return (k+off)*binHz; };
+  const f1 = interp(p1);
+  const sepHz = Math.max(cfg.MODE_SEP_HZ, f1*cfg.MODE_SEP_PCT);
+  // strongest distinct second tone
+  let p2=-1;
+  for(const k of maxima){ if(k===p1) continue; if(Math.abs(k*binHz - f1) < sepHz) continue; p2=k; break; }
+  let f2=null;
+  if(p2>0 && pow[p2]/main >= cfg.SECOND_MODE_MIN && 10*Math.log10(pow[p2]/bandMed) >= cfg.MODE2_PROM_DB){
+    f2 = interp(p2);
+  }
+  // broadband guard: a third distinct comparable tone means talk/rattle, not a ring
+  let p3pow=0;
+  for(const k of maxima){
+    if(k===p1) continue;
+    if(Math.abs(k*binHz - f1) < sepHz) continue;
+    if(p2>0 && Math.abs(k*binHz - p2*binHz) < sepHz) continue;
+    p3pow=pow[k]; break;
+  }
+  if(p3pow/main > cfg.THIRD_PEAK_MAX) return {ok:false, why:'broadband'};
+  return {ok:true, freq:f1, freq2:f2};
+}
+
+/* Cluster the second-mode readings across accepted taps:
+   report M2 only if it appears in >=2 taps and they agree. */
+function modeTwo(tapsArr, cfg){
+  const f2s = tapsArr.map(t=>t.f2).filter(x=>x>0);
+  if(f2s.length<2) return null;
+  const med = median(f2s);
+  const close = f2s.filter(x=>Math.abs(x-med)/med <= cfg.TOL_ORANGE);
+  if(close.length<2) return null;
+  return close.reduce((s,x)=>s+x,0)/close.length;
+}
+/*TAPCORE-END*/
+
 const $ = id => document.getElementById(id);
 const ui = {
   start:$('start'), reset:$('reset'), hint:$('hint'), sub:$('sub'),
   instruct:$('instruct'), bar:$('bar'), mFloor:$('mFloor'), mTrig:$('mTrig'),
   ignored:$('ignored'), taps:[$('t0'),$('t1'),$('t2')],
-  resultCard:$('resultCard'), fnVal:$('fnVal'), spread:$('spread')
+  resultCard:$('resultCard'), fnVal:$('fnVal'), fn2Val:$('fn2Val'), spread:$('spread'), toLobes:$('toLobes')
 };
 
 // ── ring buffer with absolute indexing ──
@@ -177,13 +268,9 @@ function readRange(startTotal, len){
   return out;
 }
 
-// ── FFT (in-place radix-2) ──
 const reB=new Float32Array(FFTSIZE), imB=new Float32Array(FFTSIZE), hann=new Float32Array(FFTSIZE);
 for(let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
-function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
- for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
 
-function median(a){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
 function perc(a,p){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); return s[Math.min(s.length-1, Math.floor(p*s.length))]; }
 const dbfs = r => 20*Math.log10(r+1e-9);
 
@@ -194,7 +281,7 @@ let calStart=0, calRms=[], noisePow=new Float32Array(HALF), noiseSeen=false;
 let floorRMS=0, triggerRMS=0, bandMedNoise=1e-9;
 let frameAcc=0, frameN=0, curRMS=0;
 let capturing=false, onsetTotal=0, captureEnd=0, lastCapEnd=-1e9, ignored=0;
-let taps=[];                    // accepted frequencies (Hz)
+let taps=[];                    // accepted taps: {f1, f2|null}
 
 const MARGIN_LIN = Math.pow(10, CONFIG.MARGIN_DB/20);
 const winSamp = ()=>Math.round(CONFIG.WINDOW_MS/1000*SR);
@@ -261,56 +348,12 @@ function endCalib(){
   setMarks();
 }
 
-// ── validate a candidate window ──
-function validateTap(win){
-  const pre=preSamp(), N=win.length;
-  // peak within ~30 ms of onset
-  const look = Math.min(N-1, pre + Math.round(0.030*SR));
-  let pIdx=pre, pv=0;
-  for(let i=pre;i<=look;i++){ const a=Math.abs(win[i]); if(a>pv){pv=a; pIdx=i;} }
-  if(pv<=0) return {ok:false};
-  // 1) sharp onset
-  const attackMs = Math.max(0,(pIdx-pre))/SR*1000;
-  if(attackMs > CONFIG.ATTACK_MAX_MS) return {ok:false, why:'slow onset'};
-  // 2) decay: returns toward the floor (not sustained)
-  const post=N-pIdx; if(post<Math.round(0.04*SR)) return {ok:false};
-  const third=Math.floor(post/3);
-  let e1=0,e3=0; for(let i=0;i<third;i++){ const a=win[pIdx+i], b=win[pIdx+post-1-i]; e1+=a*a; e3+=b*b; }
-  if(!(e1>0)) return {ok:false};
-  if(e3/e1 > CONFIG.DECAY_RATIO_MAX) return {ok:false, why:'sustained'};
-  // 3) spectral: tail = last 50% after the peak -> one narrow peak above floor
-  const tailStart = pIdx + Math.floor(post*0.5), tailLen = N - tailStart;
-  for(let i=0;i<FFTSIZE;i++){ const v=(i<tailLen)? win[tailStart+i]*hann[i*((FFTSIZE-1)/Math.max(1,tailLen-1))|0] : 0; reB[i]=v; imB[i]=0; }
-  // simpler, safe windowing over the tail:
-  for(let i=0;i<FFTSIZE;i++){ imB[i]=0; reB[i]= (i<tailLen)? win[tailStart+i]*(0.5*(1-Math.cos(2*Math.PI*i/Math.max(1,tailLen-1)))) : 0; }
-  fft(reB,imB);
-  const binHz=SR/FFTSIZE, [lo,hi]=searchBand();
-  const lk=Math.max(2,Math.floor(lo/binHz)), hk=Math.min(HALF-2,Math.floor(hi/binHz));
-  const pow=new Float32Array(HALF); for(let k=lk;k<=hk;k++) pow[k]=reB[k]*reB[k]+imB[k]*imB[k];
-  // collect local maxima
-  const maxima=[];
-  for(let k=lk+1;k<hk;k++){ if(pow[k]>=pow[k-1] && pow[k]>=pow[k+1] && pow[k]>0) maxima.push(k); }
-  if(!maxima.length) return {ok:false};
-  maxima.sort((a,b)=>pow[b]-pow[a]);
-  const p1=maxima[0]; const main=pow[p1];
-  const bandPow=[]; for(let k=lk;k<=hk;k++) bandPow.push(pow[k]); const bandMed=median(bandPow)||1e-12;
-  const promDb = 10*Math.log10(main/bandMed);
-  if(promDb < CONFIG.PROMINENCE_DB) return {ok:false, why:'no clear peak'};
-  // second distinct peak (not adjacent)
-  let second=0; for(const k of maxima){ if(Math.abs(k-p1)>3){ second=pow[k]; break; } }
-  if(second/main > CONFIG.SECOND_PEAK_MAX) return {ok:false, why:'broadband'};
-  // parabolic interpolation
-  let off=0; const a=pow[p1-1],b=pow[p1],c=pow[p1+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd;
-  const freq=(p1+off)*binHz;
-  return {ok:true, freq};
-}
-
 function finishCapture(){
   capturing=false; lastCapEnd=total;
   const start = onsetTotal - preSamp();
   const win = readRange(start, preSamp()+winSamp());
-  const res = validateTap(win);
-  if(res.ok){ taps.push(res.freq); onAccepted(); }
+  const res = validateTap(win, SR, searchBand(), CONFIG);
+  if(res.ok){ taps.push({f1:res.freq, f2:res.freq2}); onAccepted(); }
   else { ignored++; ui.ignored.textContent=ignored; }
 }
 
@@ -319,16 +362,18 @@ function colorOf(f, med){
   const d = Math.abs(f-med)/med;
   return d<=CONFIG.TOL_GREEN ? 'green' : (d<=CONFIG.TOL_ORANGE ? 'orange' : 'red');
 }
+function f1s(){ return taps.map(t=>t.f1); }
 function onAccepted(){
-  const med = median(taps);
+  const med = median(f1s());
   for(let i=0;i<3;i++){
     const el=ui.taps[i]; el.className='tap';
     if(i<taps.length){
-      const cls = taps.length===1 ? 'green' : colorOf(taps[i], med);
+      const cls = taps.length===1 ? 'green' : colorOf(taps[i].f1, med);
       el.classList.add(cls);
-      el.querySelector('.hz').innerHTML = Math.round(taps[i])+'<small> Hz</small>';
-    } else if(i===taps.length){ el.classList.add('empty','armed'); el.querySelector('.hz').textContent='…'; }
-    else { el.classList.add('empty'); el.querySelector('.hz').textContent='—'; }
+      el.querySelector('.hz').innerHTML = Math.round(taps[i].f1)+'<small> Hz</small>';
+      el.querySelector('.hz2').textContent = taps[i].f2 ? '+ '+Math.round(taps[i].f2)+' Hz' : '';
+    } else if(i===taps.length){ el.classList.add('empty','armed'); el.querySelector('.hz').textContent='…'; el.querySelector('.hz2').textContent=''; }
+    else { el.classList.add('empty'); el.querySelector('.hz').textContent='—'; el.querySelector('.hz2').textContent=''; }
   }
   if(taps.length<3){
     ui.instruct.className='instruct ready';
@@ -338,25 +383,33 @@ function onAccepted(){
   evaluate();
 }
 function evaluate(){
-  const med=median(taps);
-  const greens = taps.filter(f=>colorOf(f,med)==='green');
+  const med=median(f1s());
+  const greens = taps.filter(t=>colorOf(t.f1,med)==='green');
   if(greens.length>=2){
-    const fn = greens.reduce((s,x)=>s+x,0)/greens.length;
-    const spread = (Math.max(...taps)-Math.min(...taps));
+    const fn = greens.reduce((s,t)=>s+t.f1,0)/greens.length;
+    const fn2 = modeTwo(taps, CONFIG);
+    const allf=f1s();
+    const spread = (Math.max(...allf)-Math.min(...allf));
     state=ST.DONE;
     ui.resultCard.className='card result ok';
     ui.fnVal.innerHTML = Math.round(fn)+'<small> Hz</small>';
-    ui.spread.innerHTML = greens.length+'/3 agree · spread '+spread.toFixed(0)+' Hz ('+(spread/med*100).toFixed(1)+'%)<br>taps: '+taps.map(f=>Math.round(f)).join(' · ')+' Hz';
+    ui.fn2Val.innerHTML = fn2 ? Math.round(fn2)+'<small> Hz</small>' : '—';
+    const n2 = taps.filter(t=>t.f2>0).length;
+    ui.spread.innerHTML = greens.length+'/3 agree · spread '+spread.toFixed(0)+' Hz ('+(spread/med*100).toFixed(1)+'%)'
+      + (fn2 ? '<br>M2 seen in '+n2+'/3 taps' : (n2===1 ? '<br>a second tone appeared once — not repeatable, not reported' : ''))
+      + '<br>taps: '+allf.map(f=>Math.round(f)).join(' · ')+' Hz';
     ui.instruct.className='instruct ready';
-    ui.instruct.innerHTML = 'Done — <b>f<sub>n</sub> = '+Math.round(fn)+' Hz.</b> Press <b>Start</b> to measure again.';
+    ui.instruct.innerHTML = 'Done — <b>f<sub>n</sub> = '+Math.round(fn)+' Hz'+(fn2? ' · M2 = '+Math.round(fn2)+' Hz':'')+'.</b> Press <b>Start</b> to measure again.';
     ui.sub.textContent='measured';
+    ui.toLobes.href = 'chatter-lobes.html?fn1='+Math.round(fn)+(fn2 ? '&fn2='+Math.round(fn2) : '');
+    ui.toLobes.style.display='inline-block';
     stopAudio();
   } else {
     // disagreement = a stray ring slipped in. Drop the worst, keep listening.
     ui.instruct.className='instruct warn';
     ui.instruct.innerHTML = 'Readings disagree — a stray sound likely got in. <b>Tap again</b> (worst reading dropped).';
-    const med2=median(taps);
-    taps.sort((a,b)=>Math.abs(a-med2)-Math.abs(b-med2));
+    const med2=median(f1s());
+    taps.sort((a,b)=>Math.abs(a.f1-med2)-Math.abs(b.f1-med2));
     taps = taps.slice(0,2);              // keep the two closest, retake the third
     onAccepted();
   }
@@ -400,8 +453,9 @@ function resetAll(){
   frameAcc=0; frameN=0; curRMS=0;
   ui.ignored.textContent='0'; ui.bar.style.width='0%';
   ui.mFloor.style.left='0%'; ui.mTrig.style.left='0%';
-  for(const el of ui.taps){ el.className='tap empty'; el.querySelector('.hz').textContent='—'; }
-  ui.resultCard.className='card result idle'; ui.fnVal.textContent='—'; ui.spread.textContent='';
+  for(const el of ui.taps){ el.className='tap empty'; el.querySelector('.hz').textContent='—'; el.querySelector('.hz2').textContent=''; }
+  ui.resultCard.className='card result idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent='';
+  ui.toLobes.style.display='none';
   ui.sub.textContent='noisy-shop natural frequency';
   ui.instruct.className='instruct';
   ui.instruct.innerHTML='Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the shop noise, then tap the tool 3&nbsp;times.';
