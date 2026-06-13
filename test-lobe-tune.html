@@ -41,6 +41,29 @@ label.f{font-size:11px; color:var(--muted); display:flex; align-items:center; ga
 label.f input{width:58px; padding:5px 6px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-weight:700; color:var(--ink); text-align:right;}
 label.f input.wide{width:104px; text-align:left;}
 label.f input.xwide{width:170px; text-align:left;}
+label.f input.n5{width:84px;}
+#op_grade{width:156px;}
+.opbtns{display:inline-flex; gap:6px; flex-wrap:wrap; vertical-align:middle;}
+.opbtn{border:1px solid var(--border); border-radius:9px; padding:5px 10px; font-size:12px; font-weight:700; color:var(--ink); background:#fff; cursor:pointer; user-select:none;}
+.opbtn:hover{border-color:var(--muted);}
+.opbtn.sel{border-color:var(--yellow); background:rgba(245,197,24,.16); color:var(--yellow-ink);}
+.opsize{margin-left:6px; padding:5px 6px; border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:700; color:var(--ink); background:#fff;}
+.modal{position:fixed; inset:0; background:rgba(0,0,0,.34); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px;}
+.modalbox{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 18px; max-width:460px; width:100%; box-shadow:0 14px 44px rgba(0,0,0,.20);}
+.modaltitle{font-size:15px; font-weight:800; margin-bottom:8px;}
+.modalsum{font-size:12px; color:var(--ink); line-height:1.6; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 11px; margin-bottom:10px; max-height:200px; overflow:auto;}
+.modalsum b{color:var(--muted); font-weight:700;}
+.modalnote{font-size:11px; color:var(--muted); line-height:1.45; margin-bottom:13px;}
+.modalbtns{display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;}
+.ovreadout{display:flex; flex-direction:column; gap:3px; margin:8px 0 2px;}
+.ovrow{display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:3px 7px; border:1px solid var(--border); border-radius:7px; font-size:11px; color:var(--muted);}
+.ovrow .ovsw{width:11px; height:11px; border-radius:3px; flex:0 0 auto;}
+.ovrow .ovnm{font-weight:700; color:var(--ink); min-width:150px; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ovrow .ovres{font-weight:700; text-transform:capitalize;}
+.ovrow .ovres.res-stable{color:var(--green);}
+.ovrow .ovres.res-marginal{color:var(--orange);}
+.ovrow .ovres.res-chatter{color:var(--red);}
+.ovrow b{color:var(--yellow-ink); font-weight:800;}
 label.f select{padding:5px 6px; border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:700; color:var(--ink); background:#fff;}
 .mrow{display:flex; gap:9px; align-items:center;}
 .mtag{font-size:10px; font-weight:800; color:var(--muted); width:18px;}
@@ -157,8 +180,8 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <label class="f">pitch°<input id="pitch" class="wide" type="text" value="" placeholder="equal"></label>
 <label class="f">Kt<input id="kt" type="number" value="700" min="50" step="50"> MPa</label>
 <label class="f">Kr<input id="kr" type="number" value="0.30" min="0.05" max="1" step="0.05"></label>
-<label class="f">rpm max<input id="nmax" type="number" value="12000" min="500" step="500"></label>
-<label class="f">now<input id="ncur" type="number" value="4000" min="100" step="100"></label>
+<label class="f">rpm max<input id="nmax" class="n5" type="number" value="12000" min="500" step="500"></label>
+<label class="f">now<input id="ncur" class="n5" type="number" value="4000" min="100" step="100"></label>
 <div class="spacer"></div>
 <div class="stat" id="statL">—</div>
 </div>
@@ -273,9 +296,22 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <th></th><th>date</th><th>file</th><th>machine</th><th>Ø</th><th>material</th><th>tool</th><th>rpm</th><th>f꜀/picked</th><th>result</th><th>note</th>
 </tr></thead><tbody id="libBody"></tbody></table>
 </div>
-<div class="snote" id="libHint">Open the folder where you keep the saved recordings. Only the file headers are read — hundreds of files scan in about a second. Click a row to load it (audio, inputs and operation info restore together). Tick boxes and <b>Compare selected</b> overlays up to 5 spectra.</div>
+<div class="snote" id="libHint">Open the folder where you keep the saved recordings. Only the file headers are read — hundreds of files scan in about a second. Click a row to load it (audio, inputs and operation info restore together). Tick boxes and <b>Compare selected</b> overlays up to 5 spectra, scaled to each file's noise floor and marked with the chatter peak. To pull weak chatter out of the noise, record an air cut at the same rpm, save it with operation set to "air cut", then pick it as the baseline in Compare.</div>
 <canvas id="overlay" class="ovcv" style="display:none"></canvas>
+<div id="ovReadout" class="ovreadout"></div>
 <div class="chips" id="ovLegend"></div>
+</div>
+</div>
+
+<div class="modal" id="saveModal" style="display:none">
+<div class="modalbox">
+<div class="modaltitle">Save this recording?</div>
+<div class="modalsum" id="saveSummary"></div>
+<div class="modalnote">The operation info above is written inside the WAV file. Check it, then confirm — you'll choose the folder next.</div>
+<div class="modalbtns">
+<button id="saveReviseBtn" class="btn ghost">Revise operation info</button>
+<button id="saveConfirmBtn" class="btn act">Confirm &amp; choose folder…</button>
+</div>
 </div>
 </div>
 
@@ -294,7 +330,7 @@ op info restore from the file), multi-select spectrum overlay, CSV export. */
 const $ = id => document.getElementById(id);
 const cvv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const FFTSIZE = 8192, HALF = FFTSIZE/2;
-const APPV = 'test-lobe-tune v3';
+const APPV = 'test-lobe-tune v5';
 const LOBE_MIN_RPM = 100;
 const hann = new Float32Array(FFTSIZE);
 for (let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
@@ -595,16 +631,18 @@ const ui = {};
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
 'rec','saveRec','loadRec','fileIn','statT','tuneSpec','vFc','vFn','vShift','vWpt','interpT','chipsT','sendPick','clearPickT2',
 'map','vBest','vCur','vGain','interpL','chipsL',
-'libFolder','libFiles','libFileIn','libSearch','libFilters','libClearF','libCompare','libCsv','libStat','libWrap','libBody','libHint','overlay','ovLegend']
+'libFolder','libFiles','libFileIn','libSearch','libFilters','libClearF','libCompare','libCsv','libStat','libWrap','libBody','libHint','overlay','ovLegend',
+'saveModal','saveSummary','saveConfirmBtn','saveReviseBtn','ovReadout']
 .forEach(id => ui[id] = $(id));
 const tapBoxes=[ui.t0,ui.t1,ui.t2];
 const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur'];
 
 // ─────────────────── operation info panel ───────────────────
+/*OPCORE-START*/
 const OPFIELDS=[
-{k:'machine', g:'machine', lab:'machine', kind:'grow', seed:[]},
-{k:'interface', g:'spindle', lab:'interface', kind:'grow', seed:['HSK-A63','HSK-A100','SK40','BT40','CAT40','HSK-E40']},
-{k:'holderType', g:'holder', lab:'holder type', kind:'grow', seed:['shrink fit','hydraulic','ER collet','milling chuck','Weldon']},
+{k:'machine', g:'machine', lab:'machine', kind:'btnsel', opts:['Vertical','Horizontal']},
+{k:'interface', g:'spindle', lab:'interface', kind:'iface'},
+{k:'holderType', g:'holder', lab:'holder type', kind:'btnsel', opts:['Weldon','Shrink fit','Hydraulic','ER collet','Mechanical press fit','Arbor']},
 {k:'stickout', g:'holder', lab:'stickout', kind:'num', unit:'mm', title:'holder face to tool tip'},
 {k:'gaugeLen', g:'holder', lab:'gauge len', kind:'num', unit:'mm', title:'spindle face to tool tip'},
 {k:'toolCode', g:'tool', lab:'tool code', kind:'grow', seed:[]},
@@ -613,14 +651,16 @@ const OPFIELDS=[
 {k:'grade', g:'workpiece', lab:'grade', kind:'grow', seed:[]},
 {k:'hardness', g:'workpiece', lab:'hardness', kind:'text', ph:'44 HRC'},
 {k:'clamping', g:'workpiece', lab:'clamping', kind:'select', opts:['','vise','fixture','chuck','vacuum','thin-wall part']},
-{k:'operation', g:'operation', lab:'operation', kind:'select', opts:['','roughing','finishing','slotting','ramping','facing']},
+{k:'operation', g:'operation', lab:'operation', kind:'select', opts:['','roughing','finishing','slotting','ramping','facing','air cut']},
 {k:'ap', g:'operation', lab:'ap', kind:'num', unit:'mm'},
 {k:'fz', g:'operation', lab:'fz', kind:'num', unit:'mm'},
 {k:'coolant', g:'operation', lab:'coolant', kind:'select', opts:['','dry','flood','MQL','air','through-tool']},
 {k:'result', g:'outcome', lab:'result', kind:'select', opts:['','stable','marginal','chatter']},
 {k:'note', g:'outcome', lab:'note', kind:'text', ph:'sound, finish, changes…', wide:true}
 ];
-let opEls={}, hist={};
+const IFACE_SIZES={'Capto':['C3','C4','C5','C6','C8','C10'],'HSK':['A40','A50','A63','A80','A100','A125'],'V-Flange':['30','40','45','50']};
+const IFACE_KEYS=['Capto','HSK','V-Flange'];
+let opEls={}, opReflect={}, hist={};
 try{ hist=JSON.parse(localStorage.getItem('chtr_hist')||'{}'); }catch(e){ hist={}; }
 function histAdd(k,v){
 if(!v) return;
@@ -653,6 +693,42 @@ const lab=document.createElement('label'); lab.className='f';
 if(f.title) lab.title=f.title;
 lab.appendChild(document.createTextNode(f.lab));
 let el;
+if(f.kind==='btnsel'){
+el=document.createElement('input'); el.type='hidden';
+const box=document.createElement('span'); box.className='opbtns';
+const btns=[];
+f.opts.forEach(o=>{ const b=document.createElement('button'); b.type='button'; b.className='opbtn'; b.textContent=o;
+b.addEventListener('click',()=>{ el.value=(el.value===o)?'':o; opReflect[f.k](); opPersist(); });
+box.appendChild(b); btns.push(b); });
+opReflect[f.k]=()=>{ btns.forEach((b,i)=>b.classList.toggle('sel', f.opts[i]===el.value)); };
+el.id='op_'+f.k; opEls[f.k]=el;
+lab.appendChild(box); lab.appendChild(el);
+ui.opForm.appendChild(lab);
+return;
+}
+if(f.kind==='iface'){
+el=document.createElement('input'); el.type='hidden';
+const box=document.createElement('span'); box.className='opbtns';
+const sizeSel=document.createElement('select'); sizeSel.className='opsize';
+const btns=[];
+const compose=()=>{ const ifc=el._ifc||''; const sz=sizeSel.value||''; el.value= ifc ? (sz?ifc+' '+sz:ifc) : ''; };
+const fillSizes=(ifc,keep)=>{ sizeSel.innerHTML=''; const blank=document.createElement('option'); blank.value=''; blank.textContent='size'; sizeSel.appendChild(blank);
+(IFACE_SIZES[ifc]||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sizeSel.appendChild(o); });
+if(keep){ if(!(IFACE_SIZES[ifc]||[]).includes(keep)){ const o=document.createElement('option'); o.value=keep; o.textContent=keep; sizeSel.appendChild(o); } sizeSel.value=keep; } };
+IFACE_KEYS.forEach(o=>{ const b=document.createElement('button'); b.type='button'; b.className='opbtn'; b.textContent=o;
+b.addEventListener('click',()=>{ if(el._ifc===o){ el._ifc=''; fillSizes('',''); } else { el._ifc=o; fillSizes(o,''); } compose(); opReflect[f.k](); opPersist(); });
+box.appendChild(b); btns.push(b); });
+sizeSel.addEventListener('change',()=>{ compose(); opPersist(); });
+opReflect[f.k]=()=>{ const val=(el.value||'').trim(); let ifc='',sz='';
+for(const key of IFACE_KEYS){ if(val===key||val.indexOf(key)===0){ ifc=key; sz=val.slice(key.length).replace(/^[\s-]+/,''); break; } }
+if(!ifc&&val){ const m=val.match(/^(BT|CAT|SK|V)\s*-?\s*(\d+)/i); if(m){ ifc='V-Flange'; sz=m[2]; } }
+el._ifc=ifc; fillSizes(ifc,sz);
+btns.forEach((b,i)=>b.classList.toggle('sel', IFACE_KEYS[i]===ifc)); };
+el.id='op_'+f.k; opEls[f.k]=el;
+lab.appendChild(box); lab.appendChild(sizeSel); lab.appendChild(el);
+ui.opForm.appendChild(lab);
+return;
+}
 if(f.kind==='select'){
 el=document.createElement('select');
 f.opts.forEach(o=>{ const op=document.createElement('option'); op.value=o; op.textContent=o===''?'—':o; el.appendChild(op); });
@@ -679,11 +755,13 @@ return o;
 }
 function opSet(o){
 OPFIELDS.forEach(f=>{ opEls[f.k].value = (o&&o[f.k]!=null) ? o[f.k] : ''; });
+Object.keys(opReflect).forEach(k=>opReflect[k]());
 opPersist();
 }
 function opPersist(){ try{ localStorage.setItem('chtr_op',JSON.stringify(opGet())); }catch(e){} }
-function opRestoreLocal(){ try{ const o=JSON.parse(localStorage.getItem('chtr_op')||'null'); if(o) OPFIELDS.forEach(f=>{ if(o[f.k]!=null) opEls[f.k].value=o[f.k]; }); }catch(e){} }
+function opRestoreLocal(){ try{ const o=JSON.parse(localStorage.getItem('chtr_op')||'null'); if(o) OPFIELDS.forEach(f=>{ if(o[f.k]!=null) opEls[f.k].value=o[f.k]; }); }catch(e){} Object.keys(opReflect).forEach(k=>opReflect[k]()); }
 
+/*OPCORE-END*/
 // inputs snapshot for metadata
 function inputsGet(){ const o={}; INPUT_IDS.forEach(id=>o[id]=ui[id].value); return o; }
 function inputsSet(o){
@@ -1139,17 +1217,47 @@ analysis:{ fc:R.fc||null, stable:R.stable, picked:tnManual, eff:eff, wpt:R.wptCu
 rec:{ sr:recSR, s:recChunks?+(recLen/recSR).toFixed(2):null }
 };
 }
-ui.saveRec.onclick=()=>{
-if(!(recChunks&&recChunks.length)) return;
-const meta=buildMeta();
-OPFIELDS.filter(f=>f.kind==='grow').forEach(f=>histAdd(f.k, opEls[f.k].value.trim()));
-rebuildDatalists();
-const buf=encodeWAV(recChunks,recSR,meta);
+function saveFileName(){
 const ts=new Date(), p2=n=>String(n).padStart(2,'0');
 const mat=(opEls.grade.value||opEls.matGroup.value||'').replace(/[^A-Za-z0-9.-]+/g,'-').replace(/^-+|-+$/g,'');
-const name='chatter_'+Math.round(+ui.ncur.value)+'rpm_z'+Math.round(+ui.flutes.value)
+return 'chatter_'+Math.round(+ui.ncur.value)+'rpm_z'+Math.round(+ui.flutes.value)
 +'_d'+(+ui.dia.value)+(mat?'_'+mat:'')
 +'_'+ts.getFullYear()+p2(ts.getMonth()+1)+p2(ts.getDate())+'_'+p2(ts.getHours())+p2(ts.getMinutes())+p2(ts.getSeconds())+'.wav';
+}
+function opSummaryHTML(){
+const o=opGet(), inp=inputsGet(), rows=[];
+const add=(lab,val)=>{ if(val!=null&&String(val).trim()!=='') rows.push('<b>'+lab+'</b> '+val); };
+add('machine',o.machine); add('interface',o.interface); add('holder',o.holderType);
+add('tool',o.toolCode); add('material',o.matGroup); add('grade',o.grade);
+add('hardness',o.hardness); add('operation',o.operation);
+add('ap',o.ap!=null?o.ap+' mm':''); add('fz',o.fz!=null?o.fz+' mm':'');
+add('coolant',o.coolant); add('result',o.result); add('note',o.note);
+add('rpm',inp.ncur); add('flutes',inp.flutes); add('Ø',inp.dia+' mm');
+return rows.length ? rows.join(' &nbsp;·&nbsp; ') : '<i>No operation info filled in yet — revise it, or save without.</i>';
+}
+ui.saveRec.onclick=()=>{
+if(!(recChunks&&recChunks.length)) return;
+ui.opPanel.open=true;
+ui.saveSummary.innerHTML=opSummaryHTML();
+ui.saveModal.style.display='flex';
+};
+ui.saveReviseBtn.onclick=()=>{ ui.saveModal.style.display='none'; ui.opPanel.open=true; try{ ui.opForm.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){} };
+ui.saveConfirmBtn.onclick=async()=>{
+ui.saveModal.style.display='none';
+if(!(recChunks&&recChunks.length)) return;
+const meta=buildMeta();
+OPFIELDS.filter(f=>f.kind==='grow').forEach(f=>histAdd(f.k,(opEls[f.k].value||'').trim()));
+rebuildDatalists();
+const buf=encodeWAV(recChunks,recSR,meta);
+const name=saveFileName();
+if(window.showSaveFilePicker){
+try{
+const h=await window.showSaveFilePicker({suggestedName:name, types:[{description:'WAV audio', accept:{'audio/wav':['.wav']}}]});
+const w=await h.createWritable(); await w.write(buf); await w.close();
+ui.statT.textContent='saved '+(h.name||name)+' · '+(recLen/recSR).toFixed(1)+' s · context embedded';
+return;
+}catch(err){ if(err&&err.name==='AbortError'){ ui.statT.textContent='save cancelled'; return; } }
+}
 const a=document.createElement('a');
 a.href=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
 a.download=name; a.click();
@@ -1461,9 +1569,11 @@ a.click();
 setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 };
 
+/*OVCORE-START*/
 // compare overlay
 const OVCOLORS=['#b89400','#1f7cb8','#1f9d57','#e5484d','#e8932e'];
-function hideOverlay(){ ui.overlay.style.display='none'; ui.ovLegend.innerHTML=''; }
+let ovTraces=[], ovBaseIdx=-1;
+function hideOverlay(){ ui.overlay.style.display='none'; ui.ovLegend.innerHTML=''; ui.ovReadout.innerHTML=''; ovTraces=[]; ovBaseIdx=-1; }
 async function spectrumOf(file){
 const buf=await file.arrayBuffer();
 const r=parseWAV(buf);
@@ -1480,55 +1590,103 @@ have=true;
 if(!have) return null;
 return {pema, sr:r.sr};
 }
-ui.libCompare.onclick=async()=>{
-const sel=lib.filter(e=>e.sel).slice(0,5);
-if(sel.length<2) return;
-ui.libStat.textContent='computing '+sel.length+' spectra…';
-const traces=[];
-for(const e of sel){
-const s=await spectrumOf(e.file);
-if(s) traces.push({name:e.name, ...s});
-}
-if(!traces.length){ ui.libStat.textContent='no decodable selection'; return; }
+function ovBand(){ return Math.max(3500,(parseFloat(ui.fn1.value)||0)*1.7)||4000; }
+function traceFloor(t,hiK){ const a=[]; for(let k=2;k<=hiK;k++) a.push(t.pema[k]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]||1e-12; }
+function baseDbAt(base,f){ const bh=base.sr/FFTSIZE; let k=Math.round(f/bh); k=Math.max(1,Math.min(HALF-1,k)); return 10*Math.log10(base.pema[k]+1e-12); }
+function ovPeakProm(t){ const bh=t.sr/FFTSIZE, hiK=Math.min(HALF-1,Math.floor(ovBand()/bh)), fl=traceFloor(t,hiK); let mx=0; for(let k=2;k<=hiK;k++) mx=Math.max(mx,t.pema[k]); return 10*Math.log10(mx/fl+1e-12); }
+function drawOverlay(){
+const diff= ovBaseIdx>=0 && ovBaseIdx<ovTraces.length;
+const base= diff? ovTraces[ovBaseIdx] : null;
 ui.overlay.style.display='block';
 const dpr=Math.min(window.devicePixelRatio||1,2);
 const cv=ui.overlay, W=Math.round((cv.clientWidth||600)*dpr), H=Math.round((cv.clientHeight||240)*dpr);
 cv.width=W; cv.height=H;
-const g=cv.getContext('2d');
-g.clearRect(0,0,W,H);
-const fHi=Math.max(3500, Math.max(0,parseFloat(ui.fn1.value)||0)*1.7) || 4000;
-const xL=30*dpr, xR=W-8*dpr, yT=8*dpr, yB=H-16*dpr;
+const g=cv.getContext('2d'); g.clearRect(0,0,W,H);
+let fHi=ovBand();
+ovTraces.forEach(t=>{ const an=(t.meta&&t.meta.analysis)||{}; const fc=an.picked||an.fc; if(fc&&fc*1.25>fHi) fHi=Math.min(fc*1.25, t.sr/2); });
+const xL=36*dpr, xR=W-10*dpr, yT=10*dpr, yB=H-16*dpr;
 const xOf=f=>xL+(f/fHi)*(xR-xL);
-const DBMIN=-60, yOf=db=>yB-((Math.max(DBMIN,db)-DBMIN)/(0-DBMIN))*(yB-yT);
-g.strokeStyle='#ededed'; g.lineWidth=dpr; g.fillStyle='#aaa';
-g.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial'; g.textAlign='center'; g.textBaseline='top';
-const step=fHi>5000?2000:1000;
-for(let f=0;f<=fHi;f+=step){ const x=xOf(f); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke();
-g.fillText((f>=1000?(f/1000)+'k':f), x, yB+3*dpr); }
-traces.forEach((t,ti)=>{
-let mx=1e-12; const hiK=Math.min(HALF-1,Math.floor(fHi/(t.sr/FFTSIZE)));
-for(let k=2;k<=hiK;k++) mx=Math.max(mx,t.pema[k]);
-g.beginPath(); let started=false;
-const binHz=t.sr/FFTSIZE;
-for(let k=1;k<=hiK;k++){
-const f=k*binHz, db=10*Math.log10(t.pema[k]/mx+1e-12);
-const x=xOf(f), y=yOf(db);
-if(!started){ g.moveTo(x,y); started=true; } else g.lineTo(x,y);
+const series=ovTraces.map((t,ti)=>{
+if(diff&&ti===ovBaseIdx) return null;
+const bh=t.sr/FFTSIZE, hiK=Math.min(HALF-1,Math.floor(fHi/bh)), fl=traceFloor(t,hiK), pts=[];
+for(let k=1;k<=hiK;k++){ const f=k*bh; const db= diff ? (10*Math.log10(t.pema[k]+1e-12)-baseDbAt(base,f)) : 10*Math.log10(t.pema[k]/fl+1e-12); pts.push({f,db}); }
+return {ti,pts,fl,bh,t};
+});
+let dbLo= diff? -12 : -6, dbHi= diff? 6 : 12;
+series.forEach(s=>{ if(s) s.pts.forEach(p=>{ if(p.db>dbHi) dbHi=p.db; }); });
+dbHi= Math.min(Math.max(dbHi, diff?12:18), 60);
+const yOf=db=>yB-((Math.max(dbLo,Math.min(dbHi,db))-dbLo)/(dbHi-dbLo))*(yB-yT);
+g.fillStyle='#aaa'; g.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial';
+g.strokeStyle='#ededed'; g.lineWidth=dpr; g.textAlign='center'; g.textBaseline='top';
+const step= fHi>5000?2000:1000;
+for(let f=0;f<=fHi;f+=step){ const x=xOf(f); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); g.fillText((f>=1000?(f/1000)+'k':f), x, yB+3*dpr); }
+g.textAlign='right'; g.textBaseline='middle';
+const yStep= (dbHi-dbLo)>40?12:((dbHi-dbLo)>22?6:3);
+for(let db=Math.ceil(dbLo/yStep)*yStep; db<=dbHi; db+=yStep){ const y=yOf(db); const zero= diff&&db===0;
+g.strokeStyle= zero?'#b0b0b0':'#f1f1f1'; g.lineWidth= zero?1.4*dpr:dpr; g.beginPath(); g.moveTo(xL,y); g.lineTo(xR,y); g.stroke();
+g.fillStyle='#aaa'; g.fillText((db>0?'+':'')+db, xL-3*dpr, y); }
+const rpms=ovTraces.map(t=>(t.meta&&t.meta.inputs&&+t.meta.inputs.ncur)||0);
+const zs=ovTraces.map(t=>(t.meta&&t.meta.inputs&&+t.meta.inputs.flutes)||0);
+if(rpms[0]&&zs[0]&&rpms.every(r=>r===rpms[0])&&zs.every(z=>z===zs[0])){
+const ftp=zs[0]*rpms[0]/60; g.strokeStyle='rgba(74,179,240,0.25)'; g.lineWidth=dpr; g.setLineDash([3*dpr,3*dpr]);
+for(let m=1;m*ftp<=fHi;m++){ const x=xOf(m*ftp); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); } g.setLineDash([]);
 }
-g.strokeStyle=OVCOLORS[ti%OVCOLORS.length]; g.lineWidth=1.3*dpr; g.lineJoin='round'; g.stroke();
+series.forEach(s=>{ if(!s) return; const col=OVCOLORS[s.ti%OVCOLORS.length];
+g.beginPath(); let st=false; s.pts.forEach(p=>{ const x=xOf(p.f), y=yOf(p.db); if(!st){g.moveTo(x,y); st=true;} else g.lineTo(x,y); });
+g.strokeStyle=col; g.lineWidth=1.3*dpr; g.lineJoin='round'; g.stroke();
+const an=(s.t.meta&&s.t.meta.analysis)||{}; const fc=an.picked||((!an.stable)?an.fc:0);
+if(fc>0&&fc<fHi){ const k=Math.max(1,Math.min(HALF-1,Math.round(fc/s.bh)));
+const db= diff ? (10*Math.log10(s.t.pema[k]+1e-12)-baseDbAt(base,fc)) : 10*Math.log10(s.t.pema[k]/s.fl+1e-12);
+const x=xOf(fc), y=yOf(db); g.fillStyle=col; g.beginPath(); g.arc(x,y,3.5*dpr,0,2*Math.PI); g.fill();
+g.textAlign='center'; g.textBaseline='bottom'; g.font='700 '+Math.round(9*dpr)+'px -apple-system,Helvetica,Arial'; g.fillStyle=col;
+g.fillText(Math.round(fc)+' Hz', x, y-4*dpr); }
 });
+}
+function renderReadout(){
+ui.ovReadout.innerHTML= ovTraces.map((t,ti)=>{
+const an=(t.meta&&t.meta.analysis)||{}, inp=(t.meta&&t.meta.inputs)||{}, op=(t.meta&&t.meta.op)||{};
+const fc=an.picked||an.fc, fn=an.fn||+inp.fn1||0;
+const shift=(fc&&fn)?Math.round(fc-fn):null, prom=ovPeakProm(t);
+const isBase= ti===ovBaseIdx || op.operation==='air cut';
+const col=OVCOLORS[ti%OVCOLORS.length];
+const fcTxt= (an.stable&&!an.picked)?'stable':(fc?Math.round(fc)+' Hz':'-');
+return '<div class="ovrow"><span class="ovsw" style="background:'+col+'"></span>'
++'<span class="ovnm">'+t.name+(isBase?' <b>baseline</b>':'')+'</span>'
++'<span>'+(inp.ncur||'?')+' rpm</span><span>fc '+fcTxt+'</span>'
++'<span>fn '+(fn?Math.round(fn)+' Hz':'-')+'</span>'
++'<span>shift '+(shift!=null?(shift>0?'+':'')+shift+' Hz':'-')+'</span>'
++'<span>wpt '+(an.wpt!=null?(+an.wpt).toFixed(2):'-')+'</span>'
++'<span>peak +'+prom.toFixed(0)+' dB</span>'
++'<span class="ovres '+(op.result?'res-'+op.result:'')+'">'+(op.result||'')+'</span></div>';
+}).join('');
+}
+function updateOvStat(){ ui.libStat.textContent= (ovBaseIdx>=0&&ovBaseIdx<ovTraces.length) ? (ovTraces.length-1)+' cut(s) vs baseline, dB over "'+ovTraces[ovBaseIdx].name+'"' : ovTraces.length+' spectra, dB over each file noise floor'; }
+function buildOverlayControls(){
 ui.ovLegend.innerHTML='';
-traces.forEach((t,ti)=>{
-const el=document.createElement('span'); el.className='chip';
-el.style.borderColor=OVCOLORS[ti%OVCOLORS.length]; el.style.color=OVCOLORS[ti%OVCOLORS.length];
-el.textContent=t.name;
-ui.ovLegend.appendChild(el);
-});
-const x=document.createElement('button'); x.className='btn ghost'; x.textContent='Hide overlay';
-x.onclick=hideOverlay;
-ui.ovLegend.appendChild(x);
-ui.libStat.textContent=traces.length+' spectra overlaid (each normalised to its own peak)';
+const blab=document.createElement('label'); blab.className='f'; blab.appendChild(document.createTextNode('vs baseline'));
+const bsel=document.createElement('select'); bsel.className='opsize';
+const none=document.createElement('option'); none.value='-1'; none.textContent='none'; bsel.appendChild(none);
+ovTraces.forEach((t,ti)=>{ const o=document.createElement('option'); o.value=String(ti); o.textContent=t.name.length>28?t.name.slice(0,26)+'...':t.name; bsel.appendChild(o); });
+bsel.value=String(ovBaseIdx);
+bsel.addEventListener('change',()=>{ ovBaseIdx=parseInt(bsel.value,10); drawOverlay(); renderReadout(); updateOvStat(); });
+blab.appendChild(bsel); ui.ovLegend.appendChild(blab);
+ovTraces.forEach((t,ti)=>{ const el=document.createElement('span'); el.className='chip'; el.style.borderColor=OVCOLORS[ti%OVCOLORS.length]; el.style.color=OVCOLORS[ti%OVCOLORS.length]; el.textContent=t.name; ui.ovLegend.appendChild(el); });
+const x=document.createElement('button'); x.className='btn ghost'; x.textContent='Hide overlay'; x.onclick=hideOverlay; ui.ovLegend.appendChild(x);
+}
+ui.libCompare.onclick=async()=>{
+const sel=lib.filter(e=>e.sel).slice(0,5);
+if(sel.length<2) return;
+ui.libStat.textContent='computing '+sel.length+' spectra...';
+ovTraces=[];
+for(const e of sel){ const s=await spectrumOf(e.file); if(s) ovTraces.push({name:e.name, meta:e.meta, pema:s.pema, sr:s.sr}); }
+if(!ovTraces.length){ ui.libStat.textContent='no decodable selection'; return; }
+ovBaseIdx= ovTraces.findIndex(t=>t.meta&&t.meta.op&&t.meta.op.operation==='air cut');
+buildOverlayControls();
+drawOverlay();
+renderReadout();
+updateOvStat();
 };
+/*OVCORE-END*/
 
 // ─────────────────── shared render + wiring ───────────────────
 let dprT=1, tnDirty=true, lbDirty=true;
