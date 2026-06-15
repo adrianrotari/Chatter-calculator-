@@ -237,11 +237,14 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <button id="saveRec" class="btn ghost" disabled>Save recording</button>
 <button id="loadRec" class="btn ghost">Load recording</button>
 <input id="fileIn" type="file" accept=".wav,audio/wav,audio/x-wav" style="display:none">
+<label class="f">mic <select id="micSel" style="max-width:230px"><option value="">System default input</option></select></label>
 <div class="spacer"></div>
 <div class="stat" id="statT">idle · uses flutes + "now" rpm + M1 fₙ from inputs</div>
 </div>
 <div class="stage" style="padding-top:0;">
 <canvas id="tuneSpec" class="tunecv"></canvas>
+<canvas id="polar" class="tunecv" style="height:280px"></canvas>
+<div class="interp" id="interpP" style="margin-top:0">Polar chatter map: one full circle is one spindle revolution at the "now" rpm. A stable cut traces the same shape every turn; chatter does not repeat, so the lines smear into a blurred ring. <b id="polarIx">—</b></div>
 <div class="rgrid">
 <div class="rb fc"><span class="k">chatter f꜀</span><span class="v" id="vFc">—</span></div>
 <div class="rb"><span class="k">tap fₙ (M1)</span><span class="v" id="vFn">—</span></div>
@@ -629,7 +632,7 @@ const ui = {};
 'opPanel','opForm',
 'tapStart','tapReset','hint','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread',
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
-'rec','saveRec','loadRec','fileIn','statT','tuneSpec','vFc','vFn','vShift','vWpt','interpT','chipsT','sendPick','clearPickT2',
+'rec','saveRec','loadRec','fileIn','statT','tuneSpec','vFc','vFn','vShift','vWpt','interpT','chipsT','sendPick','clearPickT2','micSel','polar','polarIx',
 'map','vBest','vCur','vGain','interpL','chipsL',
 'libFolder','libFiles','libFileIn','libSearch','libFilters','libClearF','libCompare','libCsv','libStat','libWrap','libBody','libHint','overlay','ovLegend',
 'saveModal','saveSummary','saveConfirmBtn','saveReviseBtn','ovReadout']
@@ -774,10 +777,27 @@ if(tnHave) tnAnalyse();
 
 // ─────────────────── shared mic (single owner) ───────────────────
 let micCtx=null,micStream=null,micSrc=null,micCap=null,micScript=null,micSilent=null,micOwner=null;
+let micSelId='';
+async function refreshMicList(){
+if(!ui.micSel||!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices) return;
+try{ const devs=await navigator.mediaDevices.enumerateDevices(); const ins=devs.filter(d=>d.kind==='audioinput'); const cur=micSelId;
+ui.micSel.innerHTML=''; const def=document.createElement('option'); def.value=''; def.textContent='System default input'; ui.micSel.appendChild(def);
+ins.forEach((d,i)=>{ const o=document.createElement('option'); o.value=d.deviceId; o.textContent=d.label||('Input '+(i+1)); ui.micSel.appendChild(o); });
+ui.micSel.value=cur||''; }catch(e){}
+}
+if(ui.micSel){
+ui.micSel.addEventListener('change',()=>{ micSelId=ui.micSel.value||''; });
+ui.micSel.addEventListener('focus',async()=>{ const labeled=[...ui.micSel.options].some(o=>o.value&&o.textContent&&!o.textContent.startsWith('Input ')&&o.textContent!=='System default input'); if(!labeled){ try{ const st=await navigator.mediaDevices.getUserMedia({audio:true}); st.getTracks().forEach(t=>t.stop()); }catch(e){} refreshMicList(); } });
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener){ try{ navigator.mediaDevices.addEventListener('devicechange',refreshMicList); }catch(e){} }
+refreshMicList();
+}
 async function micStart(owner, onChunk){
 if(micOwner) micRelease();
 micCtx=new (window.AudioContext||window.webkitAudioContext)(); await micCtx.resume();
-micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});
+const _ac={echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1};
+if(micSelId) _ac.deviceId={exact:micSelId};
+micStream=await navigator.mediaDevices.getUserMedia({audio:_ac,video:false}).catch(async e=>{ if(micSelId){ micSelId=''; if(ui.micSel)ui.micSel.value=''; return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false}); } throw e; });
+try{ refreshMicList(); }catch(e){}
 micSrc=micCtx.createMediaStreamSource(micStream); micSilent=micCtx.createGain(); micSilent.gain.value=0; micSilent.connect(micCtx.destination);
 if(micCtx.audioWorklet){
 const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
@@ -801,6 +821,49 @@ const o=micOwner; micStop();
 if(o==='tap') tapCancel(true);
 if(o==='tune') tuneStopUI(true);
 }
+
+// ---- polar chatter map ----
+let polarBuf=null, polarN=0, polarLastT=0;
+function polarReset(){ const L=Math.ceil((tnSR||48000)*3); polarBuf=new Float32Array(L); polarN=0; }
+function polarFeed(chunk){
+if(!polarBuf) polarReset();
+const L=polarBuf.length, c=chunk.length;
+if(c>=L){ polarBuf.set(chunk.subarray(c-L)); polarN=L; return; }
+if(polarN+c>L){ const keep=L-c; polarBuf.copyWithin(0,polarN-keep,polarN); polarN=keep; }
+polarBuf.set(chunk,polarN); polarN+=c;
+}
+function polarDraw(){
+const cv=ui.polar; if(!cv) return; const ctx=cv.getContext('2d'); if(!ctx) return;
+const now=(window.performance&&performance.now)?performance.now():Date.now(); if(now-polarLastT<45) return; polarLastT=now;
+const W=cv.width, H=cv.height, cx=W/2, cy=H/2, R=Math.min(W,H)*0.42, dp=dprT||1;
+ctx.clearRect(0,0,W,H);
+ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1*dp;
+for(let q=1;q<=4;q++){ ctx.beginPath(); ctx.arc(cx,cy,R*q/4,0,2*Math.PI); ctx.stroke(); }
+const tell=(t,col)=>{ ctx.fillStyle=col||'#888'; ctx.font=(13*dp)+'px system-ui,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,cx,cy); };
+const rpm=+ui.ncur.value, sr=tnSR||48000;
+if(!(rpm>0)){ tell('set "now" rpm'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
+if(!polarBuf||polarN<sr*0.25){ tell(micOwner==='tune'?'listening\u2026':'record to see the map'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
+const rev=sr*60/rpm, NREV=Math.min(Math.floor(polarN/rev),28);
+if(NREV<3||!(rev>12)){ tell('need a few more turns'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
+const total=Math.floor(NREV*rev), start=polarN-total;
+let mean=0; for(let i=0;i<total;i++) mean+=polarBuf[start+i]; mean/=total;
+let peak=1e-9; for(let i=0;i<total;i++){ const v=Math.abs(polarBuf[start+i]-mean); if(v>peak)peak=v; }
+const amp=0.42*R/peak, baseR=R*0.62, dk=Math.max(1,Math.floor(rev/720)), B=720;
+const sumB=new Float64Array(B), sqB=new Float64Array(B), cntB=new Float64Array(B);
+for(let rIdx=0;rIdx<NREV;rIdx++){
+const rs=start+Math.floor(rIdx*rev), steps=Math.floor(rev); ctx.beginPath(); let started=false;
+for(let k=0;k<steps;k+=dk){ const idx=rs+k; if(idx>=polarN) break; const val=polarBuf[idx]-mean, ph=(k/rev)*2*Math.PI-Math.PI/2, radius=baseR+val*amp; const x=cx+Math.cos(ph)*radius, y=cy+Math.sin(ph)*radius; if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y); const b=Math.floor((k/rev)*B)%B; sumB[b]+=val; sqB[b]+=val*val; cntB[b]++; }
+const a=0.10+0.55*((rIdx+1)/NREV); ctx.strokeStyle='rgba(198,40,40,'+a.toFixed(3)+')'; ctx.lineWidth=(rIdx===NREV-1?1.4:0.7)*dp; ctx.stroke();
+}
+ctx.beginPath(); let ms=false;
+for(let b=0;b<B;b++){ if(cntB[b]===0) continue; const val=sumB[b]/cntB[b], ph=(b/B)*2*Math.PI-Math.PI/2, radius=baseR+val*amp; const x=cx+Math.cos(ph)*radius, y=cy+Math.sin(ph)*radius; if(!ms){ctx.moveTo(x,y);ms=true;} else ctx.lineTo(x,y); }
+ctx.closePath(); ctx.strokeStyle='#222'; ctx.lineWidth=1.6*dp; ctx.stroke();
+let SQ=0,SUM=0,n=0,asyncV=0;
+for(let b=0;b<B;b++){ if(cntB[b]>0){ SQ+=sqB[b]; SUM+=sumB[b]; n+=cntB[b]; const mb=sumB[b]/cntB[b]; asyncV+=sqB[b]-cntB[b]*mb*mb; } }
+const gM=SUM/(n||1), totV=SQ-n*gM*gM, frac=totV>1e-9?Math.max(0,Math.min(1,asyncV/totV)):0;
+if(ui.polarIx){ let lab,col; if(frac<0.30){ lab='stable \u00b7 repeats every turn'; col='#2e7d32'; } else if(frac<0.55){ lab='marginal'; col='#b8860b'; } else { lab='chatter \u00b7 not repeating'; col='#c62828'; } ui.polarIx.textContent='chatter index '+(frac*100|0)+'% \u00b7 '+lab; ui.polarIx.style.color=col; }
+}
+
 
 // ─────────────────── tap test module ───────────────────
 let tapSR=44100;
@@ -1196,10 +1259,11 @@ ui.statT.textContent= taken ? 'stopped — the mic switched to the tap test' : '
 ui.rec.onclick=async()=>{
 if(!tnRecording){
 tnHave=false; Pema.fill(0); tnPos=0; tnHop=0; tnManual=null; tnDirty=true;
-recChunks=[]; recLen=0;
+recChunks=[]; recLen=0; polarReset();
 try{ tnSR=await micStart('tune', chunk=>{
 if(tnRecording&&recChunks&&recLen<REC_MAX_S*tnSR){ recChunks.push(chunk); recLen+=chunk.length; }
 for(let i=0;i<chunk.length;i++) tnFeed(chunk[i]);
+polarFeed(chunk);
 }); }
 catch(err){ ui.statT.textContent='mic error: '+(err.name||'?'); return; }
 recSR=tnSR; R.binHz=tnSR/FFTSIZE;
@@ -1692,7 +1756,7 @@ updateOvStat();
 let dprT=1, tnDirty=true, lbDirty=true;
 function sizeCanvases(){
 dprT=Math.min(window.devicePixelRatio||1,2);
-[ui.tuneSpec,ui.map].forEach(c=>{
+[ui.tuneSpec,ui.map,ui.polar].forEach(c=>{
 c.width=Math.round((c.clientWidth||320)*dprT);
 c.height=Math.round((c.clientHeight||260)*dprT);
 });
@@ -1702,6 +1766,7 @@ if(tapSpecs.length) tapDrawSpec();
 function render(){
 if(tnDirty){ tnDraw(); tnDOM(); tnDirty=false; }
 if(lbDirty){ lbDraw(); lbDirty=false; }
+polarDraw();
 requestAnimationFrame(render);
 }
 let lbDeb=null;
