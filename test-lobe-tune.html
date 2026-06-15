@@ -238,6 +238,7 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <button id="loadRec" class="btn ghost">Load recording</button>
 <input id="fileIn" type="file" accept=".wav,audio/wav,audio/x-wav" style="display:none">
 <label class="f">mic <select id="micSel" style="max-width:230px"><option value="">System default input</option></select></label>
+<label class="f" style="font-size:12px"><input type="checkbox" id="airChk" checked> auto air baseline</label>
 <div class="spacer"></div>
 <div class="stat" id="statT">idle · uses flutes + "now" rpm + M1 fₙ from inputs</div>
 </div>
@@ -257,6 +258,7 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="chips">
 <button id="sendPick" class="btn act" style="display:none">Picked → M1 fₙ</button>
 <button id="clearPickT2" class="btn ghost" style="display:none">Clear pick</button>
+<button id="setFnBtn" class="btn act" style="display:none">Set fn</button>
 </div>
 </div>
 </div>
@@ -632,7 +634,7 @@ const ui = {};
 'opPanel','opForm',
 'tapStart','tapReset','hint','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread',
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
-'rec','saveRec','loadRec','fileIn','statT','tuneSpec','vFc','vFn','vShift','vWpt','interpT','chipsT','sendPick','clearPickT2','micSel','polar','polarIx',
+'rec','saveRec','loadRec','fileIn','statT','tuneSpec','vFc','vFn','vShift','vWpt','interpT','chipsT','sendPick','clearPickT2','micSel','polar','polarIx','airChk','setFnBtn',
 'map','vBest','vCur','vGain','interpL','chipsL',
 'libFolder','libFiles','libFileIn','libSearch','libFilters','libClearF','libCompare','libCsv','libStat','libWrap','libBody','libHint','overlay','ovLegend',
 'saveModal','saveSummary','saveConfirmBtn','saveReviseBtn','ovReadout']
@@ -823,7 +825,7 @@ if(o==='tune') tuneStopUI(true);
 }
 
 // ---- polar chatter map ----
-let polarBuf=null, polarN=0, polarLastT=0;
+let polarBuf=null, polarN=0, polarLastT=0, polarFrac=-1;
 function polarReset(){ const L=Math.ceil((tnSR||48000)*3); polarBuf=new Float32Array(L); polarN=0; }
 function polarFeed(chunk){
 if(!polarBuf) polarReset();
@@ -841,10 +843,10 @@ ctx.strokeStyle='rgba(0,0,0,0.10)'; ctx.lineWidth=1*dp;
 for(let q=1;q<=4;q++){ ctx.beginPath(); ctx.arc(cx,cy,R*q/4,0,2*Math.PI); ctx.stroke(); }
 const tell=(t,col)=>{ ctx.fillStyle=col||'#888'; ctx.font=(13*dp)+'px system-ui,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,cx,cy); };
 const rpm=+ui.ncur.value, sr=tnSR||48000;
-if(!(rpm>0)){ tell('set "now" rpm'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
-if(!polarBuf||polarN<sr*0.25){ tell(micOwner==='tune'?'listening\u2026':'record to see the map'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
+if(!(rpm>0)){ tell('set "now" rpm'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
+if(!polarBuf||polarN<sr*0.25){ tell(micOwner==='tune'?'listening\u2026':'record to see the map'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
 const rev=sr*60/rpm, NREV=Math.min(Math.floor(polarN/rev),28);
-if(NREV<3||!(rev>12)){ tell('need a few more turns'); if(ui.polarIx)ui.polarIx.textContent=''; return; }
+if(NREV<3||!(rev>12)){ tell('need a few more turns'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
 const total=Math.floor(NREV*rev), start=polarN-total;
 let mean=0; for(let i=0;i<total;i++) mean+=polarBuf[start+i]; mean/=total;
 let peak=1e-9; for(let i=0;i<total;i++){ const v=Math.abs(polarBuf[start+i]-mean); if(v>peak)peak=v; }
@@ -860,7 +862,7 @@ for(let b=0;b<B;b++){ if(cntB[b]===0) continue; const val=sumB[b]/cntB[b], ph=(b
 ctx.closePath(); ctx.strokeStyle='#222'; ctx.lineWidth=1.6*dp; ctx.stroke();
 let SQ=0,SUM=0,n=0,asyncV=0;
 for(let b=0;b<B;b++){ if(cntB[b]>0){ SQ+=sqB[b]; SUM+=sumB[b]; n+=cntB[b]; const mb=sumB[b]/cntB[b]; asyncV+=sqB[b]-cntB[b]*mb*mb; } }
-const gM=SUM/(n||1), totV=SQ-n*gM*gM, frac=totV>1e-9?Math.max(0,Math.min(1,asyncV/totV)):0;
+const gM=SUM/(n||1), totV=SQ-n*gM*gM, frac=totV>1e-9?Math.max(0,Math.min(1,asyncV/totV)):0; polarFrac=frac;
 if(ui.polarIx){ let lab,col; if(frac<0.30){ lab='stable \u00b7 repeats every turn'; col='#2e7d32'; } else if(frac<0.55){ lab='marginal'; col='#b8860b'; } else { lab='chatter \u00b7 not repeating'; col='#c62828'; } ui.polarIx.textContent='chatter index '+(frac*100|0)+'% \u00b7 '+lab; ui.polarIx.style.color=col; }
 }
 
@@ -1113,6 +1115,16 @@ let recChunks=null, recLen=0, recSR=44100;
 const REC_MAX_S=180;
 const tnReB=new Float32Array(FFTSIZE), tnImB=new Float32Array(FFTSIZE);
 let R={ fHi:4000, binHz:tnSR/FFTSIZE, ftp:0, frev:0, fc:0, fcDb:0, prominence:0, stable:true, fn:0, maxP:1e-12, suggestions:[], wptCur:0, kStar:0, rpm:4000, Z:4 };
+const airBase=new Float32Array(HALF), Asub=new Float32Array(HALF);
+let airOn=true, airHave2=false, airSep=false, curAir=false, airLevel=0, cutLevel=0, airWins=0;
+function airReset(){ airHave2=false; airSep=false; curAir=false; airWins=0; airLevel=0; cutLevel=0; airBase.fill(0); }
+function airUpd(wE){
+if(!airHave2){ airLevel=cutLevel=wE; airHave2=true; }
+else { airLevel = wE<airLevel ? wE : airLevel*0.999+wE*0.001; cutLevel = wE>cutLevel ? wE : cutLevel*0.999+wE*0.001; }
+airSep=cutLevel>airLevel*4;
+curAir=airSep && wE<Math.sqrt(airLevel*cutLevel);
+if(curAir){ for(let k=0;k<HALF;k++) airBase[k]=airWins?(0.85*airBase[k]+0.15*Pema[k]):Pema[k]; airWins++; }
+}
 function tnFeed(s){ tnRing[tnPos++]=s; if(tnPos>=FFTSIZE)tnPos=0; if(++tnHop>=TNHOP){ tnHop=0; tnAnalyse(); } }
 function tnAnalyse(){
 for(let i=0;i<FFTSIZE;i++){ tnReB[i]=tnRing[(tnPos+i)%FFTSIZE]*hann[i]; tnImB[i]=0; }
@@ -1127,20 +1139,24 @@ const hiK=Math.min(HALF-1,Math.floor(fHi/binHz));
 const masked=new Uint8Array(HALF);
 for(let m=1;m*ftp<fHi*1.05;m++){ const f=m*ftp, tol=Math.max(10,0.012*f); const c=Math.round(f/binHz), w=Math.max(1,Math.round(tol/binHz));
 for(let d=-w;d<=w;d++){ const b=c+d; if(b>=0&&b<HALF) masked[b]=1; } }
+let wE=0; for(let k=4;k<hiK;k++) wE+=Pema[k];
+airUpd(wE);
+let S=Pema;
+if(airOn&&airHave2&&airSep){ for(let k=0;k<HALF;k++) Asub[k]=Math.max(0,Pema[k]-airBase[k]); S=Asub; }
 const sLo=Math.max(60,fn>0?fn*0.55:120), sHi=Math.min(fHi,fn>0?fn*1.7:fHi);
 const loK=Math.floor(sLo/binHz), hK=Math.min(hiK,Math.floor(sHi/binHz));
-const um=[]; for(let k=loK;k<=hK;k++){ if(!masked[k]) um.push(Pema[k]); }
+const um=[]; for(let k=loK;k<=hK;k++){ if(!masked[k]) um.push(S[k]); }
 const med=median(um)||1e-12;
 let bk=-1,bp=0;
 for(let k=Math.max(loK,2);k<=Math.min(hK,HALF-2);k++){
 if(masked[k]) continue;
-if(Pema[k]>=Pema[k-1]&&Pema[k]>=Pema[k+1]&&Pema[k]>bp){ bp=Pema[k]; bk=k; }
+if(S[k]>=S[k-1]&&S[k]>=S[k+1]&&S[k]>bp){ bp=S[k]; bk=k; }
 }
 let fc=0,prom=0,fcDb=-60;
-if(bk>0){ let off=0; const a=Pema[bk-1],b=Pema[bk],c=Pema[bk+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd;
+if(bk>0){ let off=0; const a=S[bk-1],b=S[bk],c=S[bk+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd;
 fc=(bk+off)*binHz; prom=bp/med; }
-const stable=!(prom>6&&bk>0);
-let maxP=1e-12; for(let k=2;k<=hiK;k++) maxP=Math.max(maxP,Pema[k]);
+const stable=(!(prom>6&&bk>0))||curAir;
+let maxP=1e-12; for(let k=2;k<=hiK;k++) maxP=Math.max(maxP,S[k]);
 if(bk>0) fcDb=10*Math.log10(bp/maxP+1e-12);
 const sug=stable?{list:[],wptCur:0,kStar:0}:suggestRPM(fc,Z,rpm);
 R={fHi,binHz,ftp,frev,fc,fcDb,prominence:prom,stable,fn,maxP,suggestions:sug.list,wptCur:sug.wptCur,kStar:sug.kStar,rpm,Z};
@@ -1195,39 +1211,43 @@ c.fillText('picked '+Math.round(tnManual)+' Hz', x+(x>xR-80*dprT?-7*dprT:7*dprT)
 }
 }
 function tnDOM(){
-ui.vFn.innerHTML=R.fn>0?Math.round(R.fn)+'<small> Hz</small>':'<small>—</small>';
+ui.vFn.innerHTML=R.fn>0?Math.round(R.fn)+'<small> Hz</small>':'<small>none</small>';
 const Z=Math.max(1,parseInt(ui.flutes.value)||1), rpmNow=Math.max(1,parseFloat(ui.ncur.value)||0);
 const eff=tnManual!=null?tnManual:((!R.stable&&R.fc>0)?R.fc:0);
 ui.clearPickT2.style.display=tnManual!=null?'':'none';
 ui.sendPick.style.display=tnManual!=null?'':'none';
 ui.vFc.classList.toggle('picked',tnManual!=null);
+let air=''; if(airOn&&airSep&&airWins>0) air='<small>air baseline: auto, '+(airWins*TNHOP/Math.max(1,tnSR)).toFixed(1)+' s captured</small><br>';
+const pol=polarFrac, polStable=(pol>=0&&pol<0.30);
 if(!(eff>0)){
-ui.vFc.innerHTML='<small>none</small>'; ui.vShift.innerHTML='<small>—</small>'; ui.vWpt.innerHTML='<small>—</small>';
+ui.vFc.innerHTML='<small>none</small>'; ui.vShift.innerHTML='<small>-</small>'; ui.vWpt.innerHTML='<small>-</small>';
 ui.interpT.className='interp stable';
-ui.interpT.textContent= tnHave ? 'No dominant non-synchronous peak — the cut looks stable at this rpm. You can still tap the chart to pick a peak yourself.'
-: 'Record during the cut (or load a saved recording). Tap the chart to pick a peak yourself.';
-ui.chipsT.innerHTML=''; return;
+ui.interpT.innerHTML= air+(tnHave ? 'No dominant non-synchronous peak. The cut looks stable at this rpm. Tap the chart to pick a peak yourself.' : 'Record during the cut (or load a saved recording). Tap the chart to pick a peak yourself.');
+ui.chipsT.innerHTML=''; if(ui.setFnBtn)ui.setFnBtn.style.display='none'; return;
 }
 const sug=tnManual!=null?suggestRPM(eff,Z,rpmNow):{list:R.suggestions,wptCur:R.wptCur,kStar:R.kStar};
 ui.vFc.innerHTML=Math.round(eff)+'<small> Hz'+(tnManual!=null?' · picked':'')+'</small>';
 if(R.fn>0){ const d=eff-R.fn; ui.vShift.innerHTML=(d>=0?'+':'')+Math.round(d)+'<small> Hz</small>'; }
 else ui.vShift.innerHTML='<small>set M1</small>';
 ui.vWpt.innerHTML=sug.wptCur.toFixed(2)+'<small> waves/tooth</small>';
-const pick=sug.list.find(s=>s.pick);
-let txt='';
-if(tnManual!=null){
-txt='Picked '+Math.round(eff)+' Hz. ';
-if(maskedAtF(eff,R.ftp,R.fHi)) txt+='Warning: this peak is rotation-locked (tooth-passing) — pocket speeds from it are not meaningful; pick outside the grey bands. ';
-txt+='At '+sug.wptCur.toFixed(2)+' waves per tooth pass. ';
-} else {
-txt='You’re at '+sug.wptCur.toFixed(2)+' waves per tooth pass — between pockets, which is why it chatters. ';
+const pick=sug.list.find(s=>s.pick), locked=maskedAtF(eff,R.ftp,R.fHi);
+if(polStable||locked){
+ui.chipsT.innerHTML=''; if(ui.setFnBtn)ui.setFnBtn.style.display='none';
+ui.interpT.className='interp stable';
+ui.interpT.innerHTML= air+'<b>Hold, no rpm or fn change.</b> The polar map says this repeats every turn'+(pol>=0?' ('+Math.round(pol*100)+'%)':'')+', so '+Math.round(eff)+' Hz is forced / rotation-locked, not a chatter mode'+(locked?' (on a tooth-passing band)':'')+'.';
+return;
 }
-if(pick) txt+='Nearest pocket is k='+pick.k+' → '+Math.round(pick.n)+' rpm. Re-measure after the change and converge.';
-ui.interpT.className='interp'; ui.interpT.textContent=txt;
+let txt='';
+if(tnManual!=null) txt='Picked '+Math.round(eff)+' Hz. ';
+else txt='<b>Chatter'+(pol>=0?' ('+Math.round(pol*100)+'%)':'')+'.</b> '+sug.wptCur.toFixed(2)+' waves per tooth pass, between pockets. ';
+if(pick) txt+='Try k='+pick.k+' to '+Math.round(pick.n)+' rpm. ';
+txt+='Set fn = '+Math.round(eff)+' Hz (the in-cut mode), then re-measure.';
+ui.interpT.className='interp'; ui.interpT.innerHTML=air+txt;
+if(ui.setFnBtn){ ui.setFnBtn.style.display=''; ui.setFnBtn.dataset.fc=String(Math.round(eff)); ui.setFnBtn.textContent='Set fn = '+Math.round(eff)+' Hz'; }
 ui.chipsT.innerHTML='';
-for(const s of sug.list){ const el=document.createElement('div'); el.className='chip'+(s.pick?' pick':'');
-const dir=s.n>rpmNow?'↑':(s.n<rpmNow?'↓':'·');
-el.innerHTML='<small>k='+s.k+'</small> <span class="rpm">'+Math.round(s.n)+'</span> <small>rpm '+dir+'</small>';
+for(const sp of sug.list){ const el=document.createElement('div'); el.className='chip'+(sp.pick?' pick':'');
+const dir=sp.n>rpmNow?'\u2191':(sp.n<rpmNow?'\u2193':'\u00b7');
+el.innerHTML='<small>k='+sp.k+'</small> <span class="rpm">'+Math.round(sp.n)+'</span> <small>rpm '+dir+'</small>';
 ui.chipsT.appendChild(el); }
 }
 ui.tuneSpec.addEventListener('pointerdown', e=>{
@@ -1248,6 +1268,8 @@ if(p!=null&&p>0){ tnManual=p; tnDirty=true; }
 });
 ui.clearPickT2.addEventListener('click',()=>{ tnManual=null; tnDirty=true; });
 ui.sendPick.addEventListener('click',()=>{ if(tnManual!=null){ ui.fn1.value=Math.round(tnManual); lobesKick(); tnDirty=true; } });
+if(ui.setFnBtn) ui.setFnBtn.addEventListener('click',()=>{ const v=+ui.setFnBtn.dataset.fc; if(v>0){ ui.fn1.value=v; lobesKick(); tnDirty=true; } });
+if(ui.airChk) ui.airChk.addEventListener('change',()=>{ airOn=ui.airChk.checked; tnDirty=true; });
 
 function tuneStopUI(taken){
 if(micOwner==='tune') micStop();
@@ -1259,7 +1281,7 @@ ui.statT.textContent= taken ? 'stopped — the mic switched to the tap test' : '
 ui.rec.onclick=async()=>{
 if(!tnRecording){
 tnHave=false; Pema.fill(0); tnPos=0; tnHop=0; tnManual=null; tnDirty=true;
-recChunks=[]; recLen=0; polarReset();
+recChunks=[]; recLen=0; polarReset(); airReset();
 try{ tnSR=await micStart('tune', chunk=>{
 if(tnRecording&&recChunks&&recLen<REC_MAX_S*tnSR){ recChunks.push(chunk); recLen+=chunk.length; }
 for(let i=0;i<chunk.length;i++) tnFeed(chunk[i]);
@@ -1334,7 +1356,7 @@ if(r.err){ ui.statT.textContent='load failed: '+r.err; return; }
 if(tnRecording) tuneStopUI(false);
 else if(micOwner==='tune') micStop();
 tnSR=r.sr; R.binHz=tnSR/FFTSIZE;
-tnHave=false; Pema.fill(0); tnPos=0; tnHop=0; tnManual=null;
+tnHave=false; Pema.fill(0); tnPos=0; tnHop=0; tnManual=null; airReset();
 ui.saveRec.disabled=true; recChunks=null; recLen=0;
 let restored='';
 if(r.meta){
@@ -1348,6 +1370,7 @@ setTimeout(()=>{
 TNHOP=8192;
 for(let i=0;i<r.samples.length;i++) tnFeed(r.samples[i]);
 TNHOP=2048;
+try{ polarReset(); polarFeed(r.samples); }catch(e){}
 if(!tnHave) tnAnalyse();
 ui.statT.textContent=fname+' · '+(r.samples.length/r.sr).toFixed(1)+' s · '+r.sr+' Hz'+restored;
 tnDirty=true;
