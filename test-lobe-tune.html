@@ -119,6 +119,7 @@ canvas.pickcv{width:100%; height:140px; display:block; border:1px solid var(--bo
 canvas.tunecv{width:100%; height:300px; display:block; touch-action:none;}
 canvas.mapcv{width:100%; height:300px; display:block; touch-action:none;}
 canvas.ovcv{width:100%; height:240px; display:block; border:1px solid var(--border); border-radius:8px; background:#fff;}
+canvas.sweepcv{width:100%; height:200px; display:block; border:1px solid var(--border); border-radius:8px; background:#fff; touch-action:manipulation;}
 .chips{display:flex; gap:7px; flex-wrap:wrap; align-items:center;}
 .chip{border:1px solid var(--border); border-radius:9px; padding:5px 9px; font-size:12px; font-weight:700; color:var(--ink); background:#fff; white-space:nowrap; cursor:pointer; user-select:none;}
 .chip small{font-weight:600; color:var(--muted);}
@@ -150,6 +151,7 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </style>
 </head>
 <body>
+<a href="./index.html" style="display:inline-block;margin:8px 0 4px 0;font:700 11px Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:#555;background:#fff;border:1px solid #ddd;border-radius:5px;padding:6px 12px">&#8249; All apps</a>
 
 <header>
 <h1>Chatter<span>.calc</span> · Test · Lobes · Tune</h1>
@@ -197,6 +199,36 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </details>
 </div>
 
+<!-- ───────── speaker tap (software tap test) ───────── -->
+<div class="card">
+<div class="cardhead">1b · Speaker tap (software tap test · no hammer · experimental)</div>
+<div class="controls">
+<button id="swTool" class="btn go">Sweep · tool in</button>
+<button id="swAir" class="btn ghost">Sweep · baseline (tool out)</button>
+<button id="swClear" class="btn ghost">Clear</button>
+<label class="f">from<input id="swF0" type="number" value="200" min="50" step="50"> Hz</label>
+<label class="f">to<input id="swF1" type="number" value="8000" min="500" step="100"> Hz</label>
+<label class="f">secs<input id="swDur" type="number" value="4" min="1" max="12" step="1"></label>
+<label class="f">level<input id="swVol" type="number" value="35" min="5" max="100" step="5"> %</label>
+<div class="spacer"></div>
+<div class="stat" id="swStat">uses the mic chosen in Tune · aim a speaker at the tool</div>
+</div>
+<div class="stage" style="padding-top:0;">
+<canvas id="swSpec" class="sweepcv"></canvas>
+<div class="rgrid" style="grid-template-columns:repeat(3,auto) 1fr;">
+<div class="rb fc"><span class="k">fₙ (speaker)</span><span class="v" id="swFn">—</span></div>
+<div class="rb"><span class="k">tap fₙ (M1)</span><span class="v" id="swTapFn">—</span></div>
+<div class="rb shift"><span class="k">difference</span><span class="v" id="swDiff">—</span></div>
+<div></div>
+</div>
+<div class="interp" id="swInterp">Aim a speaker at the tool. <b>Sweep · tool in</b> plays a tone that slides low → high → low while the mic records. Then pull the tool back and press <b>Sweep · baseline</b>. The app subtracts the two, so what is left is the tool answering — the peak of that difference is fₙ. Then <b>Set M1 fₙ</b> feeds it to the lobes.</div>
+<div class="chips">
+<button id="swSetFn" class="btn act" style="display:none">Set M1 fₙ</button>
+</div>
+<div class="snote">Test method, unproven on a microphone: the speaker shakes the tool, the baseline subtraction cancels the speaker and the room. Prove it first on an easy ringer — a steel ruler clamped in a vise. If the difference peak tracks your hand tap and moves when you change tools, it works. If you only see fixed peaks that do not move, the mic cannot do it here and you keep the hammer tap above.</div>
+</div>
+</div>
+
 <div class="grid2">
 <!-- ───────── tap test ───────── -->
 <div class="card">
@@ -207,7 +239,7 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <label class="f">expect f<sub>n</sub><input id="hint" type="number" placeholder="auto" min="50" step="10"> Hz</label>
 </div>
 <div class="stage">
-<div class="instruct" id="instruct">Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then tap the tool 3&nbsp;times.</div>
+<div class="instruct" id="instruct">Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then keep tapping until it locks, or it stops after 30&nbsp;s.</div>
 <div class="meter">
 <div class="bartrack"><div class="barfill" id="bar"></div><div class="mark floor" id="mFloor" style="left:0%"></div><div class="mark trig" id="mTrig" style="left:0%"></div></div>
 <div class="mrow2"><span>level</span><span>noise ignored: <b id="ignored">0</b></span></div>
@@ -827,6 +859,7 @@ function micRelease(){
 const o=micOwner; micStop();
 if(o==='tap') tapCancel(true);
 if(o==='tune') tuneStopUI(true);
+	if(o==='sweep') swCancel(true);
 }
 
 // ---- polar chatter map ----
@@ -932,7 +965,7 @@ tapMarks(); return;
 }
 tapState=tapST.READY;
 ui.instruct.className='instruct ready';
-ui.instruct.innerHTML='Floor learned. <b>Tap the tool 3 times.</b> Stray noise is ignored automatically.';
+ui.instruct.innerHTML='Floor learned. <b>Keep tapping the tool.</b> It locks when the taps agree, or stops after 30 s. Stray noise is ignored.';
 tapMarks();
 }
 function tapFinishCap(){
@@ -952,47 +985,56 @@ const el=tapBoxes[i]; el.className='tap'+(cls?' '+cls:'');
 el.querySelector('.hz').innerHTML=html2;
 el.querySelector('.hz2').textContent=sub||'';
 }
+let tapTimer=null;
+function tapClearTimer(){ if(tapTimer){ clearTimeout(tapTimer); tapTimer=null; } }
+function tapStartTimer(){ tapClearTimer(); tapTimer=setTimeout(tapTimeout,30000); }
+function bestCluster(arr,tol){ let best=[]; for(const c of arr){ const g=arr.filter(x=>Math.abs(x-c)/c<=tol); if(g.length>best.length) best=g; } return best; }
 function tapAccepted(){
-const med=median(tapF1s());
+const all=tapF1s();
+const cl=bestCluster(all,TAPCFG.TOL_GREEN);
+const ctr= cl.length>=2 ? cl.reduce((s,x)=>s+x,0)/cl.length : median(all);
+const recent=taps.slice(-3);
 for(let i=0;i<3;i++){
-if(i<taps.length){
-const cls=taps.length===1?'green':colorOf(taps[i].f1,med);
-tapSetBox(i,cls,Math.round(taps[i].f1)+'<small> Hz</small>', taps[i].f2?'+ '+Math.round(taps[i].f2)+' Hz':'');
-} else if(i===taps.length){ tapSetBox(i,'empty armed','…',''); }
+if(i<recent.length){ const t=recent[i]; tapSetBox(i,colorOf(t.f1,ctr),Math.round(t.f1)+'<small> Hz</small>', t.f2?'+ '+Math.round(t.f2)+' Hz':''); }
 else tapSetBox(i,'empty','—','');
 }
-if(taps.length<3){
+if(cl.length>=3){ tapFinishOK(cl); return; }
+const est= cl.length>=2 ? Math.round(ctr) : null;
 ui.instruct.className='instruct ready';
-ui.instruct.innerHTML='Captured '+taps.length+' of 3 — <b>keep tapping.</b>';
-return;
+ui.instruct.innerHTML='Captured <b>'+all.length+'</b> tap'+(all.length===1?'':'s')+' · '+cl.length+' agree'+(est?' · about <b>'+est+' Hz</b>':'')+' — keep tapping until it locks.';
 }
-tapEvaluate();
-}
-function tapEvaluate(){
-const med=median(tapF1s());
-const greens=taps.filter(t=>colorOf(t.f1,med)==='green');
-if(greens.length>=2){
-const fn=greens.reduce((s,t)=>s+t.f1,0)/greens.length;
+function tapFinishOK(cl){
+const fn=cl.reduce((s,x)=>s+x,0)/cl.length;
 const fn2=modeTwo(taps,TAPCFG);
-const allf=tapF1s(), spread=Math.max(...allf)-Math.min(...allf);
+const all=tapF1s(), spread=Math.max(...cl)-Math.min(...cl);
 tapState=tapST.DONE; tapStopUI();
 ui.tapRes.className='tres ok';
 ui.fnVal.innerHTML=Math.round(fn)+'<small> Hz</small>';
 ui.fn2Val.innerHTML=fn2?Math.round(fn2)+'<small> Hz</small>':'—';
-ui.spread.innerHTML=greens.length+'/3 agree · spread '+spread.toFixed(0)+' Hz<br>taps: '+allf.map(f=>Math.round(f)).join(' · ')+' Hz';
+ui.spread.innerHTML=cl.length+' of '+all.length+' agree · spread '+spread.toFixed(0)+' Hz<br>locked fₙ from '+cl.length+' taps';
 ui.instruct.className='instruct ready';
-ui.instruct.innerHTML='Done — <b>fₙ = '+Math.round(fn)+' Hz'+(fn2?' · M2 = '+Math.round(fn2)+' Hz':'')+'</b> → sent to inputs.';
+ui.instruct.innerHTML='Locked — <b>fₙ = '+Math.round(fn)+' Hz'+(fn2?' · M2 = '+Math.round(fn2)+' Hz':'')+'</b> → sent to inputs.';
 applyToInputs(fn,fn2);
-} else {
-ui.instruct.className='instruct warn';
-ui.instruct.innerHTML='Readings disagree — a stray sound got in. <b>Tap again</b> (worst reading dropped).';
-const med2=median(tapF1s());
-taps.sort((a,b)=>Math.abs(a.f1-med2)-Math.abs(b.f1-med2));
-taps=taps.slice(0,2);
-tapAccepted();
 }
+function tapTimeout(){
+tapTimer=null;
+if(tapState===tapST.DONE) return;
+if(micOwner==='tap') micStop();
+tapRunning=false; tapState=tapST.IDLE;
+ui.tapStart.textContent='Start tap test'; ui.tapStart.classList.add('go');
+const all=tapF1s(), cl=bestCluster(all,TAPCFG.TOL_GREEN);
+let why;
+if(all.length<2) why='only '+all.length+' clean tap'+(all.length===1?'':'s')+' got through in 30 s — too noisy, or the taps were too soft';
+else { const sp=Math.max(...all)-Math.min(...all); why='the '+all.length+' taps never agreed (best cluster '+cl.length+', need 3; spread '+sp.toFixed(0)+' Hz)'; }
+ui.fn1.value=''; ui.fn2.value='';
+lobesKick(); tnDirty=true;
+for(let i=0;i<3;i++) tapSetBox(i,'empty','—','');
+ui.tapRes.className='tres idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent='';
+ui.instruct.className='instruct warn';
+ui.instruct.innerHTML='Tap test stopped at 30 s — '+why+'. <b>M1 left empty.</b> Type fₙ by hand, use the speaker tap above, or press <b>Start</b> to try again.';
 }
 function tapStopUI(){
+tapClearTimer();
 if(micOwner==='tap') micStop();
 tapRunning=false;
 ui.tapStart.textContent='Start tap test'; ui.tapStart.classList.add('go');
@@ -1004,6 +1046,7 @@ ui.instruct.className='instruct';
 ui.instruct.innerHTML= taken ? 'Tap test stopped — the mic switched to Tune.' : 'Cancelled. Press <b>Start</b> to measure.';
 }
 function tapResetAll(){
+tapClearTimer();
 if(micOwner==='tap') micStop();
 tapRunning=false; tapState=tapST.IDLE; tapTotal=0; calRms=[]; tapFloor=0; tapTrig=0;
 tapCapturing=false; tapLastCap=-1e9; tapIgnored=0; taps=[];
@@ -1014,14 +1057,14 @@ for(let i=0;i<3;i++) tapSetBox(i,'empty','—','');
 ui.tapRes.className='tres idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent='';
 ui.tapStart.textContent='Start tap test';
 ui.instruct.className='instruct';
-ui.instruct.innerHTML='Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then tap the tool 3&nbsp;times.';
+ui.instruct.innerHTML='Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then keep tapping until it locks, or it stops after 30&nbsp;s.';
 }
 ui.tapStart.onclick=async()=>{
 if(tapRunning){ tapCancel(false); return; }
 tapResetAll();
 try{ tapSR=await micStart('tap', chunk=>{ for(let i=0;i<chunk.length;i++) tapFeed(chunk[i]); }); }
 catch(err){ ui.instruct.className='instruct warn'; ui.instruct.innerHTML='Mic error: '+(err.name||'?')+'. Allow microphone access.'; return; }
-tapRunning=true; tapState=tapST.CALIB; calStart=tapTotal;
+tapRunning=true; tapState=tapST.CALIB; calStart=tapTotal; tapStartTimer();
 ui.tapStart.textContent='Cancel';
 ui.instruct.className='instruct';
 ui.instruct.innerHTML='<b>Learning the room noise… 5&nbsp;s.</b> Keep quiet.';
@@ -1782,6 +1825,167 @@ updateOvStat();
 };
 /*OVCORE-END*/
 
+// ─────────────────── speaker tap (sweep) module ───────────────────
+/*SWEEPCORE-START*/
+const swEl={};
+['swTool','swAir','swClear','swF0','swF1','swDur','swVol','swStat','swSpec','swFn','swTapFn','swDiff','swSetFn'].forEach(id=>swEl[id]=$(id));
+let swToolSpec=null, swAirSpec=null, swDifSpec=null, swPeak=0, swPeakProm=0, swRec=null, swRecLen=0, swRunning=false, swSR=44100;
+
+function swReadParams(){
+  let f0=Math.max(50, +swEl.swF0.value||200);
+  let f1=Math.max(f0+100, +swEl.swF1.value||8000);
+  const dur=Math.max(1, Math.min(12, +swEl.swDur.value||4));
+  const vol=Math.max(0.05, Math.min(1, (+swEl.swVol.value||35)/100));
+  return {f0,f1,dur,vol};
+}
+// averaged power spectrum of a recording (hann, 50% overlap)
+function specOfSamples(samples, sr){
+  const pema=new Float32Array(HALF), re=new Float32Array(FFTSIZE), im=new Float32Array(FFTSIZE);
+  const hop=FFTSIZE>>1; let n=0;
+  for(let pos=0; pos+FFTSIZE<=samples.length; pos+=hop){
+    for(let i=0;i<FFTSIZE;i++){ re[i]=samples[pos+i]*hann[i]; im[i]=0; }
+    fft(re,im);
+    for(let k=0;k<HALF;k++) pema[k]+=re[k]*re[k]+im[k]*im[k];
+    n++;
+  }
+  if(!n) return null;
+  for(let k=0;k<HALF;k++) pema[k]/=n;
+  return {pema, sr, bh:sr/FFTSIZE};
+}
+function swCompute(){
+  swDifSpec=null; swPeak=0; swPeakProm=0;
+  if(swToolSpec&&swAirSpec){
+    const bh=swToolSpec.bh, p=swReadParams();
+    const raw=new Float32Array(HALF), ds=new Float32Array(HALF);
+    for(let k=0;k<HALF;k++) raw[k]=10*Math.log10(swToolSpec.pema[k]+1e-20)-10*Math.log10(swAirSpec.pema[k]+1e-20);
+    for(let k=0;k<HALF;k++){ const a=raw[Math.max(0,k-1)],b=raw[k],c=raw[Math.min(HALF-1,k+1)]; ds[k]=(a+b+c)/3; }
+    swDifSpec={arr:ds, bh};
+    const lo=Math.max(p.f0*1.05, bh), hi=p.f1*0.95;
+    const pk=pickPeak(ds,0,bh,lo,hi);
+    if(pk!=null&&pk>0){
+      swPeak=pk;
+      const k0=Math.max(0,Math.floor(lo/bh)), k1=Math.min(HALF-1,Math.floor(hi/bh)), band=[];
+      for(let k=k0;k<=k1;k++) band.push(ds[k]);
+      const m=median(band), pkbin=Math.max(0,Math.min(HALF-1,Math.round(pk/bh)));
+      swPeakProm=ds[pkbin]-m;
+      const weak=swPeakProm<3;
+      swEl.swStat.textContent='difference peak '+Math.round(pk)+' Hz · +'+swPeakProm.toFixed(1)+' dB'+(weak?' · weak, may not be a real mode — swap tools to confirm':' · swap tools to confirm it tracks');
+      swEl.swStat.className='stat'+(weak?' warn':'');
+    } else {
+      swEl.swStat.textContent='no clear difference peak in range';
+      swEl.swStat.className='stat';
+    }
+  }
+  swDraw(); swDOM();
+}
+function swDraw(){
+  const cv=swEl.swSpec; if(!cv) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=Math.round((cv.clientWidth||600)*dpr), H=Math.round((cv.clientHeight||200)*dpr);
+  cv.width=W; cv.height=H;
+  const g=cv.getContext('2d'); if(!g) return; g.clearRect(0,0,W,H);
+  const p=swReadParams(), f0=p.f0, f1=p.f1;
+  const xL=34*dpr, xR=W-8*dpr, yT=10*dpr, yB=H-16*dpr;
+  const xOf=f=>xL+((f-f0)/Math.max(1,(f1-f0)))*(xR-xL);
+  g.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial';
+  g.strokeStyle='#ededed'; g.lineWidth=dpr; g.fillStyle='#aaa'; g.textAlign='center'; g.textBaseline='top';
+  const span=f1-f0, step= span>6000?2000:(span>3000?1000:500);
+  for(let f=Math.ceil(f0/step)*step; f<=f1; f+=step){ const x=xOf(f); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); g.fillText(f>=1000?(f/1000)+'k':f, x, yB+3*dpr); }
+  if(swDifSpec){
+    const arr=swDifSpec.arr, bh=swDifSpec.bh;
+    const k0=Math.max(1,Math.floor(f0/bh)), k1=Math.min(HALF-1,Math.floor(f1/bh));
+    let lo=-6, hi=6; for(let k=k0;k<=k1;k++){ if(arr[k]>hi)hi=arr[k]; if(arr[k]<lo)lo=arr[k]; }
+    hi=Math.min(Math.max(hi,8),60); lo=Math.max(Math.min(lo,-8),-60);
+    const yOf=db=>yB-((Math.max(lo,Math.min(hi,db))-lo)/(hi-lo))*(yB-yT);
+    g.strokeStyle='#cfcfcf'; g.lineWidth=1.2*dpr; g.beginPath(); g.moveTo(xL,yOf(0)); g.lineTo(xR,yOf(0)); g.stroke();
+    g.textAlign='right'; g.textBaseline='middle'; g.fillStyle='#aaa';
+    const ys=(hi-lo)>40?12:((hi-lo)>22?6:3);
+    for(let db=Math.ceil(lo/ys)*ys; db<=hi; db+=ys){ const y=yOf(db); g.fillText((db>0?'+':'')+db, xL-3*dpr, y); }
+    g.beginPath(); let st=false;
+    for(let k=k0;k<=k1;k++){ const x=xOf(k*bh), y=yOf(arr[k]); if(!st){g.moveTo(x,y); st=true;} else g.lineTo(x,y); }
+    g.strokeStyle=cvv('--red'); g.lineWidth=1.5*dpr; g.lineJoin='round'; g.stroke();
+    if(swPeak>0){ const x=xOf(swPeak);
+      g.strokeStyle=cvv('--green'); g.lineWidth=1.4*dpr; g.setLineDash([4*dpr,3*dpr]); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); g.setLineDash([]);
+      g.fillStyle=cvv('--green'); g.textBaseline='top'; g.font='800 '+Math.round(11*dpr)+'px -apple-system,Helvetica,Arial';
+      g.textAlign=x>xR-70*dpr?'right':'left'; g.fillText(Math.round(swPeak)+' Hz', x+(x>xR-70*dpr?-6*dpr:6*dpr), yT+2*dpr); }
+    g.fillStyle='#999'; g.textAlign='left'; g.textBaseline='top'; g.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial';
+    g.fillText('tool minus baseline (dB)', xL+2*dpr, yT+1*dpr);
+  } else if(swToolSpec){
+    const pema=swToolSpec.pema, bh=swToolSpec.bh;
+    const k0=Math.max(1,Math.floor(f0/bh)), k1=Math.min(HALF-1,Math.floor(f1/bh));
+    let mx=0; for(let k=k0;k<=k1;k++) if(pema[k]>mx)mx=pema[k]; if(mx<=0)mx=1;
+    const yOf=db=>yB-((Math.max(-60,db)+60)/60)*(yB-yT);
+    g.beginPath(); let st=false;
+    for(let k=k0;k<=k1;k++){ const db=10*Math.log10(pema[k]/mx+1e-20), x=xOf(k*bh), y=yOf(db); if(!st){g.moveTo(x,y); st=true;} else g.lineTo(x,y); }
+    g.strokeStyle=cvv('--yellow-ink'); g.lineWidth=1.4*dpr; g.lineJoin='round'; g.stroke();
+    g.fillStyle='#999'; g.textAlign='left'; g.textBaseline='top'; g.fillText('tool response captured — now run the baseline', xL+2*dpr, yT+1*dpr);
+  } else {
+    g.fillStyle=cvv('--grid2'); g.textAlign='center'; g.textBaseline='middle'; g.font='600 '+Math.round(12*dpr)+'px -apple-system,Helvetica,Arial';
+    g.fillText('run a sweep', (xL+xR)/2, (yT+yB)/2);
+  }
+}
+function swDOM(){
+  const tapFn=Math.max(0,+ui.fn1.value||0);
+  swEl.swTapFn.innerHTML= tapFn>0 ? Math.round(tapFn)+'<small> Hz</small>' : '<small>none</small>';
+  if(swPeak>0){
+    swEl.swFn.innerHTML=Math.round(swPeak)+'<small> Hz</small>';
+    swEl.swSetFn.style.display=''; swEl.swSetFn.textContent='Set M1 fₙ = '+Math.round(swPeak)+' Hz';
+    if(tapFn>0){ const d=swPeak-tapFn; swEl.swDiff.innerHTML=(d>=0?'+':'')+Math.round(d)+'<small> Hz</small>'; }
+    else swEl.swDiff.innerHTML='<small>—</small>';
+  } else {
+    swEl.swFn.innerHTML='<small>—</small>'; swEl.swSetFn.style.display='none'; swEl.swDiff.innerHTML='<small>—</small>';
+  }
+}
+function setSwButtons(running){ swEl.swTool.disabled=running; swEl.swAir.disabled=running; swEl.swClear.disabled=running; }
+async function swRun(kind){
+  if(swRunning) return;
+  const p=swReadParams();
+  swRunning=true; setSwButtons(true);
+  swEl.swStat.className='stat';
+  swEl.swStat.textContent='● '+(kind==='air'?'baseline':'tool')+' sweep '+p.f0+' → '+p.f1+' Hz…';
+  swRec=[]; swRecLen=0;
+  try{ swSR=await micStart('sweep', chunk=>{ if(swRunning){ swRec.push(chunk); swRecLen+=chunk.length; } }); }
+  catch(err){ swRunning=false; setSwButtons(false); swEl.swStat.textContent='mic error: '+(err.name||'?')+' — allow microphone access'; return; }
+  const ctx=micCtx;
+  try{
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine';
+    const t0=ctx.currentTime+0.06, tm=t0+p.dur/2, te=t0+p.dur;
+    osc.frequency.setValueAtTime(p.f0,t0);
+    osc.frequency.linearRampToValueAtTime(p.f1,tm);
+    osc.frequency.linearRampToValueAtTime(p.f0,te);
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(p.vol,t0+0.04);
+    g.gain.setValueAtTime(p.vol,te-0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001,te);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(te+0.05);
+  }catch(e){ swRunning=false; setSwButtons(false); if(micOwner==='sweep') micStop(); swEl.swStat.textContent='audio error: '+(e.message||e); return; }
+  setTimeout(()=>swFinish(kind), Math.round((p.dur+0.5)*1000));
+}
+function swFinish(kind){
+  if(!swRunning) return;
+  swRunning=false; setSwButtons(false);
+  const total=swRecLen, buf=new Float32Array(total); let o=0;
+  for(const c of (swRec||[])){ buf.set(c,o); o+=c.length; }
+  if(micOwner==='sweep') micStop();
+  swRec=null; swRecLen=0;
+  const spec=specOfSamples(buf, swSR);
+  if(!spec){ swEl.swStat.textContent='no audio captured — check the mic and try again'; return; }
+  if(kind==='air') swAirSpec=spec; else swToolSpec=spec;
+  swEl.swStat.textContent=(kind==='air'?'baseline':'tool')+' captured · '+(buf.length/swSR).toFixed(1)+' s'+((swToolSpec&&swAirSpec)?' · computing difference…':' · now run the other one');
+  swCompute();
+}
+function swClearAll(){ swToolSpec=swAirSpec=swDifSpec=null; swPeak=0; swPeakProm=0; swEl.swStat.className='stat'; swEl.swStat.textContent='cleared'; swDraw(); swDOM(); }
+function swCancel(taken){ swRunning=false; setSwButtons(false); swEl.swStat.className='stat'; swEl.swStat.textContent= taken?'sweep stopped — the mic moved to another tool':'cancelled'; }
+swEl.swTool.onclick=()=>swRun('tool');
+swEl.swAir.onclick=()=>swRun('air');
+swEl.swClear.onclick=swClearAll;
+swEl.swSetFn.onclick=()=>{ if(swPeak>0){ applyToInputs(swPeak); swEl.swStat.className='stat'; swEl.swStat.textContent='M1 fₙ set to '+Math.round(swPeak)+' Hz — lobes updated'; swDOM(); } };
+swDraw();
+/*SWEEPCORE-END*/
+
+
 // ─────────────────── shared render + wiring ───────────────────
 let dprT=1, tnDirty=true, lbDirty=true;
 function sizeCanvases(){
@@ -1792,6 +1996,7 @@ c.height=Math.round((c.clientHeight||260)*dprT);
 });
 tnDirty=true; lbDirty=true;
 if(tapSpecs.length) tapDrawSpec();
+	if(typeof swDraw==='function') swDraw();
 }
 function render(){
 if(tnDirty){ tnDraw(); tnDOM(); tnDirty=false; }

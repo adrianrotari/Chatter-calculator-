@@ -7,366 +7,273 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Chatter.calc · Tune</title>
 <style>
-:root{
---bg:#fafafa; --card:#ffffff; --border:#e3e3e3; --ink:#333; --muted:#8a8a8a;
---grid:#ededed; --grid2:#e0e0e0; --mask:#ececed;
---yellow:#f5c518; --yellow-ink:#b89400;
---blue:#4ab3f0; --blue-ink:#1f7cb8;
---green:#1f9d57; --orange:#e8932e; --red:#e5484d;
-}
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0; height:100%; overflow:hidden;}
-body{
-background:var(--bg); color:var(--ink);
-font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-display:flex; flex-direction:column;
-padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));
-gap:9px;
-}
-header{display:flex; align-items:baseline; justify-content:space-between; flex:0 0 auto;}
-header h1{font-size:16px; font-weight:700; margin:0; letter-spacing:.2px;}
-header h1 span{color:var(--yellow-ink);}
-header .sub{font-size:11px; color:var(--muted);}
-.card{background:var(--card); border:1px solid var(--border); border-radius:12px;}
+  :root{
+    --bg:#fafafa; --card:#ffffff; --border:#e3e3e3; --ink:#333; --muted:#8a8a8a;
+    --grid:#ededed; --grid2:#e0e0e0; --mask:#ececed;
+    --yellow:#f5c518; --yellow-ink:#b89400;
+    --blue:#4ab3f0; --blue-ink:#1f7cb8;
+    --green:#1f9d57; --orange:#e8932e; --red:#e5484d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%; overflow:hidden;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column;
+    padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));
+    gap:9px;
+  }
+  header{display:flex; align-items:baseline; justify-content:space-between; flex:0 0 auto;}
+  header h1{font-size:16px; font-weight:700; margin:0; letter-spacing:.2px;}
+  header h1 span{color:var(--yellow-ink);}
+  header .sub{font-size:11px; color:var(--muted);}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px;}
 
-.controls{padding:8px 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex:0 0 auto;}
-.btn{border:0; border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; background:var(--ink); color:#fff;}
-.btn.rec{background:var(--red);}
-.btn.ghost{background:#fff; color:var(--muted); border:1px solid var(--border);}
-.btn:disabled{opacity:.4;}
-a.btn.lobes{background:var(--yellow); color:var(--ink); text-decoration:none; display:inline-block;}
-label.f{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px;}
-label.f input{width:62px; padding:5px 6px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-weight:700; color:var(--ink); text-align:right;}
-.controls .spacer{flex:1 1 auto;}
-.controls .stat{font-size:11px; color:var(--muted); text-align:right;}
+  .controls{padding:8px 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex:0 0 auto;}
+  .btn{border:0; border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; background:var(--ink); color:#fff;}
+  .btn.rec{background:var(--red);}
+  .btn.ghost{background:#fff; color:var(--muted); border:1px solid var(--border);}
+  .btn:disabled{opacity:.4;}
+  label.f{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:5px;}
+  label.f input{width:62px; padding:5px 6px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-weight:700; color:var(--ink); text-align:right;}
+  .controls .spacer{flex:1 1 auto;}
+  .controls .stat{font-size:11px; color:var(--muted); text-align:right;}
 
-.specwrap{padding:6px 6px 2px; flex:1 1 auto; min-height:0; display:flex; flex-direction:column;}
-.specwrap canvas{display:block; width:100%; flex:1 1 auto; min-height:0; touch-action:none;}
+  .specwrap{padding:6px 6px 2px; flex:1 1 auto; min-height:0; display:flex; flex-direction:column;}
+  .specwrap canvas{display:block; width:100%; flex:1 1 auto; min-height:0; touch-action:none;}
 
-.result{padding:9px 11px; display:flex; flex-direction:column; gap:8px; flex:0 0 auto;}
-.rgrid{display:grid; grid-template-columns:auto auto auto 1fr; gap:10px; align-items:end;}
-.rb{display:flex; flex-direction:column; gap:1px; min-width:0;}
-.rb .k{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
-.rb .v{font-size:19px; font-weight:800; white-space:nowrap; line-height:1;}
-.rb .v small{font-size:11px; font-weight:600; color:var(--muted);}
-.rb.fc .v{color:var(--red);}
-.rb.fc .v.picked{color:var(--green);}
-.rb.shift .v{color:var(--blue-ink);}
-.interp{font-size:12px; color:var(--ink); line-height:1.35;}
-.interp.stable{color:var(--green);}
-.chips{display:flex; gap:7px; flex-wrap:wrap; align-items:center;}
-.chip{border:1px solid var(--border); border-radius:9px; padding:5px 9px; font-size:12px; font-weight:700; color:var(--ink); background:#fff; white-space:nowrap;}
-.chip small{font-weight:600; color:var(--muted);}
-.chip.pick{border-color:var(--green); background:rgba(31,157,87,.08); color:var(--green);}
-.chip .rpm{font-size:13px;}
+  .result{padding:9px 11px; display:flex; flex-direction:column; gap:8px; flex:0 0 auto;}
+  .rgrid{display:grid; grid-template-columns:auto auto auto 1fr; gap:10px; align-items:end;}
+  .rb{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .rb .k{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
+  .rb .v{font-size:19px; font-weight:800; white-space:nowrap; line-height:1;}
+  .rb .v small{font-size:11px; font-weight:600; color:var(--muted);}
+  .rb.fc .v{color:var(--red);}
+  .rb.shift .v{color:var(--blue-ink);}
+  .interp{font-size:12px; color:var(--ink); line-height:1.35;}
+  .interp.stable{color:var(--green);}
+  .chips{display:flex; gap:7px; flex-wrap:wrap;}
+  .chip{border:1px solid var(--border); border-radius:9px; padding:5px 9px; font-size:12px; font-weight:700; color:var(--ink); background:#fff; white-space:nowrap;}
+  .chip small{font-weight:600; color:var(--muted);}
+  .chip.pick{border-color:var(--green); background:rgba(31,157,87,.08); color:var(--green);}
+  .chip .rpm{font-size:13px;}
 
-footer{font-size:10px; color:var(--muted); text-align:center; flex:0 0 auto; line-height:1.4;}
+  footer{font-size:10px; color:var(--muted); text-align:center; flex:0 0 auto; line-height:1.4;}
+  .backbar{flex:0 0 auto; margin:0 0 2px;}
+  .backbar a{display:inline-block; font:700 11px Helvetica,Arial,sans-serif; letter-spacing:1px; text-transform:uppercase; text-decoration:none; color:#555; background:#fff; border:1px solid #ddd; border-radius:5px; padding:6px 12px;}
 </style>
 </head>
 <body>
 
+<div class="backbar"><a href="./index.html">&#8249; All apps</a></div>
+
 <header>
-<h1>Chatter<span>.calc</span> · Tune</h1>
-<div class="sub" id="sub">in-cut spectrum → RPM</div>
+  <h1>Chatter<span>.calc</span> · Tune</h1>
+  <div class="sub" id="sub">in-cut spectrum → RPM</div>
 </header>
 
 <div class="card controls">
-<button id="rec" class="btn rec">Record</button>
-<button id="demo" class="btn ghost">Demo</button>
-<label class="f">rpm<input id="rpm" type="number" value="4000" min="100" step="100"></label>
-<label class="f">flutes<input id="flutes" type="number" value="4" min="1" max="12" step="1"></label>
-<label class="f">tap f<input id="fn" type="number" value="0" min="0" step="10"> Hz</label>
-<div class="spacer"></div>
-<div class="stat" id="stat">idle</div>
+  <button id="rec" class="btn rec">Record</button>
+  <button id="demo" class="btn ghost">Demo</button>
+  <label class="f">rpm<input id="rpm" type="number" value="4000" min="100" step="100"></label>
+  <label class="f">flutes<input id="flutes" type="number" value="4" min="1" max="12" step="1"></label>
+  <label class="f">tap f<input id="fn" type="number" value="0" min="0" step="10"> Hz</label>
+  <div class="spacer"></div>
+  <div class="stat" id="stat">idle</div>
 </div>
 
 <div class="card specwrap">
-<canvas id="spec"></canvas>
+  <canvas id="spec"></canvas>
 </div>
 
 <div class="card result">
-<div class="rgrid">
-<div class="rb fc"><span class="k">chatter f꜀</span><span class="v" id="vFc">—</span></div>
-<div class="rb"><span class="k">tap f<small>ₙ</small></span><span class="v" id="vFn">—</span></div>
-<div class="rb shift"><span class="k">in-cut shift</span><span class="v" id="vShift">—</span></div>
-<div class="rb"><span class="k">at current rpm</span><span class="v" id="vWpt">—</span></div>
-</div>
-<div class="interp" id="interp">Start a cut (or tap Demo). Enter your spindle rpm and flutes so the tooth-passing peaks can be masked; enter the tap-test natural frequency to anchor the search.</div>
-<div class="chips" id="chips"></div>
-<div class="chips">
-<a id="toLobes" class="btn lobes" href="#" style="display:none">Open in Lobes →</a>
-<button id="clearPick" class="btn ghost" style="display:none">Clear pick</button>
-</div>
+  <div class="rgrid">
+    <div class="rb fc"><span class="k">chatter f꜀</span><span class="v" id="vFc">—</span></div>
+    <div class="rb"><span class="k">tap f<small>ₙ</small></span><span class="v" id="vFn">—</span></div>
+    <div class="rb shift"><span class="k">in-cut shift</span><span class="v" id="vShift">—</span></div>
+    <div class="rb"><span class="k">at current rpm</span><span class="v" id="vWpt">—</span></div>
+  </div>
+  <div class="interp" id="interp">Start a cut (or tap Demo). Enter your spindle rpm and flutes so the tooth-passing peaks can be masked; enter the tap-test natural frequency to anchor the search.</div>
+  <div class="chips" id="chips"></div>
 </div>
 
 <footer id="foot">
-Grey bands = tooth-passing harmonics (masked). Dashed line = tap-test fₙ. Red dot = the strongest peak that is NOT rotation-locked — the in-cut chatter frequency. <b>Tap anywhere on the chart to pick a peak yourself</b> (green) — pocket speeds and <b>Open in Lobes</b> follow your pick; tap the marker again to clear it. Pocket speeds put a whole number of vibration waves between tooth passes.
+  Grey bands = tooth-passing harmonics (masked). Dashed line = tap-test fₙ. Red dot = the strongest peak that is NOT rotation-locked — the in-cut chatter frequency. Pocket speeds put a whole number of vibration waves between tooth passes.
 </footer>
 
 <script>
 "use strict";
 /* Chatter.calc — live-FFT RPM tuner.
-In a cut, the spectrum is dominated by tooth-passing harmonics (k·Z·f_rev).
-Mask those and the chatter tone near the tool's natural mode stands out —
-but shifted up from the bench tap test by dynamic stiffness. From that real
-in-cut frequency f_c, the most stable spindle speeds are the ones that fit a
-whole number of vibration waves into each tooth pass: n = 60·f_c/(Z·k).
-v2: tap the chart to pick a peak manually (Markus request, 2026-06-12) —
-the pick (green) overrides the auto-detected f_c for the pocket-speed chips
-and feeds an Open in Lobes link (chatter-lobes.html?fn1=picked). Picking a
-grey rotation-locked band warns instead of recommending. */
+   In a cut, the spectrum is dominated by tooth-passing harmonics (k·Z·f_rev).
+   Mask those and the chatter tone near the tool's natural mode stands out —
+   but shifted up from the bench tap test by dynamic stiffness. From that real
+   in-cut frequency f_c, the most stable spindle speeds are the ones that fit a
+   whole number of vibration waves into each tooth pass: n = 60·f_c/(Z·k).      */
 
 const $ = id => document.getElementById(id);
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const ui = { rec:$('rec'), demo:$('demo'), rpm:$('rpm'), flutes:$('flutes'), fn:$('fn'),
-stat:$('stat'), sub:$('sub'), spec:$('spec'),
-vFc:$('vFc'), vFn:$('vFn'), vShift:$('vShift'), vWpt:$('vWpt'), interp:$('interp'), chips:$('chips'),
-toLobes:$('toLobes'), clearPick:$('clearPick') };
+  stat:$('stat'), sub:$('sub'), spec:$('spec'),
+  vFc:$('vFc'), vFn:$('vFn'), vShift:$('vShift'), vWpt:$('vWpt'), interp:$('interp'), chips:$('chips') };
 
 const FFTSIZE = 8192, HALF = FFTSIZE/2, HOP = 2048;
 let SR = 44100;
 const ring = new Float32Array(FFTSIZE); let rpos = 0, hopCount = 0;
 const reB = new Float32Array(FFTSIZE), imB = new Float32Array(FFTSIZE), hann = new Float32Array(FFTSIZE);
 for (let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
-const Pema = new Float32Array(HALF); // time-averaged power spectrum
+const Pema = new Float32Array(HALF);          // time-averaged power spectrum
 let haveData = false;
-let manualFc = null; // user-picked frequency (Hz); overrides auto f_c
 
 // latest analysis result (for render + DOM)
 let R = { fHi:4000, binHz:SR/FFTSIZE, masked:new Uint8Array(HALF), ftp:0, frev:0,
-fc:0, fcDb:0, prominence:0, stable:true, fn:0, suggestions:[], wptCur:0 };
+          fc:0, fcDb:0, prominence:0, stable:true, fn:0, suggestions:[], wptCur:0 };
 
 function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
-for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+ for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
 
 function median(a){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
 
-/*TUNECORE-START*/
 // pocket speeds: n = 60·f_c/(Z·k); k* is the integer nearest the current operation
 function suggestRPM(fc, Z, nCur){
-if(!(fc>0)||!(Z>0)||!(nCur>0)) return {list:[],wptCur:0,kStar:0};
-const wptCur = 60*fc/(Z*nCur); // waves per tooth right now (non-integer = off-pocket)
-const kStar = Math.max(1, Math.round(wptCur));
-const list=[];
-for(let k=kStar-2;k<=kStar+2;k++){ if(k<1)continue; const n=60*fc/(Z*k);
-if(n<300||n>40000)continue; list.push({k, n, pick:k===kStar}); }
-list.sort((a,b)=>a.n-b.n);
-return {list, wptCur, kStar};
+  if(!(fc>0)||!(Z>0)||!(nCur>0)) return {list:[],wptCur:0,kStar:0};
+  const wptCur = 60*fc/(Z*nCur);                 // waves per tooth right now (non-integer = off-pocket)
+  const kStar = Math.max(1, Math.round(wptCur));
+  const list=[];
+  for(let k=kStar-2;k<=kStar+2;k++){ if(k<1)continue; const n=60*fc/(Z*k);
+    if(n<300||n>40000)continue; list.push({k, n, pick:k===kStar}); }
+  list.sort((a,b)=>a.n-b.n);
+  return {list, wptCur, kStar};
 }
-
-// is f inside a tooth-passing mask band? (same tolerance the mask uses)
-function maskedAtF(f, ftp, fHi){
-if(!(ftp>0)||!(f>0)) return false;
-for(let m=1; m*ftp < fHi*1.05; m++){
-const fm=m*ftp;
-if(Math.abs(f-fm) <= Math.max(10,0.012*fm)) return true;
-}
-return false;
-}
-/*TUNECORE-END*/
-
-/*PICKCORE-START*/
-/* Snap a user tap to a spectral peak. arr is a power spectrum starting at
-bin lk; [fLo,fHi] is the touch window in Hz. Finds the strongest bin in
-the window, hill-climbs to the nearest local maximum (may exit the
-window), then refines with parabolic interpolation. Returns Hz or null. */
-function pickPeak(arr, lk, binHz, fLo, fHi){
-const n=arr.length;
-let i0=Math.round(fLo/binHz)-lk, i1=Math.round(fHi/binHz)-lk;
-i0=Math.max(0,Math.min(n-1,i0)); i1=Math.max(0,Math.min(n-1,i1));
-if(i1<i0) return null;
-let bi=i0;
-for(let i=i0;i<=i1;i++) if(arr[i]>arr[bi]) bi=i;
-while(bi>0 && arr[bi-1]>arr[bi]) bi--;
-while(bi<n-1 && arr[bi+1]>arr[bi]) bi++;
-let off=0;
-if(bi>0 && bi<n-1){
-const a=arr[bi-1],b=arr[bi],c=arr[bi+1],dd=a-2*b+c;
-if(dd!==0) off=Math.max(-0.5,Math.min(0.5,0.5*(a-c)/dd));
-}
-return (lk+bi+off)*binHz;
-}
-/*PICKCORE-END*/
 
 function analyse(){
-for(let i=0;i<FFTSIZE;i++){ reB[i]=ring[(rpos+i)%FFTSIZE]*hann[i]; imB[i]=0; }
-fft(reB,imB);
-const binHz = SR/FFTSIZE;
-for(let k=0;k<HALF;k++){ const p=reB[k]*reB[k]+imB[k]*imB[k]; Pema[k]=haveData?(0.75*Pema[k]+0.25*p):p; }
-haveData = true;
+  for(let i=0;i<FFTSIZE;i++){ reB[i]=ring[(rpos+i)%FFTSIZE]*hann[i]; imB[i]=0; }
+  fft(reB,imB);
+  const binHz = SR/FFTSIZE;
+  for(let k=0;k<HALF;k++){ const p=reB[k]*reB[k]+imB[k]*imB[k]; Pema[k]=haveData?(0.75*Pema[k]+0.25*p):p; }
+  haveData = true;
 
-const rpm=Math.max(1,parseFloat(ui.rpm.value)||0), Z=Math.max(1,parseInt(ui.flutes.value)||1), fn=Math.max(0,parseFloat(ui.fn.value)||0);
-const frev=rpm/60, ftp=Z*frev;
-const fHi=Math.min(SR/2, Math.max(3500, (fn>0?fn*1.7:4000)));
-const hiK=Math.min(HALF-1, Math.floor(fHi/binHz));
+  const rpm=Math.max(1,parseFloat(ui.rpm.value)||0), Z=Math.max(1,parseInt(ui.flutes.value)||1), fn=Math.max(0,parseFloat(ui.fn.value)||0);
+  const frev=rpm/60, ftp=Z*frev;
+  const fHi=Math.min(SR/2, Math.max(3500, (fn>0?fn*1.7:4000)));
+  const hiK=Math.min(HALF-1, Math.floor(fHi/binHz));
 
-// mask tooth-passing harmonics (k·Z·f_rev); width scales with frequency to absorb rpm error under load
-const masked=new Uint8Array(HALF);
-for(let m=1; m*ftp < fHi*1.05; m++){ const f=m*ftp, tol=Math.max(10,0.012*f); const c=Math.round(f/binHz), w=Math.max(1,Math.round(tol/binHz));
-for(let d=-w;d<=w;d++){ const b=c+d; if(b>=0&&b<HALF) masked[b]=1; } }
+  // mask tooth-passing harmonics (k·Z·f_rev); width scales with frequency to absorb rpm error under load
+  const masked=new Uint8Array(HALF);
+  for(let m=1; m*ftp < fHi*1.05; m++){ const f=m*ftp, tol=Math.max(10,0.012*f); const c=Math.round(f/binHz), w=Math.max(1,Math.round(tol/binHz));
+    for(let d=-w;d<=w;d++){ const b=c+d; if(b>=0&&b<HALF) masked[b]=1; } }
 
-// search window: the in-cut version of the tapped mode (shifted up a little). Without fn, scan broadly.
-const sLo=Math.max(60, fn>0?fn*0.55:120), sHi=Math.min(fHi, fn>0?fn*1.7:fHi);
-const loK=Math.floor(sLo/binHz), hK=Math.min(hiK,Math.floor(sHi/binHz));
+  // search window: the in-cut version of the tapped mode (shifted up a little). Without fn, scan broadly.
+  const sLo=Math.max(60, fn>0?fn*0.55:120), sHi=Math.min(fHi, fn>0?fn*1.7:fHi);
+  const loK=Math.floor(sLo/binHz), hK=Math.min(hiK,Math.floor(sHi/binHz));
 
-// floor from unmasked bins in the search window
-const um=[]; for(let k=loK;k<=hK;k++){ if(!masked[k]) um.push(Pema[k]); }
-const med=median(um)||1e-12;
+  // floor from unmasked bins in the search window
+  const um=[]; for(let k=loK;k<=hK;k++){ if(!masked[k]) um.push(Pema[k]); }
+  const med=median(um)||1e-12;
 
-// strongest unmasked local-max
-let bk=-1,bp=0;
-for(let k=Math.max(loK,2);k<=Math.min(hK,HALF-2);k++){
-if(masked[k]) continue;
-if(Pema[k]>=Pema[k-1] && Pema[k]>=Pema[k+1] && Pema[k]>bp){ bp=Pema[k]; bk=k; }
-}
-let fc=0,prom=0,fcDb=-60;
-if(bk>0){
-let off=0; const a=Pema[bk-1],b=Pema[bk],c=Pema[bk+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd;
-fc=(bk+off)*binHz; prom=bp/med;
-}
-const stable = !(prom>6 && bk>0); // need a clear non-synchronous peak to call it chatter
+  // strongest unmasked local-max
+  let bk=-1,bp=0;
+  for(let k=Math.max(loK,2);k<=Math.min(hK,HALF-2);k++){
+    if(masked[k]) continue;
+    if(Pema[k]>=Pema[k-1] && Pema[k]>=Pema[k+1] && Pema[k]>bp){ bp=Pema[k]; bk=k; }
+  }
+  let fc=0,prom=0,fcDb=-60;
+  if(bk>0){
+    let off=0; const a=Pema[bk-1],b=Pema[bk],c=Pema[bk+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd;
+    fc=(bk+off)*binHz; prom=bp/med;
+  }
+  const stable = !(prom>6 && bk>0);             // need a clear non-synchronous peak to call it chatter
 
-// dB scale relative to the peak in view
-let maxP=1e-12; for(let k=2;k<=hiK;k++) maxP=Math.max(maxP,Pema[k]);
-if(bk>0) fcDb=10*Math.log10(bp/maxP+1e-12);
+  // dB scale relative to the peak in view
+  let maxP=1e-12; for(let k=2;k<=hiK;k++) maxP=Math.max(maxP,Pema[k]);
+  if(bk>0) fcDb=10*Math.log10(bp/maxP+1e-12);
 
-const sug = stable ? {list:[],wptCur:0,kStar:0} : suggestRPM(fc,Z,rpm);
+  const sug = stable ? {list:[],wptCur:0,kStar:0} : suggestRPM(fc,Z,rpm);
 
-R={ fHi, binHz, masked, ftp, frev, fc, fcDb, prominence:prom, stable, fn, maxP,
-suggestions:sug.list, wptCur:sug.wptCur, kStar:sug.kStar, rpm, Z };
-dirty=true;
+  R={ fHi, binHz, masked, ftp, frev, fc, fcDb, prominence:prom, stable, fn, maxP,
+      suggestions:sug.list, wptCur:sug.wptCur, kStar:sug.kStar, rpm, Z };
+  dirty=true;
 }
 
 // ── spectrum render ──
 let dpr=1, dirty=true;
 function sizeCanvas(){ dpr=Math.min(window.devicePixelRatio||1,2); const c=ui.spec;
-c.width=Math.round((c.clientWidth||320)*dpr); c.height=Math.round((c.clientHeight||220)*dpr); dirty=true; }
+  c.width=Math.round((c.clientWidth||320)*dpr); c.height=Math.round((c.clientHeight||220)*dpr); dirty=true; }
 function drawSpec(){
-const c=ui.spec.getContext('2d'), W=ui.spec.width, H=ui.spec.height; c.clearRect(0,0,W,H);
-const xL=30*dpr, xR=W-6*dpr, yT=8*dpr, yB=H-16*dpr, binHz=R.binHz, fHi=R.fHi;
-const xOf=f=>xL+(f/fHi)*(xR-xL);
-const DBMIN=-60, yOf=db=>yB-((Math.max(DBMIN,db)-DBMIN)/(0-DBMIN))*(yB-yT);
+  const c=ui.spec.getContext('2d'), W=ui.spec.width, H=ui.spec.height; c.clearRect(0,0,W,H);
+  const xL=30*dpr, xR=W-6*dpr, yT=8*dpr, yB=H-16*dpr, binHz=R.binHz, fHi=R.fHi;
+  const xOf=f=>xL+(f/fHi)*(xR-xL);
+  const DBMIN=-60, yOf=db=>yB-((Math.max(DBMIN,db)-DBMIN)/(0-DBMIN))*(yB-yT);
 
-// mask bands (tooth-passing)
-if(R.ftp>0){ c.fillStyle=cv('--mask');
-for(let m=1; m*R.ftp<fHi; m++){ const f=m*R.ftp, tol=Math.max(10,0.012*f); const x0=xOf(f-tol),x1=xOf(f+tol);
-c.fillRect(x0,yT,Math.max(1.5*dpr,x1-x0),yB-yT); } }
+  // mask bands (tooth-passing)
+  if(R.ftp>0){ c.fillStyle=cv('--mask');
+    for(let m=1; m*R.ftp<fHi; m++){ const f=m*R.ftp, tol=Math.max(10,0.012*f); const x0=xOf(f-tol),x1=xOf(f+tol);
+      c.fillRect(x0,yT,Math.max(1.5*dpr,x1-x0),yB-yT); } }
 
-// grid + freq ticks
-c.strokeStyle=cv('--grid'); c.lineWidth=1*dpr; c.fillStyle=cv('--muted');
-c.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='top'; c.textAlign='center';
-const step = fHi>5000?2000:1000;
-for(let f=0; f<=fHi; f+=step){ const x=xOf(f); c.beginPath(); c.moveTo(x,yT); c.lineTo(x,yB); c.stroke();
-c.fillText((f>=1000?(f/1000)+'k':f), x, yB+3*dpr); }
-// dB gridlines
-c.textAlign='right'; c.textBaseline='middle';
-for(let db=0; db>=-60; db-=20){ const y=yOf(db); c.strokeStyle=cv('--grid');
-c.beginPath(); c.moveTo(xL,y); c.lineTo(xR,y); c.stroke(); c.fillStyle=cv('--muted'); c.fillText(db, xL-3*dpr, y); }
+  // grid + freq ticks
+  c.strokeStyle=cv('--grid'); c.lineWidth=1*dpr; c.fillStyle=cv('--muted');
+  c.font='600 '+Math.round(9.5*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='top'; c.textAlign='center';
+  const step = fHi>5000?2000:1000;
+  for(let f=0; f<=fHi; f+=step){ const x=xOf(f); c.beginPath(); c.moveTo(x,yT); c.lineTo(x,yB); c.stroke();
+    c.fillText((f>=1000?(f/1000)+'k':f), x, yB+3*dpr); }
+  // dB gridlines
+  c.textAlign='right'; c.textBaseline='middle';
+  for(let db=0; db>=-60; db-=20){ const y=yOf(db); c.strokeStyle=cv('--grid');
+    c.beginPath(); c.moveTo(xL,y); c.lineTo(xR,y); c.stroke(); c.fillStyle=cv('--muted'); c.fillText(db, xL-3*dpr, y); }
 
-if(!haveData){ c.fillStyle=cv('--grid2'); c.textAlign='center'; c.fillText('—', (xL+xR)/2,(yT+yB)/2); return; }
+  if(!haveData){ c.fillStyle=cv('--grid2'); c.textAlign='center'; c.fillText('—', (xL+xR)/2,(yT+yB)/2); return; }
 
-// spectrum line (dB) with fill
-c.beginPath(); let started=false;
-const hiK=Math.min(HALF-1,Math.floor(fHi/binHz));
-for(let k=1;k<=hiK;k++){ const f=k*binHz, db=10*Math.log10(Pema[k]/R.maxP+1e-12), x=xOf(f), y=yOf(db);
-if(!started){ c.moveTo(x,y); started=true; } else c.lineTo(x,y); }
-c.lineTo(xOf(hiK*binHz),yB); c.lineTo(xOf(binHz),yB); c.closePath();
-c.fillStyle='rgba(245,197,24,0.14)'; c.fill();
-c.beginPath(); started=false;
-for(let k=1;k<=hiK;k++){ const f=k*binHz, db=10*Math.log10(Pema[k]/R.maxP+1e-12), x=xOf(f), y=yOf(db);
-if(!started){ c.moveTo(x,y); started=true; } else c.lineTo(x,y); }
-c.strokeStyle=cv('--yellow-ink'); c.lineWidth=1.4*dpr; c.lineJoin='round'; c.stroke();
+  // spectrum line (dB) with fill
+  c.beginPath(); let started=false;
+  const hiK=Math.min(HALF-1,Math.floor(fHi/binHz));
+  for(let k=1;k<=hiK;k++){ const f=k*binHz, db=10*Math.log10(Pema[k]/R.maxP+1e-12), x=xOf(f), y=yOf(db);
+    if(!started){ c.moveTo(x,y); started=true; } else c.lineTo(x,y); }
+  c.lineTo(xOf(hiK*binHz),yB); c.lineTo(xOf(binHz),yB); c.closePath();
+  c.fillStyle='rgba(245,197,24,0.14)'; c.fill();
+  c.beginPath(); started=false;
+  for(let k=1;k<=hiK;k++){ const f=k*binHz, db=10*Math.log10(Pema[k]/R.maxP+1e-12), x=xOf(f), y=yOf(db);
+    if(!started){ c.moveTo(x,y); started=true; } else c.lineTo(x,y); }
+  c.strokeStyle=cv('--yellow-ink'); c.lineWidth=1.4*dpr; c.lineJoin='round'; c.stroke();
 
-// tap-test fn reference line
-if(R.fn>0 && R.fn<fHi){ const x=xOf(R.fn); c.strokeStyle=cv('--ink'); c.lineWidth=1.2*dpr; c.setLineDash([4*dpr,3*dpr]);
-c.beginPath(); c.moveTo(x,yT); c.lineTo(x,yB); c.stroke(); c.setLineDash([]);
-c.fillStyle=cv('--ink'); c.textAlign='center'; c.textBaseline='top'; c.font='700 '+Math.round(10*dpr)+'px -apple-system,Helvetica,Arial';
-c.fillText('fₙ '+Math.round(R.fn), x, yT+1*dpr); }
+  // tap-test fn reference line
+  if(R.fn>0 && R.fn<fHi){ const x=xOf(R.fn); c.strokeStyle=cv('--ink'); c.lineWidth=1.2*dpr; c.setLineDash([4*dpr,3*dpr]);
+    c.beginPath(); c.moveTo(x,yT); c.lineTo(x,yB); c.stroke(); c.setLineDash([]);
+    c.fillStyle=cv('--ink'); c.textAlign='center'; c.textBaseline='top'; c.font='700 '+Math.round(10*dpr)+'px -apple-system,Helvetica,Arial';
+    c.fillText('fₙ '+Math.round(R.fn), x, yT+1*dpr); }
 
-// chatter peak marker (auto)
-if(!R.stable && R.fc>0 && R.fc<fHi){ const x=xOf(R.fc), y=yOf(R.fcDb);
-c.fillStyle=cv('--red'); c.beginPath(); c.arc(x,y,4.5*dpr,0,2*Math.PI); c.fill();
-c.font='800 '+Math.round(11*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='bottom';
-c.textAlign = x>xR-60*dpr?'right':'left';
-c.fillText(Math.round(R.fc)+' Hz', x+(x>xR-60*dpr?-7*dpr:7*dpr), y-5*dpr); }
-
-// picked peak marker (manual, green)
-if(manualFc!=null && manualFc>0 && manualFc<fHi){
-const k=Math.max(1,Math.min(HALF-1,Math.round(manualFc/binHz)));
-const db=10*Math.log10(Pema[k]/R.maxP+1e-12);
-const x=xOf(manualFc), y=yOf(db);
-c.strokeStyle=cv('--green'); c.lineWidth=1.2*dpr; c.setLineDash([3*dpr,3*dpr]);
-c.beginPath(); c.moveTo(x,yT); c.lineTo(x,yB); c.stroke(); c.setLineDash([]);
-c.fillStyle=cv('--green'); c.beginPath(); c.arc(x,y,4.5*dpr,0,2*Math.PI); c.fill();
-c.font='800 '+Math.round(11*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='bottom';
-c.textAlign = x>xR-80*dpr?'right':'left';
-c.fillText('picked '+Math.round(manualFc)+' Hz', x+(x>xR-80*dpr?-7*dpr:7*dpr), y-6*dpr);
-}
+  // chatter peak marker
+  if(!R.stable && R.fc>0 && R.fc<fHi){ const x=xOf(R.fc), y=yOf(R.fcDb);
+    c.fillStyle=cv('--red'); c.beginPath(); c.arc(x,y,4.5*dpr,0,2*Math.PI); c.fill();
+    c.font='800 '+Math.round(11*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='bottom';
+    c.textAlign = x>xR-60*dpr?'right':'left';
+    c.fillText(Math.round(R.fc)+' Hz', x+(x>xR-60*dpr?-7*dpr:7*dpr), y-5*dpr); }
 }
 
 function updateDOM(){
-ui.vFn.innerHTML = R.fn>0 ? Math.round(R.fn)+'<small> Hz</small>' : '<small>—</small>';
-const Z=Math.max(1,parseInt(ui.flutes.value)||1), rpmNow=Math.max(1,parseFloat(ui.rpm.value)||0);
-const eff = manualFc!=null ? manualFc : ((!R.stable && R.fc>0) ? R.fc : 0);
-ui.clearPick.style.display = manualFc!=null ? '' : 'none';
-ui.vFc.classList.toggle('picked', manualFc!=null);
-if(!(eff>0)){
-ui.vFc.innerHTML='<small>none</small>'; ui.vShift.innerHTML='<small>—</small>'; ui.vWpt.innerHTML='<small>—</small>';
-ui.interp.className='interp stable';
-ui.interp.textContent = haveData ? 'No dominant non-synchronous peak — the cut looks stable at this rpm. You’re already inside a pocket; nothing to correct. You can still tap the chart to pick a peak yourself.' : ui.interp.textContent;
-ui.chips.innerHTML='';
-ui.toLobes.style.display='none';
-return;
-}
-const sug = manualFc!=null ? suggestRPM(eff,Z,rpmNow) : {list:R.suggestions, wptCur:R.wptCur, kStar:R.kStar};
-ui.vFc.innerHTML = Math.round(eff)+'<small> Hz'+(manualFc!=null?' · picked':'')+'</small>';
-if(R.fn>0){ const d=eff-R.fn; ui.vShift.innerHTML=(d>=0?'+':'')+Math.round(d)+'<small> Hz</small>'; }
-else ui.vShift.innerHTML='<small>set fₙ</small>';
-ui.vWpt.innerHTML = sug.wptCur.toFixed(2)+'<small> waves/tooth</small>';
+  ui.vFn.innerHTML = R.fn>0 ? Math.round(R.fn)+'<small> Hz</small>' : '<small>—</small>';
+  if(R.stable || !(R.fc>0)){
+    ui.vFc.innerHTML='<small>none</small>'; ui.vShift.innerHTML='<small>—</small>'; ui.vWpt.innerHTML='<small>—</small>';
+    ui.interp.className='interp stable';
+    ui.interp.textContent = haveData ? 'No dominant non-synchronous peak — the cut looks stable at this rpm. You’re already inside a pocket; nothing to correct.' : ui.interp.textContent;
+    ui.chips.innerHTML=''; return;
+  }
+  ui.vFc.innerHTML = Math.round(R.fc)+'<small> Hz</small>';
+  if(R.fn>0){ const d=R.fc-R.fn; ui.vShift.innerHTML=(d>=0?'+':'')+Math.round(d)+'<small> Hz</small>'; }
+  else ui.vShift.innerHTML='<small>set fₙ</small>';
+  ui.vWpt.innerHTML = R.wptCur.toFixed(2)+'<small> waves/tooth</small>';
 
-const pick=sug.list.find(s=>s.pick);
-let txt='';
-if(manualFc!=null){
-txt = 'Picked '+Math.round(eff)+' Hz. ';
-if(maskedAtF(eff, R.ftp, R.fHi)) txt += 'Warning: this peak is rotation-locked (a tooth-passing harmonic) — pocket speeds from it are not meaningful; pick a peak outside the grey bands. ';
-txt += 'At '+sug.wptCur.toFixed(2)+' waves per tooth pass. ';
-} else {
-txt = 'You’re at '+sug.wptCur.toFixed(2)+' waves per tooth pass — between pockets, which is why it chatters. ';
-}
-if(pick) txt+='Nearest pocket is k='+pick.k+' → '+Math.round(pick.n)+' rpm. Higher k = lower rpm (safer); lower k = higher rpm (deeper pocket). Re-measure after the change and converge.';
-ui.interp.className='interp'; ui.interp.textContent=txt;
+  const pick=R.suggestions.find(s=>s.pick);
+  let txt='You’re at '+R.wptCur.toFixed(2)+' waves per tooth pass — between pockets, which is why it chatters. ';
+  if(pick) txt+='Nearest pocket is k='+pick.k+' → '+Math.round(pick.n)+' rpm. Higher k = lower rpm (safer); lower k = higher rpm (deeper pocket). Re-measure after the change and converge.';
+  ui.interp.className='interp'; ui.interp.textContent=txt;
 
-ui.chips.innerHTML='';
-for(const s of sug.list){ const el=document.createElement('div'); el.className='chip'+(s.pick?' pick':'');
-const dir = s.n>rpmNow?'↑':(s.n<rpmNow?'↓':'·');
-el.innerHTML='<small>k='+s.k+'</small> <span class="rpm">'+Math.round(s.n)+'</span> <small>rpm '+dir+'</small>';
-ui.chips.appendChild(el); }
-
-ui.toLobes.href = 'chatter-lobes.html?fn1='+Math.round(eff);
-ui.toLobes.style.display='inline-block';
+  ui.chips.innerHTML='';
+  for(const s of R.suggestions){ const el=document.createElement('div'); el.className='chip'+(s.pick?' pick':'');
+    const dir = s.n>R.rpm?'↑':(s.n<R.rpm?'↓':'·');
+    el.innerHTML='<small>k='+s.k+'</small> <span class="rpm">'+Math.round(s.n)+'</span> <small>rpm '+dir+'</small>';
+    ui.chips.appendChild(el); }
 }
 
 function render(){ if(dirty){ drawSpec(); updateDOM(); dirty=false; } requestAnimationFrame(render); }
-
-// ── manual peak picking ──
-ui.spec.addEventListener('pointerdown', e=>{
-if(!haveData) return;
-const rect=ui.spec.getBoundingClientRect();
-const xDev=(e.clientX-rect.left)*dpr;
-const W=ui.spec.width, xL=30*dpr, xR=W-6*dpr;
-if(xDev<xL-8*dpr || xDev>xR+8*dpr) return;
-const fAt=x=>(Math.max(xL,Math.min(xR,x))-xL)/(xR-xL)*R.fHi;
-// tap on the existing marker clears it
-if(manualFc!=null){
-const xm=xL+(manualFc/R.fHi)*(xR-xL);
-if(Math.abs(xm-xDev)<=14*dpr){ manualFc=null; dirty=true; return; }
-}
-const binHz=R.binHz, hiK=Math.min(HALF-2,Math.floor(R.fHi/binHz));
-const fA=Math.max(binHz, fAt(xDev-16*dpr)), fB=Math.min(hiK*binHz, fAt(xDev+16*dpr));
-const p=pickPeak(Pema.subarray(0,hiK+1), 0, binHz, fA, fB);
-if(p!=null && p>0){ manualFc=p; dirty=true; }
-});
-ui.clearPick.addEventListener('click', ()=>{ manualFc=null; dirty=true; });
 
 // ── feed ──
 function feed(s){ ring[rpos++]=s; if(rpos>=FFTSIZE)rpos=0; if(++hopCount>=HOP){ hopCount=0; analyse(); } }
@@ -374,44 +281,44 @@ function feed(s){ ring[rpos++]=s; if(rpos>=FFTSIZE)rpos=0; if(++hopCount>=HOP){ 
 // ── live mic ──
 let ctx=null,stream=null,srcNode=null,capNode=null,scriptNode=null,silent=null,recording=false;
 async function startLive(){
-ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume(); SR=ctx.sampleRate; R.binHz=SR/FFTSIZE;
-stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});
-srcNode=ctx.createMediaStreamSource(stream); silent=ctx.createGain(); silent.gain.value=0; silent.connect(ctx.destination);
-if(ctx.audioWorklet){
-const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
-const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await ctx.audioWorklet.addModule(url);
-capNode=new AudioWorkletNode(ctx,'cap'); capNode.port.onmessage=e=>{const f=e.data;for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(capNode); capNode.connect(silent);
-} else { scriptNode=ctx.createScriptProcessor(2048,1,1); scriptNode.onaudioprocess=e=>{const f=e.inputBuffer.getChannelData(0);for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(scriptNode); scriptNode.connect(silent); }
+  ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume(); SR=ctx.sampleRate; R.binHz=SR/FFTSIZE;
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});
+  srcNode=ctx.createMediaStreamSource(stream); silent=ctx.createGain(); silent.gain.value=0; silent.connect(ctx.destination);
+  if(ctx.audioWorklet){
+    const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
+    const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await ctx.audioWorklet.addModule(url);
+    capNode=new AudioWorkletNode(ctx,'cap'); capNode.port.onmessage=e=>{const f=e.data;for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(capNode); capNode.connect(silent);
+  } else { scriptNode=ctx.createScriptProcessor(2048,1,1); scriptNode.onaudioprocess=e=>{const f=e.inputBuffer.getChannelData(0);for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(scriptNode); scriptNode.connect(silent); }
 }
 function stopLive(){ try{if(capNode){capNode.port.onmessage=null;capNode.disconnect();}}catch(e){} try{if(scriptNode){scriptNode.onaudioprocess=null;scriptNode.disconnect();}}catch(e){}
-try{if(srcNode)srcNode.disconnect();}catch(e){} try{if(silent)silent.disconnect();}catch(e){} try{if(stream)stream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(ctx)ctx.close();}catch(e){}
-ctx=stream=srcNode=capNode=scriptNode=silent=null; }
+  try{if(srcNode)srcNode.disconnect();}catch(e){} try{if(silent)silent.disconnect();}catch(e){} try{if(stream)stream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(ctx)ctx.close();}catch(e){}
+  ctx=stream=srcNode=capNode=scriptNode=silent=null; }
 
 ui.rec.onclick=async()=>{
-if(!recording){ haveData=false; Pema.fill(0); rpos=0; hopCount=0; manualFc=null;
-try{ await startLive(); }catch(err){ ui.stat.textContent='mic error: '+(err.name||'?'); return; }
-recording=true; ui.rec.textContent='Stop'; ui.demo.disabled=true; ui.stat.textContent='● listening…'; ui.sub.textContent='live'; }
-else { recording=false; stopLive(); ui.rec.textContent='Record'; ui.demo.disabled=false; ui.stat.textContent='stopped'; }
+  if(!recording){ haveData=false; Pema.fill(0); rpos=0; hopCount=0;
+    try{ await startLive(); }catch(err){ ui.stat.textContent='mic error: '+(err.name||'?'); return; }
+    recording=true; ui.rec.textContent='Stop'; ui.demo.disabled=true; ui.stat.textContent='● listening…'; ui.sub.textContent='live'; }
+  else { recording=false; stopLive(); ui.rec.textContent='Record'; ui.demo.disabled=false; ui.stat.textContent='stopped'; }
 };
 
 // ── demo: synthesize an in-cut spectrum (4-flute @ 4000 rpm) chattering near a tapped mode ──
 ui.demo.onclick=()=>{
-if(recording) return;
-SR=44100; R.binHz=SR/FFTSIZE; haveData=false; Pema.fill(0); rpos=0; hopCount=0; manualFc=null;
-ui.rpm.value=4000; ui.flutes.value=4; ui.fn.value=1100;
-ui.stat.textContent='building demo…';
-setTimeout(()=>{ buildDemo(); ui.stat.textContent='demo · chatter near tapped mode'; ui.sub.textContent='demo'; dirty=true; },20);
+  if(recording) return;
+  SR=44100; R.binHz=SR/FFTSIZE; haveData=false; Pema.fill(0); rpos=0; hopCount=0;
+  ui.rpm.value=4000; ui.flutes.value=4; ui.fn.value=1100;
+  ui.stat.textContent='building demo…';
+  setTimeout(()=>{ buildDemo(); ui.stat.textContent='demo · chatter near tapped mode'; ui.sub.textContent='demo'; dirty=true; },20);
 };
 function buildDemo(){
-const rpm=4000, Z=4, frev=rpm/60, ftp=Z*frev; // ftp ≈ 266.7 Hz
-const fc=1217; // in-cut chatter (above the 1100 Hz bench mode)
-const N=FFTSIZE*3; // a few buffers so the EMA settles
-for(let n=0;n<N;n++){ const t=n/SR; let v=0;
-for(let m=1;m*ftp<6000;m++){ v += (0.9/m)*Math.sin(2*Math.PI*m*ftp*t); } // tooth-passing comb (decaying)
-v += 0.10*Math.sin(2*Math.PI*frev*t) + 0.07*Math.sin(2*Math.PI*2*frev*t); // runout (once-per-rev)
-v += 0.85*Math.sin(2*Math.PI*fc*t); // the chatter tone
-v += 0.05*(Math.random()*2-1); // broadband floor
-feed(v); }
+  const rpm=4000, Z=4, frev=rpm/60, ftp=Z*frev;   // ftp ≈ 266.7 Hz
+  const fc=1217;                                    // in-cut chatter (above the 1100 Hz bench mode)
+  const N=FFTSIZE*3;                                // a few buffers so the EMA settles
+  for(let n=0;n<N;n++){ const t=n/SR; let v=0;
+    for(let m=1;m*ftp<6000;m++){ v += (0.9/m)*Math.sin(2*Math.PI*m*ftp*t); }      // tooth-passing comb (decaying)
+    v += 0.10*Math.sin(2*Math.PI*frev*t) + 0.07*Math.sin(2*Math.PI*2*frev*t);     // runout (once-per-rev)
+    v += 0.85*Math.sin(2*Math.PI*fc*t);                                            // the chatter tone
+    v += 0.05*(Math.random()*2-1);                                                 // broadband floor
+    feed(v); }
 }
 
 window.addEventListener('resize', sizeCanvas);
