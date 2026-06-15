@@ -170,6 +170,11 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <label class="f">k<input id="k2" type="number" value="0" min="0" step="0.5"> N/µm</label>
 <label class="f">ζ<input id="z2" type="number" value="0.03" min="0.001" step="0.005"></label>
 </div>
+<div class="mrow"><span class="mtag">M3</span>
+<label class="f">fₙ<input id="fn3" type="number" value="0" min="0" step="10"> Hz</label>
+<label class="f">k<input id="k3" type="number" value="0" min="0" step="0.5"> N/µm</label>
+<label class="f">ζ<input id="z3" type="number" value="0.03" min="0.001" step="0.005"></label>
+</div>
 <div class="sep"></div>
 <label class="f">flutes<input id="flutes" type="number" value="4" min="1" max="12" step="1"></label>
 <label class="f">Ø<input id="dia" type="number" value="12.7" min="0.5" step="0.1"> mm</label>
@@ -630,7 +635,7 @@ return { pitch: Array(Z).fill(360 / Z), label: 'bad pitch, using equal' };
 
 // ─────────────────── ui refs ───────────────────
 const ui = {};
-['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur','statL',
+['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur','statL',
 'opPanel','opForm',
 'tapStart','tapReset','hint','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread',
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
@@ -640,7 +645,7 @@ const ui = {};
 'saveModal','saveSummary','saveConfirmBtn','saveReviseBtn','ovReadout']
 .forEach(id => ui[id] = $(id));
 const tapBoxes=[ui.t0,ui.t1,ui.t2];
-const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur'];
+const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur'];
 
 // ─────────────────── operation info panel ───────────────────
 /*OPCORE-START*/
@@ -1394,6 +1399,8 @@ const m1={fn:+ui.fn1.value, k:+ui.k1.value*1e6, z:+ui.z1.value};
 if(m1.fn>0&&m1.k>0) modes.push(m1);
 const m2={fn:+ui.fn2.value, k:+ui.k2.value*1e6, z:+ui.z2.value};
 if(m2.fn>0&&m2.k>0) modes.push(m2);
+const m3={fn:+ui.fn3.value, k:+ui.k3.value*1e6, z:+ui.z3.value};
+if(m3.fn>0&&m3.k>0) modes.push(m3);
 if(!modes.length){ ui.statL.textContent='enter mode 1'; return; }
 const Z=Math.max(1,Math.round(+ui.flutes.value));
 const pp=parsePitch(ui.pitch.value,Z);
