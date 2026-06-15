@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cut Coach</title>
+<style>
+:root{
+ --bg:#f4f6f8; --card:#ffffff; --ink:#1a2230; --muted:#5b6675;
+ --line:#e2e7ee; --accent:#0e7c86; --accent2:#0a5d65;
+ --good:#2e7d32; --warn:#b8860b; --bad:#c62828; --good-bg:#eaf5ea; --warn-bg:#fbf3e0; --bad-bg:#fbeaea;
+ --radius:14px; --shadow:0 1px 3px rgba(20,30,50,.06);
+ --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 60px}
+header.app{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+header.app h1{font-size:24px;margin:0;font-weight:600;letter-spacing:-.01em}
+header.app .dot{color:var(--accent)}
+header.app .tag{color:var(--muted);font-size:14px}
+.lead{color:var(--muted);font-size:13.5px;margin:6px 0 20px;max-width:780px}
+.grid{display:grid;gap:16px}
+.cols{grid-template-columns:1.15fr .85fr}
+@media(max-width:840px){.cols{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 14px;font-weight:600}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select{font-family:var(--sans);font-size:15px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-height:40px}
+.field input{width:96px}
+.field.wide input,.field.wide select{width:220px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.btn{font-family:var(--sans);font-size:15px;font-weight:600;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:11px 18px;cursor:pointer;min-height:44px;transition:transform .05s,background .15s}
+.btn:hover{background:#f7f9fb}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent2)}
+.btn.rec{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.rec:hover{filter:brightness(.95)}
+.btn.ghost{color:var(--muted)}
+.muted{color:var(--muted)}
+.gaugewrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+canvas#gauge{width:230px;height:170px}
+.verdict{flex:1;min-width:220px}
+.verdict .status{font-size:30px;font-weight:600;letter-spacing:-.01em;line-height:1.1}
+.verdict .sub{color:var(--muted);font-size:14px;margin-top:6px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;margin-top:10px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.stat{display:flex;flex-direction:column}
+.stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.fix{font-size:15px}
+.fix .big{font-size:34px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.fix .big small{font-size:15px;color:var(--muted);font-weight:400}
+.fix .alts{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-variant-numeric:tabular-nums;background:#fbfcfd}
+.chip small{color:var(--muted);font-weight:400}
+canvas#polar,canvas#map{width:100%;display:block;border-radius:10px;background:#fbfcfd;border:1px solid var(--line)}
+canvas#polar{height:300px}
+canvas#map{height:300px}
+.maprow{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px}
+.help{font-size:12.5px;color:var(--muted);margin-top:10px}
+.foot{color:var(--muted);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="app"><h1>Cut Coach<span class="dot">.</span></h1><span class="tag">a measurement mic + a laptop, turned into a chatter advisor</span></header>
+<p class="lead">Point the iMM-6C at the cut and press listen. Cut Coach tells you whether you are chattering, gives the spindle speed to fix it, and remembers what runs clean on your machine. No tap test, no accelerometer, no modal numbers to fill in.</p>
+
+<div class="card" style="margin-bottom:16px">
+<h2>Setup</h2>
+<div class="row">
+<div class="field wide"><label>microphone</label><select id="mic"><option value="">system default input</option></select></div>
+<div class="field"><label>flutes (z)</label><input id="z" type="number" value="4" min="1" step="1"></div>
+<div class="field"><label>spindle rpm now</label><input id="rpm" type="number" value="6000" min="1" step="50"></div>
+<div class="field"><label>rpm max</label><input id="rpmmax" type="number" value="12000" min="100" step="100"></div>
+<div class="field"><label>depth a&#8242; (mm)</label><input id="ap" type="number" value="2" min="0" step="0.1"></div>
+<div class="field"><label>&nbsp;</label><button id="listen" class="btn rec">Listen</button></div>
+</div>
+<div class="help">Set the spindle speed and depth you are actually running. The depth is only used to log this cut on your machine map. Turn off any voice or noise reduction is handled for you.</div>
+</div>
+
+<div class="grid cols" style="margin-bottom:16px">
+<div class="card">
+<h2>Verdict</h2>
+<div class="gaugewrap">
+<canvas id="gauge" width="460" height="340"></canvas>
+<div class="verdict">
+<div class="status" id="status">Idle</div>
+<div class="sub" id="statusSub">Press listen and run the cut for a few seconds.</div>
+<span class="pill" id="pill" style="display:none"></span>
+<div class="stats">
+<div class="stat"><span class="k">chatter freq</span><span class="v" id="vFc">&#8212;</span></div>
+<div class="stat"><span class="k">waves / tooth</span><span class="v" id="vWpt">&#8212;</span></div>
+<div class="stat"><span class="k">air baseline</span><span class="v" id="vAir">&#8212;</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="card" id="fixCard">
+<h2>The fix</h2>
+<div class="fix" id="fix">
+<div class="muted">Listening will tell you if a speed change is worth it.</div>
+</div>
+</div>
+</div>
+
+<div class="grid cols" style="margin-bottom:16px">
+<div class="card">
+<h2>Cut fingerprint</h2>
+<canvas id="polar" width="900" height="600"></canvas>
+<div class="help">One full circle is one spindle turn. A clean cut traces the same shape every turn (a tight flower). Chatter does not repeat, so it smears into a ring.</div>
+</div>
+<div class="card">
+<h2>Your machine map</h2>
+<canvas id="map" width="900" height="600"></canvas>
+<div class="legend"><span><i style="background:var(--good)"></i>ran clean</span><span><i style="background:var(--warn)"></i>marginal</span><span><i style="background:var(--bad)"></i>chattered</span></div>
+<div class="maprow">
+<button id="logcut" class="btn primary">Log this cut</button>
+<button id="exportmap" class="btn ghost">Export</button>
+<button id="clearmap" class="btn ghost">Clear</button>
+<span class="muted" id="mapcount" style="align-self:center;font-size:13px"></span>
+</div>
+<div class="help">Every cut you log is one dot at its speed and depth, coloured by how it ran. Over a few dozen cuts this becomes the real stable map of your machine and tooling, the thing a generic lobe chart can never give you.</div>
+</div>
+</div>
+
+<div class="foot">Cut Coach reads audible sound only. It finds chatter and the speed to escape it, and trends your own results. It does not measure tool wear or absolute stability limits. Built on the validated pocket-speed rule n = 60&#183;f<sub>c</sub>/(z&#183;k) and once-per-revolution synchronous analysis.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const FFTSIZE=8192, HALF=FFTSIZE/2;
+const hann=new Float32Array(FFTSIZE); for(let i=0;i<FFTSIZE;i++) hann[i]=0.5-0.5*Math.cos(2*Math.PI*i/(FFTSIZE-1));
+function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const tr=re[i];re[i]=re[j];re[j]=tr;const ti=im[i];im[i]=im[j];im[j]=ti;}}for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+function median(a){if(!a.length)return 0;const s=a.slice().sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+
+let SR=48000;
+const ring=new Float32Array(FFTSIZE); let rpos=0, rhop=0; const HOP=2048;
+const reB=new Float32Array(FFTSIZE), imB=new Float32Array(FFTSIZE);
+const Pe=new Float32Array(HALF); let have=false;
+const airBase=new Float32Array(HALF), Asub=new Float32Array(HALF);
+let airOn=true, airHave=false, airSep=false, curAir=false, airLevel=0, cutLevel=0, airWins=0;
+let polarBuf=null, polarN=0;
+const R={fc:0, prom:0, wpt:0, score:0, scoreS:0, state:'idle', polarFrac:-1, ftp:0};
+
+function airUpd(wE){
+ if(!airHave){airLevel=cutLevel=wE;airHave=true;}
+ else{airLevel=wE<airLevel?wE:airLevel*0.999+wE*0.001;cutLevel=wE>cutLevel?wE:cutLevel*0.999+wE*0.001;}
+ airSep=cutLevel>airLevel*4;
+ curAir=airSep&&wE<Math.sqrt(airLevel*cutLevel);
+ if(curAir){for(let k=0;k<HALF;k++)airBase[k]=airWins?(0.85*airBase[k]+0.15*Pe[k]):Pe[k];airWins++;}
+}
+function feed(s){
+ ring[rpos++]=s; if(rpos>=FFTSIZE)rpos=0;
+ if(++rhop>=HOP){rhop=0;analyse();}
+}
+function analyse(){
+ for(let i=0;i<FFTSIZE;i++){reB[i]=ring[(rpos+i)%FFTSIZE]*hann[i];imB[i]=0;}
+ fft(reB,imB);
+ const binHz=SR/FFTSIZE;
+ let wE=0;
+ for(let k=0;k<HALF;k++){const p=reB[k]*reB[k]+imB[k]*imB[k];Pe[k]=have?(0.75*Pe[k]+0.25*p):p;if(k>=4)wE+=p;}
+ have=true;
+ airUpd(wE);
+ let S=Pe;
+ if(airOn&&airHave&&airSep){for(let k=0;k<HALF;k++)Asub[k]=Math.max(0,Pe[k]-airBase[k]);S=Asub;}
+ const rpm=Math.max(1,+$('rpm').value||0), Z=Math.max(1,Math.round(+$('z').value||1));
+ const ftp=Z*rpm/60; R.ftp=ftp;
+ const fHi=Math.min(SR/2,10000), hiK=Math.floor(fHi/binHz);
+ const masked=new Uint8Array(HALF);
+ for(let m=1;m*ftp<fHi*1.05;m++){const f=m*ftp,tol=Math.max(10,0.012*f),c=Math.round(f/binHz),w=Math.max(1,Math.round(tol/binHz));for(let d=-w;d<=w;d++){const b=c+d;if(b>=0&&b<HALF)masked[b]=1;}}
+ const loK=Math.floor(200/binHz);
+ const um=[]; for(let k=loK;k<=hiK;k++) if(!masked[k]) um.push(S[k]);
+ const med=median(um)||1e-12;
+ let bk=-1,bp=0;
+ for(let k=Math.max(loK,2);k<=Math.min(hiK,HALF-2);k++){if(masked[k])continue;if(S[k]>=S[k-1]&&S[k]>=S[k+1]&&S[k]>bp){bp=S[k];bk=k;}}
+ let fc=0,prom=0;
+ if(bk>0){let off=0;const a=S[bk-1],b=S[bk],c=S[bk+1],dd=a-2*b+c;if(dd!==0)off=0.5*(a-c)/dd;fc=(bk+off)*binHz;prom=bp/med;}
+ R.fc=fc; R.prom=prom;
+ R.wpt=fc>0?60*fc/(Z*rpm):0;
+ const promN=clamp((prom-2.5)/9,0,1);
+ const pf=R.polarFrac>=0?R.polarFrac:0;
+ const raw = curAir ? 0 : pf*(0.45+0.55*promN);
+ R.score=clamp(raw*100,0,100);
+ R.scoreS = R.scoreS*0.7 + R.score*0.3;
+}
+
+function polarReset(){const L=Math.ceil((SR||48000)*3);polarBuf=new Float32Array(L);polarN=0;}
+function polarFeed(chunk){
+ if(!polarBuf)polarReset();
+ const L=polarBuf.length,c=chunk.length;
+ if(c>=L){polarBuf.set(chunk.subarray(c-L));polarN=L;return;}
+ if(polarN+c>L){const keep=L-c;polarBuf.copyWithin(0,polarN-keep,polarN);polarN=keep;}
+ polarBuf.set(chunk,polarN);polarN+=c;
+}
+function polarIndex(){
+ const rpm=+$('rpm').value||0, sr=SR;
+ if(!(rpm>0)||!polarBuf||polarN<sr*0.25){R.polarFrac=-1;return;}
+ const rev=sr*60/rpm, NREV=Math.min(Math.floor(polarN/rev),28);
+ if(NREV<3||!(rev>12)){R.polarFrac=-1;return;}
+ const total=Math.floor(NREV*rev),start=polarN-total;
+ let mean=0;for(let i=0;i<total;i++)mean+=polarBuf[start+i];mean/=total;
+ const B=360,sumB=new Float64Array(B),sqB=new Float64Array(B),cnt=new Float64Array(B),dk=Math.max(1,Math.floor(rev/720));
+ for(let r=0;r<NREV;r++){const rs=start+Math.floor(r*rev),steps=Math.floor(rev);for(let k=0;k<steps;k+=dk){const idx=rs+k;if(idx>=polarN)break;const val=polarBuf[idx]-mean;const bb=Math.floor((k/rev)*B)%B;sumB[bb]+=val;sqB[bb]+=val*val;cnt[bb]++;}}
+ let SQ=0,SUM=0,n=0,aV=0;
+ for(let b=0;b<B;b++){if(cnt[b]>0){SQ+=sqB[b];SUM+=sumB[b];n+=cnt[b];const mb=sumB[b]/cnt[b];aV+=sqB[b]-cnt[b]*mb*mb;}}
+ const gM=SUM/(n||1),tV=SQ-n*gM*gM;
+ R.polarFrac=tV>1e-9?clamp(aV/tV,0,1):0;
+}
+
+let micCtx=null,micStream=null,micSrc=null,micNode=null,micSilent=null,listening=false,micSelId='';
+async function refreshMics(){
+ try{const ds=await navigator.mediaDevices.enumerateDevices();const ins=ds.filter(d=>d.kind==='audioinput');const cur=micSelId;const sel=$('mic');sel.innerHTML='';const def=document.createElement('option');def.value='';def.textContent='system default input';sel.appendChild(def);ins.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('input '+(i+1));sel.appendChild(o);});sel.value=cur||'';}catch(e){}
+}
+$('mic').addEventListener('change',()=>{micSelId=$('mic').value||'';});
+$('mic').addEventListener('focus',async()=>{const labeled=[...$('mic').options].some(o=>o.value&&o.textContent&&!o.textContent.startsWith('input ')&&o.textContent!=='system default input');if(!labeled){try{const t=await navigator.mediaDevices.getUserMedia({audio:true});t.getTracks().forEach(x=>x.stop());}catch(e){}refreshMics();}});
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener){try{navigator.mediaDevices.addEventListener('devicechange',refreshMics);}catch(e){}}
+
+async function startListen(){
+ have=false;Pe.fill(0);rpos=0;rhop=0;airHave=false;airSep=false;airWins=0;airLevel=0;cutLevel=0;airBase.fill(0);polarReset();
+ micCtx=new (window.AudioContext||window.webkitAudioContext)();await micCtx.resume();SR=micCtx.sampleRate;
+ const ac={echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1};
+ if(micSelId)ac.deviceId={exact:micSelId};
+ try{micStream=await navigator.mediaDevices.getUserMedia({audio:ac,video:false});}
+ catch(e){if(micSelId){micSelId='';$('mic').value='';micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});}else{$('statusSub').textContent='mic error: '+(e.name||'?');return;}}
+ refreshMics();
+ micSrc=micCtx.createMediaStreamSource(micStream);micSilent=micCtx.createGain();micSilent.gain.value=0;micSilent.connect(micCtx.destination);
+ const onChunk=ch=>{for(let i=0;i<ch.length;i++)feed(ch[i]);polarFeed(ch);};
+ if(micCtx.audioWorklet){
+  const code="class C extends AudioWorkletProcessor{process(i){const c=i[0][0];if(c&&c.length)this.port.postMessage(c.slice(0));return true;}}registerProcessor('cap',C);";
+  const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));await micCtx.audioWorklet.addModule(url);
+  micNode=new AudioWorkletNode(micCtx,'cap');micNode.port.onmessage=e=>onChunk(e.data);micSrc.connect(micNode);micNode.connect(micSilent);
+ }else{micNode=micCtx.createScriptProcessor(2048,1,1);micNode.onaudioprocess=e=>onChunk(new Float32Array(e.inputBuffer.getChannelData(0)));micSrc.connect(micNode);micNode.connect(micSilent);}
+ listening=true;$('listen').textContent='Stop';$('listen').classList.remove('rec');$('listen').classList.add('primary');
+ $('status').textContent='Listening';$('statusSub').textContent='run the cut for a few seconds';
+}
+function stopListen(){
+ listening=false;
+ try{if(micNode){micNode.onmessage=null;micNode.onaudioprocess=null;micNode.disconnect();}}catch(e){}
+ try{if(micSrc)micSrc.disconnect();}catch(e){}try{if(micSilent)micSilent.disconnect();}catch(e){}
+ try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){}try{if(micCtx)micCtx.close();}catch(e){}
+ micCtx=micStream=micSrc=micNode=micSilent=null;
+ $('listen').textContent='Listen';$('listen').classList.add('rec');$('listen').classList.remove('primary');
+ if($('status').textContent==='Listening'){$('status').textContent='Stopped';}
+}
+$('listen').onclick=()=>{listening?stopListen():startListen();};
+
+function drawGauge(){
+ const cv=$('gauge'),x=cv.getContext('2d'),W=cv.width,H=cv.height,dp=2;
+ x.clearRect(0,0,W,H);
+ const cx=W/2,cy=H*0.78,r=W*0.40;
+ const a0=Math.PI,a1=2*Math.PI;
+ x.lineWidth=22*dp;x.lineCap='round';
+ x.strokeStyle='#e7ecf2';x.beginPath();x.arc(cx,cy,r,a0,a1);x.stroke();
+ const sc=clamp(R.scoreS,0,100);
+ const col=sc<35?getCSS('--good'):sc<62?getCSS('--warn'):getCSS('--bad');
+ if(listening||have){x.strokeStyle=col;x.beginPath();x.arc(cx,cy,r,a0,a0+(a1-a0)*sc/100);x.stroke();}
+ x.fillStyle=col;x.font='600 '+(46*dp)+'px '+getComputedStyle(document.body).fontFamily;x.textAlign='center';x.textBaseline='alphabetic';
+ x.fillText(listening||have?Math.round(sc):'–',cx,cy-6*dp);
+ x.fillStyle='#7b8696';x.font='600 '+(13*dp)+'px '+getComputedStyle(document.body).fontFamily;
+ x.fillText('CHATTER SCORE',cx,cy+22*dp);
+}
+function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()||'#888';}
+
+function drawPolar(){
+ const cv=$('polar'),x=cv.getContext('2d'),W=cv.width,H=cv.height,dp=2;
+ x.clearRect(0,0,W,H);
+ const cx=W/2,cy=H/2,Rr=Math.min(W,H)*0.42;
+ x.strokeStyle='rgba(20,30,50,.10)';x.lineWidth=1*dp;
+ for(let q=1;q<=4;q++){x.beginPath();x.arc(cx,cy,Rr*q/4,0,2*Math.PI);x.stroke();}
+ const rpm=+$('rpm').value||0,sr=SR;
+ x.fillStyle='#9aa4b2';x.font=(15*dp)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';
+ if(!(rpm>0)){x.fillText('set the rpm',cx,cy);return;}
+ if(!polarBuf||polarN<sr*0.25){x.fillText(listening?'listening…':'press listen',cx,cy);return;}
+ const rev=sr*60/rpm,NREV=Math.min(Math.floor(polarN/rev),28);
+ if(NREV<3){x.fillText('a few more turns…',cx,cy);return;}
+ const total=Math.floor(NREV*rev),start=polarN-total;
+ let mean=0;for(let i=0;i<total;i++)mean+=polarBuf[start+i];mean/=total;
+ let peak=1e-9;for(let i=0;i<total;i++){const v=Math.abs(polarBuf[start+i]-mean);if(v>peak)peak=v;}
+ const amp=0.42*Rr/peak,baseR=Rr*0.62,dk=Math.max(1,Math.floor(rev/720)),B=720;
+ const sumB=new Float64Array(B),cnt=new Float64Array(B);
+ const col=R.scoreS<35?getCSS('--good'):R.scoreS<62?getCSS('--warn'):getCSS('--bad');
+ for(let r=0;r<NREV;r++){const rs=start+Math.floor(r*rev),steps=Math.floor(rev);x.beginPath();let st=false;for(let k=0;k<steps;k+=dk){const idx=rs+k;if(idx>=polarN)break;const val=polarBuf[idx]-mean,ph=(k/rev)*2*Math.PI-Math.PI/2,rad=baseR+val*amp;const px=cx+Math.cos(ph)*rad,py=cy+Math.sin(ph)*rad;if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);const bb=Math.floor((k/rev)*B)%B;sumB[bb]+=val;cnt[bb]++;}const al=0.08+0.5*((r+1)/NREV);x.strokeStyle=hexA(col,al);x.lineWidth=(r===NREV-1?1.4:0.7)*dp;x.stroke();}
+ x.beginPath();let ms=false;for(let b=0;b<B;b++){if(cnt[b]===0)continue;const val=sumB[b]/cnt[b],ph=(b/B)*2*Math.PI-Math.PI/2,rad=baseR+val*amp,px=cx+Math.cos(ph)*rad,py=cy+Math.sin(ph)*rad;if(!ms){x.moveTo(px,py);ms=true;}else x.lineTo(px,py);}x.closePath();x.strokeStyle='#26303f';x.lineWidth=1.7*dp;x.stroke();
+}
+function hexA(h,a){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a.toFixed(3)+')';}
+
+let cuts=[];
+try{cuts=JSON.parse(localStorage.getItem('cutcoach_cuts')||'[]');}catch(e){cuts=[];}
+function saveCuts(){try{localStorage.setItem('cutcoach_cuts',JSON.stringify(cuts));}catch(e){}}
+function drawMap(){
+ const cv=$('map'),x=cv.getContext('2d'),W=cv.width,H=cv.height,dp=2;
+ x.clearRect(0,0,W,H);
+ const L=54*dp,Rr=W-16*dp,T=14*dp,Bt=H-34*dp;
+ const nmax=Math.max(2000,+$('rpmmax').value||12000);
+ let amax=4;cuts.forEach(c=>{if(c.ap>amax)amax=c.ap;});amax=Math.ceil(amax/2)*2;
+ const xx=r=>L+(r/nmax)*(Rr-L), yy=a=>Bt-(a/amax)*(Bt-T);
+ x.strokeStyle='#e7ecf2';x.lineWidth=1*dp;x.fillStyle='#9aa4b2';x.font=(12*dp)+'px sans-serif';
+ for(let r=0;r<=nmax;r+=Math.max(1000,Math.round(nmax/6/1000)*1000)){x.beginPath();x.moveTo(xx(r),T);x.lineTo(xx(r),Bt);x.stroke();x.textAlign='center';x.textBaseline='top';x.fillText(r,xx(r),Bt+6*dp);}
+ for(let a=0;a<=amax;a+=Math.max(1,Math.round(amax/5))){x.beginPath();x.moveTo(L,yy(a));x.lineTo(Rr,yy(a));x.stroke();x.textAlign='right';x.textBaseline='middle';x.fillText(a,L-6*dp,yy(a));}
+ x.fillStyle='#7b8696';x.textAlign='center';x.fillText('spindle rpm',(L+Rr)/2,H-12*dp);
+ x.save();x.translate(14*dp,(T+Bt)/2);x.rotate(-Math.PI/2);x.fillText('depth a′ (mm)',0,0);x.restore();
+ cuts.forEach(c=>{const col=c.v==='stable'?getCSS('--good'):c.v==='marginal'?getCSS('--warn'):getCSS('--bad');x.fillStyle=col;x.beginPath();x.arc(xx(c.rpm),yy(c.ap),5*dp,0,2*Math.PI);x.fill();x.strokeStyle='#fff';x.lineWidth=1.4*dp;x.stroke();});
+ $('mapcount').textContent=cuts.length?cuts.length+' cuts logged':'no cuts logged yet';
+}
+$('logcut').onclick=()=>{
+ const v=R.state;const rpm=+$('rpm').value||0,ap=+$('ap').value||0;
+ if(!(rpm>0)){return;}
+ cuts.push({rpm,ap,v:(v==='idle'?'stable':v),fc:Math.round(R.fc),t:Date.now()});
+ saveCuts();drawMap();
+};
+$('clearmap').onclick=()=>{if(confirm('Clear all logged cuts on this machine map?')){cuts=[];saveCuts();drawMap();}};
+$('exportmap').onclick=()=>{const blob=new Blob([JSON.stringify(cuts,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cut-coach-machine-map.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);};
+
+function pocketSpeeds(fc,Z,rpm){
+ if(!(fc>0&&Z>0&&rpm>0))return[];
+ const wpt=60*fc/(Z*rpm),k0=Math.max(1,Math.round(wpt)),out=[];
+ for(let k=k0-1;k<=k0+2;k++){if(k<1)continue;const n=60*fc/(Z*k);if(n<300||n>(+$('rpmmax').value||40000))continue;out.push({k,n,best:k===k0});}
+ out.sort((a,b)=>Math.abs(a.n-rpm)-Math.abs(b.n-rpm));
+ return out;
+}
+function updateUI(){
+ const sc=R.scoreS;
+ let state='stable',label='Running clean',col='--good',bg='--good-bg';
+ if(!(listening||have)){state='idle';}
+ else if(sc>=62){state='chatter';label='Chatter';col='--bad';bg='--bad-bg';}
+ else if(sc>=35){state='marginal';label='Marginal';col='--warn';bg='--warn-bg';}
+ R.state=state;
+ if(state!=='idle'){
+  $('status').textContent=label;$('status').style.color=getCSS('--'+(state==='stable'?'good':state==='marginal'?'warn':'bad'));
+  const pill=$('pill');pill.style.display='inline-block';pill.textContent='score '+Math.round(sc)+' / 100';
+  pill.style.background=getCSS(bg);pill.style.color=getCSS(col);
+ }
+ const rpm=+$('rpm').value||0,Z=Math.max(1,Math.round(+$('z').value||1));
+ $('vFc').innerHTML=(state==='chatter'&&R.fc>0)?Math.round(R.fc)+'<small class="muted"> Hz</small>':'&#8212;';
+ $('vWpt').textContent=(state==='chatter'&&R.wpt>0)?R.wpt.toFixed(2):'–';
+ $('vAir').textContent=(airOn&&airSep&&airWins>0)?(airWins*HOP/Math.max(1,SR)).toFixed(1)+' s':'–';
+ const fix=$('fix');
+ if(state==='idle'){fix.innerHTML='<div class="muted">Listening will tell you if a speed change is worth it.</div>';$('statusSub').textContent='Press listen and run the cut for a few seconds.';return;}
+ if(state==='stable'){fix.innerHTML='<div style="font-size:17px"><b>No change needed.</b> This speed is running clean.</div><div class="muted" style="margin-top:8px">If you want more metal off, this is a good speed to push depth on. Log the cut to remember it.</div>';$('statusSub').textContent='the cut repeats every turn';return;}
+ const ps=pocketSpeeds(R.fc,Z,rpm),best=ps.find(p=>p.best)||ps[0];
+ if(state==='marginal'){
+  $('statusSub').textContent='a chatter tone is building';
+  if(best)fix.innerHTML='<div style="font-size:16px">Starting to chatter near <b>'+Math.round(R.fc)+' Hz</b>. The nearest clean speed is</div><div class="big">'+Math.round(best.n)+'<small> rpm</small></div><div class="muted">You can hold here, but move toward that speed if it grows.</div>';
+  else fix.innerHTML='<div class="muted">A tone is building but no clean speed is in range; try a lighter cut.</div>';
+  return;
+ }
+ $('statusSub').textContent='the cut is not repeating, it is chattering';
+ if(best){
+  const dir=best.n>rpm?'up':'down',alts=ps.filter(p=>p!==best).slice(0,2);
+  fix.innerHTML='<div style="font-size:16px">Chattering at <b>'+Math.round(R.fc)+' Hz</b>. Switch '+dir+' to the nearest chatter-free speed</div>'+
+   '<div class="big">'+Math.round(best.n)+'<small> rpm</small></div>'+
+   '<div class="muted">You are at '+R.wpt.toFixed(2)+' waves per tooth, between sweet spots; this speed lands on the next whole one (k='+best.k+'). Re-listen after the change.</div>'+
+   (alts.length?'<div class="alts">'+alts.map(p=>'<div class="chip">'+Math.round(p.n)+' <small>rpm &middot; k='+p.k+'</small></div>').join('')+'</div>':'');
+ }else{
+  fix.innerHTML='<div style="font-size:16px">Chattering at <b>'+Math.round(R.fc)+' Hz</b>, but every pocket speed is outside your rpm range.</div><div class="muted" style="margin-top:8px">Take a lighter radial or axial cut, or change the tool overhang.</div>';
+ }
+}
+
+function loop(){
+ if(listening){polarIndex();}
+ drawGauge();drawPolar();updateUI();
+ requestAnimationFrame(loop);
+}
+function sizeCanvas(c){const r=c.getBoundingClientRect();c.width=Math.round(r.width*2);c.height=Math.round(r.height*2);}
+function sizeAll(){[$('gauge'),$('polar'),$('map')].forEach(sizeCanvas);drawMap();}
+window.addEventListener('resize',sizeAll);
+refreshMics();sizeAll();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
