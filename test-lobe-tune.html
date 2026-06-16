@@ -29,7 +29,6 @@ header h1 span{color:var(--yellow-ink);}
 header .sub{font-size:11px; color:var(--muted);}
 .card{background:var(--card); border:1px solid var(--border); border-radius:12px;}
 .cardhead{font-size:11px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); padding:9px 12px 0;}
-
 .controls{padding:8px 10px; display:flex; gap:7px 9px; align-items:center; flex-wrap:wrap;}
 .btn{border:0; border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; background:var(--ink); color:#fff;}
 .btn.go{background:var(--green);}
@@ -79,10 +78,8 @@ details.op summary::before{content:'\25B8'; font-size:12px;}
 details.op[open] summary::before{content:'\25BE';}
 details.op summary .hintt{font-weight:600; text-transform:none; letter-spacing:0; color:var(--muted);}
 details.op summary:hover{background:rgba(245,197,24,.18);}
-
 .grid2{display:grid; grid-template-columns:2fr 3fr; gap:9px; align-items:stretch;}
 @media (max-width:900px){ .grid2{grid-template-columns:1fr;} }
-
 .stage{padding:10px 12px; display:flex; flex-direction:column; gap:10px;}
 .instruct{font-size:13px; font-weight:600; line-height:1.4; min-height:36px;}
 .instruct b{font-weight:800;}
@@ -152,18 +149,16 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </head>
 <body>
 <a href="./index.html" style="display:inline-block;margin:8px 0 4px 0;font:700 11px Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:#555;background:#fff;border:1px solid #ddd;border-radius:5px;padding:6px 12px">&#8249; All apps</a>
-
 <header>
 <h1>Chatter<span>.calc</span> · Test · Lobes · Tune</h1>
 <div class="sub">desktop · tap test → stability map → in-cut verify → library</div>
 </header>
-
 <!-- ───────── shared inputs ───────── -->
 <div class="card">
 <div class="cardhead">Tool + cut inputs (shared · saved into every recording)</div>
 <div class="controls">
 <div class="mrow"><span class="mtag">M1</span>
-<label class="f">fₙ<input id="fn1" type="number" value="1100" min="0" step="10"> Hz</label>
+<label class="f">fₙ<input id="fn1" type="number" value="" min="0" step="10" placeholder="tap test"> Hz</label>
 <label class="f">k<input id="k1" type="number" value="5" min="0" step="0.5"> N/µm</label>
 <label class="f">ζ<input id="z1" type="number" value="0.03" min="0.001" step="0.005"></label>
 </div>
@@ -189,6 +184,7 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <label class="f">Kr<input id="kr" type="number" value="0.30" min="0.05" max="1" step="0.05"></label>
 <label class="f">rpm max<input id="nmax" class="n5" type="number" value="12000" min="500" step="500"></label>
 <label class="f">now<input id="ncur" class="n5" type="number" value="4000" min="100" step="100"></label>
+<label class="f">v꜀<input id="vcCur" class="n5" type="number" value="" min="1" step="1" placeholder="m/min"> m/min</label>
 <div class="spacer"></div>
 <div class="stat" id="statL">—</div>
 </div>
@@ -198,7 +194,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="controls" id="opForm"></div>
 </details>
 </div>
-
 <!-- ───────── speaker tap (software tap test) ───────── -->
 <div class="card">
 <div class="cardhead">1b · Speaker tap (software tap test · no hammer · experimental)</div>
@@ -228,7 +223,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="snote">Test method, unproven on a microphone: the speaker shakes the tool, the baseline subtraction cancels the speaker and the room. Prove it first on an easy ringer — a steel ruler clamped in a vise. If the difference peak tracks your hand tap and moves when you change tools, it works. If you only see fixed peaks that do not move, the mic cannot do it here and you keep the hammer tap above.</div>
 </div>
 </div>
-
 <div class="grid2">
 <!-- ───────── tap test ───────── -->
 <div class="card">
@@ -265,7 +259,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="snote">A clean result fills M1/M2 in the inputs automatically. The spectrum appears after any hit — tap it to pick peaks yourself (first = M1, second = M2), then <b>Picks → inputs</b>.</div>
 </div>
 </div>
-
 <!-- ───────── tune ───────── -->
 <div class="card">
 <div class="cardhead">3 · Tune (in-cut verify · mic)</div>
@@ -300,7 +293,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </div>
 </div>
 </div>
-
 <!-- ───────── lobes ───────── -->
 <div class="card">
 <div class="cardhead">2 · Stability lobes (from the inputs above)</div>
@@ -312,11 +304,10 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="rb"><span class="k">depth gain</span><span class="v" id="vGain">—</span></div>
 <div></div>
 </div>
-<div class="interp" id="interpL">Enter the tap test natural frequency, stiffness and damping, the tool and the cut. The map shows the stable depth limit per spindle speed; the chips are the pocket speeds worth running.</div>
+<div class="interp" id="interpL">Enter the tap test natural frequency, stiffness and damping, the tool and the cut. The map shows the stable depth limit per spindle speed; the chips are the pocket speeds worth running. Click a pocket to set the "now" rpm and vc.</div>
 <div class="chips" id="chipsL"></div>
 </div>
 </div>
-
 <!-- ───────── library ───────── -->
 <div class="card">
 <div class="cardhead">4 · Recording library</div>
@@ -344,7 +335,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="chips" id="ovLegend"></div>
 </div>
 </div>
-
 <div class="modal" id="saveModal" style="display:none">
 <div class="modalbox">
 <div class="modaltitle">Save this recording?</div>
@@ -356,31 +346,22 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </div>
 </div>
 </div>
-
 <footer>
 Workflow: <b>1</b> tap test fills M1/M2 → <b>2</b> lobes shows the pockets → run one → <b>3</b> record the cut in Tune, pick the real in-cut peak, <b>Picked → M1 fₙ</b> refines the map → <b>4</b> the library mines what you saved. Every WAV carries its full context (shared inputs + operation info + analysis snapshot) in a metadata chunk; the file stays a normal playable WAV. One mic owner at a time. Recordings cap at 3 minutes. Lobes engine: zero order frequency domain, multi mode, equal or differential pitch; out of envelope: low speed slotting (process damping), ae under 5 percent of Ø.
 </footer>
-
 <script>
 "use strict";
-/* Chatter.calc — combined desktop page: tap test + lobes + tune + recording library.
-v3 (2026-06-12): WAV metadata chunk ('chtr', JSON, written before the audio data so
-library scans read only headers), operation-info panel (17 optional fields,
-self-growing dropdowns), library card with filters, row-click load (inputs +
-op info restore from the file), multi-select spectrum overlay, CSV export. */
-
+/* Chatter.calc — combined desktop page: tap test + lobes + tune + recording library. */
 const $ = id => document.getElementById(id);
 const cvv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const FFTSIZE = 8192, HALF = FFTSIZE/2;
-const APPV = 'test-lobe-tune v5';
+const APPV = 'test-lobe-tune v6';
 const LOBE_MIN_RPM = 100;
 const hann = new Float32Array(FFTSIZE);
 for (let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
-
 function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
 for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
 function median(a){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
-
 /*PICKCORE-START*/
 function pickPeak(arr, lk, binHz, fLo, fHi){
 const n=arr.length;
@@ -408,7 +389,6 @@ for(let i=0;i<n;i++) out[i]/=used;
 return out;
 }
 /*PICKCORE-END*/
-
 /*WAVCORE-START*/
 function encodeWAV(chunks, sr, meta){ // 16-bit PCM mono WAV; meta JSON in a 'chtr' chunk BEFORE data
 let len=0; for(const c of chunks) len+=c.length;
@@ -468,7 +448,6 @@ const dur=r.data ? (r.data.sz/2/Math.max(1,r.fmt.ch))/Math.max(1,r.fmt.sr) : nul
 return {sr:r.fmt.sr, dur:dur, meta:r.meta||null};
 }
 /*WAVCORE-END*/
-
 /*TAPCORE-START*/
 const TAPCFG = {
 CALIB_S:5, MARGIN_DB:12, HARDMIN_RMS:1.8e-5, TRANSIENT_MAX:0.06, FLOOR_CEIL_RMS:0.10,
@@ -533,7 +512,6 @@ if(close.length<2) return null;
 return close.reduce((s,x)=>s+x,0)/close.length;
 }
 /*TAPCORE-END*/
-
 /*TUNECORE-START*/
 function suggestRPM(fc, Z, nCur){
 if(!(fc>0)||!(Z>0)||!(nCur>0)) return {list:[],wptCur:0,kStar:0};
@@ -554,7 +532,6 @@ if(Math.abs(f-fm) <= Math.max(10,0.012*fm)) return true;
 return false;
 }
 /*TUNECORE-END*/
-
 /*ENGINE-START*/
 function computeLobes(p){
 const NF = p.nFc, NR = p.nRpm;
@@ -664,10 +641,9 @@ if (Math.min(...sp) > 0) return { pitch: sp, label: 'positions' };
 return { pitch: Array(Z).fill(360 / Z), label: 'bad pitch, using equal' };
 }
 /*ENGINE-END*/
-
 // ─────────────────── ui refs ───────────────────
 const ui = {};
-['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur','statL',
+['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur','vcCur','statL',
 'opPanel','opForm',
 'tapStart','tapReset','hint','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread',
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
@@ -678,7 +654,6 @@ const ui = {};
 .forEach(id => ui[id] = $(id));
 const tapBoxes=[ui.t0,ui.t1,ui.t2];
 const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur'];
-
 // ─────────────────── operation info panel ───────────────────
 /*OPCORE-START*/
 const OPFIELDS=[
@@ -802,7 +777,6 @@ opPersist();
 }
 function opPersist(){ try{ localStorage.setItem('chtr_op',JSON.stringify(opGet())); }catch(e){} }
 function opRestoreLocal(){ try{ const o=JSON.parse(localStorage.getItem('chtr_op')||'null'); if(o) OPFIELDS.forEach(f=>{ if(o[f.k]!=null) opEls[f.k].value=o[f.k]; }); }catch(e){} Object.keys(opReflect).forEach(k=>opReflect[k]()); }
-
 /*OPCORE-END*/
 // inputs snapshot for metadata
 function inputsGet(){ const o={}; INPUT_IDS.forEach(id=>o[id]=ui[id].value); return o; }
@@ -810,10 +784,10 @@ function inputsSet(o){
 if(!o) return;
 if(o.nmax==null && o.n1!=null) o=Object.assign({}, o, {nmax:o.n1});
 INPUT_IDS.forEach(id=>{ if(o[id]!=null) ui[id].value=o[id]; });
+syncVcFromRpm();
 lobesKick();
 if(tnHave) tnAnalyse();
 }
-
 // ─────────────────── shared mic (single owner) ───────────────────
 let micCtx=null,micStream=null,micSrc=null,micCap=null,micScript=null,micSilent=null,micOwner=null;
 let micSelId='';
@@ -861,7 +835,6 @@ if(o==='tap') tapCancel(true);
 if(o==='tune') tuneStopUI(true);
 	if(o==='sweep') swCancel(true);
 }
-
 // ---- polar chatter map ----
 let polarBuf=null, polarN=0, polarLastT=0, polarFrac=-1;
 function polarReset(){ const L=Math.ceil((tnSR||48000)*3); polarBuf=new Float32Array(L); polarN=0; }
@@ -882,7 +855,7 @@ for(let q=1;q<=4;q++){ ctx.beginPath(); ctx.arc(cx,cy,R*q/4,0,2*Math.PI); ctx.st
 const tell=(t,col)=>{ ctx.fillStyle=col||'#888'; ctx.font=(13*dp)+'px system-ui,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t,cx,cy); };
 const rpm=+ui.ncur.value, sr=tnSR||48000;
 if(!(rpm>0)){ tell('set "now" rpm'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
-if(!polarBuf||polarN<sr*0.25){ tell(micOwner==='tune'?'listening\u2026':'record to see the map'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
+if(!polarBuf||polarN<sr*0.25){ tell(micOwner==='tune'?'listening…':'record to see the map'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
 const rev=sr*60/rpm, NREV=Math.min(Math.floor(polarN/rev),28);
 if(NREV<3||!(rev>12)){ tell('need a few more turns'); polarFrac=-1; if(ui.polarIx)ui.polarIx.textContent=''; return; }
 const total=Math.floor(NREV*rev), start=polarN-total;
@@ -901,10 +874,8 @@ ctx.closePath(); ctx.strokeStyle='#222'; ctx.lineWidth=1.6*dp; ctx.stroke();
 let SQ=0,SUM=0,n=0,asyncV=0;
 for(let b=0;b<B;b++){ if(cntB[b]>0){ SQ+=sqB[b]; SUM+=sumB[b]; n+=cntB[b]; const mb=sumB[b]/cntB[b]; asyncV+=sqB[b]-cntB[b]*mb*mb; } }
 const gM=SUM/(n||1), totV=SQ-n*gM*gM, frac=totV>1e-9?Math.max(0,Math.min(1,asyncV/totV)):0; polarFrac=frac;
-if(ui.polarIx){ let lab,col; if(frac<0.30){ lab='stable \u00b7 repeats every turn'; col='#2e7d32'; } else if(frac<0.55){ lab='marginal'; col='#b8860b'; } else { lab='chatter \u00b7 not repeating'; col='#c62828'; } ui.polarIx.textContent='chatter index '+(frac*100|0)+'% \u00b7 '+lab; ui.polarIx.style.color=col; }
+if(ui.polarIx){ let lab,col; if(frac<0.30){ lab='stable · repeats every turn'; col='#2e7d32'; } else if(frac<0.55){ lab='marginal'; col='#b8860b'; } else { lab='chatter · not repeating'; col='#c62828'; } ui.polarIx.textContent='chatter index '+(frac*100|0)+'% · '+lab; ui.polarIx.style.color=col; }
 }
-
-
 // ─────────────────── tap test module ───────────────────
 let tapSR=44100;
 const TRING=16384;
@@ -1027,7 +998,7 @@ let why;
 if(all.length<2) why='only '+all.length+' clean tap'+(all.length===1?'':'s')+' got through in 30 s — too noisy, or the taps were too soft';
 else { const sp=Math.max(...all)-Math.min(...all); why='the '+all.length+' taps never agreed (best cluster '+cl.length+', need 3; spread '+sp.toFixed(0)+' Hz)'; }
 ui.fn1.value=''; ui.fn2.value='';
-lobesKick(); tnDirty=true;
+syncVcFromRpm(); lobesKick(); tnDirty=true;
 for(let i=0;i<3;i++) tapSetBox(i,'empty','—','');
 ui.tapRes.className='tres idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent='';
 ui.instruct.className='instruct warn';
@@ -1070,7 +1041,6 @@ ui.instruct.className='instruct';
 ui.instruct.innerHTML='<b>Learning the room noise… 5&nbsp;s.</b> Keep quiet.';
 };
 ui.tapReset.onclick=tapResetAll;
-
 function tapXof(f,W){ const a=Math.log(tapCur.fLo), b=Math.log(tapCur.fHi);
 return (Math.log(Math.max(tapCur.fLo,Math.min(tapCur.fHi,f)))-a)/(b-a)*W; }
 function tapFof(x,W){ const a=Math.log(tapCur.fLo), b=Math.log(tapCur.fHi);
@@ -1144,7 +1114,6 @@ ui.chipM1.addEventListener('click',()=>{ if(tapManual.m1!=null){ tapManual.m1=nu
 ui.chipM2.addEventListener('click',()=>{ if(tapManual.m2!=null){ tapManual.m2=null; tapDrawSpec(); }});
 ui.clearPicksT.addEventListener('click',()=>{ tapManual={m1:null,m2:null}; tapDrawSpec(); });
 ui.applyPicks.addEventListener('click',()=>{ if(tapManual.m1!=null) applyToInputs(tapManual.m1, tapManual.m2); });
-
 function applyToInputs(f1,f2){
 if(!(f1>0)) return;
 ui.fn1.value=Math.round(f1);
@@ -1152,7 +1121,6 @@ if(f2>0){ ui.fn2.value=Math.round(f2); if(!(+ui.k2.value>0)) ui.k2.value=5; }
 lobesKick();
 tnDirty=true;
 }
-
 // ─────────────────── tune module ───────────────────
 let tnSR=44100;
 const tnRing=new Float32Array(FFTSIZE); let tnPos=0, tnHop=0;
@@ -1293,9 +1261,13 @@ txt+='Set fn = '+Math.round(eff)+' Hz (the in-cut mode), then re-measure.';
 ui.interpT.className='interp'; ui.interpT.innerHTML=air+txt;
 if(ui.setFnBtn){ ui.setFnBtn.style.display=''; ui.setFnBtn.dataset.fc=String(Math.round(eff)); ui.setFnBtn.textContent='Set fn = '+Math.round(eff)+' Hz'; }
 ui.chipsT.innerHTML='';
+const Dt=+ui.dia.value||0;
 for(const sp of sug.list){ const el=document.createElement('div'); el.className='chip'+(sp.pick?' pick':'');
-const dir=sp.n>rpmNow?'\u2191':(sp.n<rpmNow?'\u2193':'\u00b7');
-el.innerHTML='<small>k='+sp.k+'</small> <span class="rpm">'+Math.round(sp.n)+'</span> <small>rpm '+dir+'</small>';
+const dir=sp.n>rpmNow?'↑':(sp.n<rpmNow?'↓':'·');
+const vc=Dt>0?Math.round(Math.PI*Dt*sp.n/1000):0;
+el.innerHTML='<small>k='+sp.k+'</small> <span class="rpm">'+Math.round(sp.n)+'</span> <small>rpm '+dir+(vc?' · '+vc+' m/min':'')+'</small>';
+el.title='Set "now" rpm + vc to this speed';
+el.addEventListener('click',()=>applyRpmFromChip(sp.n));
 ui.chipsT.appendChild(el); }
 }
 ui.tuneSpec.addEventListener('pointerdown', e=>{
@@ -1318,7 +1290,6 @@ ui.clearPickT2.addEventListener('click',()=>{ tnManual=null; tnDirty=true; });
 ui.sendPick.addEventListener('click',()=>{ if(tnManual!=null){ ui.fn1.value=Math.round(tnManual); lobesKick(); tnDirty=true; } });
 if(ui.setFnBtn) ui.setFnBtn.addEventListener('click',()=>{ const v=+ui.setFnBtn.dataset.fc; if(v>0){ ui.fn1.value=v; lobesKick(); tnDirty=true; } });
 if(ui.airChk) ui.airChk.addEventListener('change',()=>{ airOn=ui.airChk.checked; tnDirty=true; });
-
 function tuneStopUI(taken){
 if(micOwner==='tune') micStop();
 tnRecording=false;
@@ -1433,7 +1404,6 @@ const rd=new FileReader();
 rd.onload=()=>loadWavBuffer(rd.result, file.name);
 rd.readAsArrayBuffer(file);
 });
-
 // ─────────────────── lobes module ───────────────────
 let lbCur=null;
 function lobesRecompute(){
@@ -1444,7 +1414,7 @@ const m2={fn:+ui.fn2.value, k:+ui.k2.value*1e6, z:+ui.z2.value};
 if(m2.fn>0&&m2.k>0) modes.push(m2);
 const m3={fn:+ui.fn3.value, k:+ui.k3.value*1e6, z:+ui.z3.value};
 if(m3.fn>0&&m3.k>0) modes.push(m3);
-if(!modes.length){ ui.statL.textContent='enter mode 1'; return; }
+if(!modes.length){ ui.statL.textContent='enter mode 1'; lbCur=null; ui.vBest.innerHTML='—'; ui.vCur.innerHTML='—'; ui.vGain.innerHTML='—'; ui.chipsL.innerHTML=''; lbDirty=true; return; }
 const Z=Math.max(1,Math.round(+ui.flutes.value));
 const pp=parsePitch(ui.pitch.value,Z);
 const d=+ui.dia.value/1e3, a=Math.min(+ui.ae.value/1e3,d);
@@ -1485,14 +1455,18 @@ ui.vBest.innerHTML=best?Math.round(best.n)+'<small> rpm · '+best.b.toFixed(2)+'
 ui.vCur.innerHTML=isFinite(lbCur.atCur.b)?lbCur.atCur.b.toFixed(2)+'<small> mm at '+Math.round(lbCur.atCur.n)+'</small>':'—';
 ui.vGain.innerHTML=(best&&isFinite(lbCur.atCur.b)&&lbCur.atCur.b>0)?'×'+(best.b/lbCur.atCur.b).toFixed(1):'—';
 ui.chipsL.innerHTML='';
+const Dchip=+ui.dia.value||0;
 dedup.forEach((pk,i)=>{ const el=document.createElement('div');
 el.className='chip'+(i===0?' pick':'');
-el.innerHTML='<span class="rpm">'+Math.round(pk.n)+'</span> <small>rpm · '+pk.b.toFixed(2)+' mm</small>';
+const vc=Dchip>0?Math.round(Math.PI*Dchip*pk.n/1000):0;
+el.innerHTML='<span class="rpm">'+Math.round(pk.n)+'</span> <small>rpm · '+pk.b.toFixed(2)+' mm'+(vc?' · '+vc+' m/min':'')+'</small>';
+el.title='Set "now" rpm + vc to this pocket';
+el.addEventListener('click',()=>applyRpmFromChip(pk.n));
 ui.chipsL.appendChild(el); });
 ui.interpL.textContent=best
 ? 'Run '+Math.round(best.n)+' rpm for the deepest stable pocket in range. The depth limit there is '
 +best.b.toFixed(2)+' mm against '+(isFinite(lbCur.atCur.b)?lbCur.atCur.b.toFixed(2):'?')
-+' mm at your current speed. Verify in the cut with Tune; the mic hears what the math cannot.'
++' mm at your current speed. Click a pocket to set the rpm and vc. Verify in the cut with Tune; the mic hears what the math cannot.'
 : 'No stable pocket found in this rpm range.';
 }
 function lbDraw(){
@@ -1549,7 +1523,6 @@ c.beginPath(); c.arc(x,y,4*dprT,0,2*Math.PI); c.fill();
 }
 }
 function lobesKick(){ clearTimeout(lbDeb); lbDeb=setTimeout(lobesRecompute,150); }
-
 // ─────────────────── library module ───────────────────
 let lib=[]; // {name, file:File, meta, sr, dur, sel}
 const FILTER_DEFS=[
@@ -1683,8 +1656,6 @@ if(files.length) await scanFiles(files);
 });
 ui.libSearch.addEventListener('input',renderLib);
 ui.libClearF.onclick=()=>{ filterSel={}; ui.libSearch.value=''; buildFilterUI(); renderLib(); };
-
-// CSV export of the filtered view
 ui.libCsv.onclick=()=>{
 const rows=libFiltered();
 const cols=['file','saved','machine','interface','holderType','stickout','gaugeLen','toolCode','toolCond','matGroup','grade','hardness','clamping','operation','ap','fz','coolant','result','note',
@@ -1705,7 +1676,6 @@ a.download='chatter_library_'+new Date().toISOString().slice(0,10)+'.csv';
 a.click();
 setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 };
-
 /*OVCORE-START*/
 // compare overlay
 const OVCOLORS=['#b89400','#1f7cb8','#1f9d57','#e5484d','#e8932e'];
@@ -1824,13 +1794,11 @@ renderReadout();
 updateOvStat();
 };
 /*OVCORE-END*/
-
 // ─────────────────── speaker tap (sweep) module ───────────────────
 /*SWEEPCORE-START*/
 const swEl={};
 ['swTool','swAir','swClear','swF0','swF1','swDur','swVol','swStat','swSpec','swFn','swTapFn','swDiff','swSetFn'].forEach(id=>swEl[id]=$(id));
 let swToolSpec=null, swAirSpec=null, swDifSpec=null, swPeak=0, swPeakProm=0, swRec=null, swRecLen=0, swRunning=false, swSR=44100;
-
 function swReadParams(){
   let f0=Math.max(50, +swEl.swF0.value||200);
   let f1=Math.max(f0+100, +swEl.swF1.value||8000);
@@ -1838,7 +1806,6 @@ function swReadParams(){
   const vol=Math.max(0.05, Math.min(1, (+swEl.swVol.value||35)/100));
   return {f0,f1,dur,vol};
 }
-// averaged power spectrum of a recording (hann, 50% overlap)
 function specOfSamples(samples, sr){
   const pema=new Float32Array(HALF), re=new Float32Array(FFTSIZE), im=new Float32Array(FFTSIZE);
   const hop=FFTSIZE>>1; let n=0;
@@ -1984,10 +1951,13 @@ swEl.swClear.onclick=swClearAll;
 swEl.swSetFn.onclick=()=>{ if(swPeak>0){ applyToInputs(swPeak); swEl.swStat.className='stat'; swEl.swStat.textContent='M1 fₙ set to '+Math.round(swPeak)+' Hz — lobes updated'; swDOM(); } };
 swDraw();
 /*SWEEPCORE-END*/
-
-
 // ─────────────────── shared render + wiring ───────────────────
 let dprT=1, tnDirty=true, lbDirty=true;
+// vc (cutting speed) <-> rpm — shown on top, applied by clicking a pocket/speed chip
+function vcFromRpm(){ const D=+ui.dia.value||0, n=+ui.ncur.value||0; return D>0? Math.PI*D*n/1000 : 0; }
+function rpmFromVc(){ const D=+ui.dia.value||0, vc=+ui.vcCur.value||0; return D>0? vc*1000/(Math.PI*D) : 0; }
+function syncVcFromRpm(){ if(!ui.vcCur) return; const v=vcFromRpm(); ui.vcCur.value = v>0? Math.round(v) : ''; }
+function applyRpmFromChip(n){ if(!(n>0)) return; ui.ncur.value=Math.round(n); syncVcFromRpm(); lobesKick(); if(tnHave) tnAnalyse(); }
 function sizeCanvases(){
 dprT=Math.min(window.devicePixelRatio||1,2);
 [ui.tuneSpec,ui.map,ui.polar].forEach(c=>{
@@ -2007,15 +1977,17 @@ requestAnimationFrame(render);
 let lbDeb=null;
 INPUT_IDS.forEach(id=>ui[id].addEventListener('input',()=>{
 lobesKick();
+if(id==='ncur'||id==='dia') syncVcFromRpm();
 if(['ncur','flutes','fn1'].includes(id) && tnHave) tnAnalyse();
 }));
+if(ui.vcCur) ui.vcCur.addEventListener('input',()=>{ const n=rpmFromVc(); if(n>0){ ui.ncur.value=Math.round(n); lobesKick(); if(tnHave) tnAnalyse(); } });
 window.addEventListener('resize', sizeCanvases);
-
 buildOpForm();
 opRestoreLocal();
 rebuildDatalists();
 sizeCanvases();
 lobesRecompute();
+syncVcFromRpm();
 requestAnimationFrame(render);
 </script>
 </body>
