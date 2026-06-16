@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Test · fₙ — CHATTER.CALC</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--bg:#fafafa;--card:#fff;--border:#e3e3e3;--ink:#333;--muted:#8a8a8a;--track:#eef0f2;
+--yellow:#f5c518;--yellow-ink:#b89400;--blue:#4ab3f0;--blue-ink:#1f7cb8;
+--green:#1f9d57;--green-bg:rgba(31,157,87,.10);--orange:#e8932e;--orange-bg:rgba(232,147,46,.12);--red:#e5484d;--red-bg:rgba(229,72,77,.10);}
+html,body{background:var(--bg);color:var(--ink);font:14px/1.4 'Helvetica Neue','Arial Narrow',Helvetica,Arial,sans-serif;}
+body{max-width:900px;margin:0 auto;padding:10px 14px 30px;}
+a.back{display:inline-block;margin:6px 0 4px;font:700 11px Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:#555;background:#fff;border:1px solid #ddd;border-radius:5px;padding:6px 12px;}
+header h1{font-size:17px;font-weight:800;margin:6px 0 1px;} header h1 span{color:var(--yellow-ink);}
+header .sub{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;}
+.cardhead{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding:9px 12px 0;}
+.controls{padding:8px 12px;display:flex;gap:7px 9px;align-items:center;flex-wrap:wrap;}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;background:var(--ink);color:#fff;}
+.btn.go{background:var(--green);} .btn.ghost{background:#fff;color:var(--muted);border:1px solid var(--border);} .btn.act{background:var(--yellow);color:var(--ink);}
+.btn:disabled{opacity:.4;cursor:default;}
+label.f{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+label.f input{width:74px;padding:5px 6px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;color:var(--ink);text-align:right;}
+label.f select{padding:5px 6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--ink);background:#fff;max-width:200px;}
+.spacer{flex:1 1 auto;} .stat{font-size:11px;color:var(--muted);text-align:right;} .stat.warn{color:var(--orange);font-weight:700;}
+.result{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;padding:10px 13px;border:1.5px solid var(--green);background:var(--green-bg);border-radius:9px;margin:0 12px 10px;}
+.result .rk{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.result .rv{font-size:26px;font-weight:800;color:var(--green);line-height:1;} .result .rv small{font-size:12px;color:var(--muted);font-weight:600;}
+.result .rv2{font-size:18px;font-weight:800;color:var(--blue-ink);line-height:1;}
+.stage{padding:8px 12px 12px;display:flex;flex-direction:column;gap:10px;}
+.instruct{font-size:13px;font-weight:600;line-height:1.4;min-height:34px;} .instruct b{font-weight:800;} .instruct.warn{color:var(--red);} .instruct.ready{color:var(--green);}
+.meter{display:flex;flex-direction:column;gap:5px;}
+.meter .bartrack{position:relative;height:14px;background:var(--track);border-radius:7px;overflow:hidden;}
+.meter .barfill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--blue);border-radius:7px;transition:width .04s linear;}
+.meter .mark{position:absolute;top:-3px;bottom:-3px;width:2px;} .meter .mark.floor{background:var(--muted);} .meter .mark.trig{background:var(--red);}
+.meter .mrow2{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+.taps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.tap{border:1.5px solid var(--border);border-radius:11px;padding:8px 6px 9px;text-align:center;background:#fff;}
+.tap .lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.tap .hz{font-size:20px;font-weight:800;line-height:1.05;margin-top:3px;white-space:nowrap;} .tap .hz small{font-size:11px;font-weight:600;color:var(--muted);}
+.tap .hz2{font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;min-height:13px;}
+.tap.empty .hz{color:#cfcfcf;}
+.tap.green{border-color:var(--green);background:var(--green-bg);} .tap.green .hz{color:var(--green);}
+.tap.orange{border-color:var(--orange);background:var(--orange-bg);} .tap.orange .hz{color:var(--orange);}
+.tap.red{border-color:var(--red);background:var(--red-bg);} .tap.red .hz{color:var(--red);}
+canvas.pickcv{width:100%;height:150px;display:block;border:1px solid var(--border);border-radius:8px;background:#fff;touch-action:manipulation;}
+canvas.sweepcv{width:100%;height:200px;display:block;border:1px solid var(--border);border-radius:8px;background:#fff;touch-action:manipulation;}
+.chips{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.chip{border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;font-weight:700;color:var(--ink);background:#fff;white-space:nowrap;cursor:pointer;user-select:none;}
+.chip.on1{border-color:var(--yellow);color:var(--yellow-ink);background:rgba(245,197,24,.10);} .chip.on2{border-color:var(--blue);color:var(--blue-ink);background:rgba(74,179,240,.10);}
+.rgrid{display:grid;grid-template-columns:repeat(3,auto) 1fr;gap:12px;align-items:end;}
+.rb{display:flex;flex-direction:column;gap:1px;} .rb .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+.rb .v{font-size:19px;font-weight:800;white-space:nowrap;line-height:1;} .rb .v small{font-size:11px;font-weight:600;color:var(--muted);}
+.rb.fc .v{color:var(--red);} .rb.shift .v{color:var(--blue-ink);}
+.interp{font-size:12px;color:var(--ink);line-height:1.35;} .snote{font-size:10px;color:var(--muted);line-height:1.4;}
+.tres{display:flex;align-items:center;gap:14px;flex-wrap:wrap;} .tres .rk{font-size:9px;color:var(--muted);text-transform:uppercase;} .tres .rv{font-size:24px;font-weight:800;} .tres .rv small{font-size:12px;color:var(--muted);font-weight:600;} .tres .rv2{font-size:17px;font-weight:800;color:var(--blue-ink);} .tres.ok .rv{color:var(--green);} .tres .spread{font-size:10px;color:var(--muted);}
+</style>
+</head>
+<body>
+<a class="back" href="./index.html">&#8249; All apps</a>
+<header>
+<h1>Tap Test <span>·</span> fₙ</h1>
+<div class="sub">measure the tool natural frequency — bench hammer tap or speaker sweep · read fₙ, type it into Test · Lobes · Tune</div>
+</header>
+
+<div class="card">
+<div class="cardhead">Result</div>
+<div class="result">
+<div><div class="rk">fₙ (M1)</div><div class="rv" id="fnOut">—</div></div>
+<div><div class="rk">M2</div><div class="rv2" id="fn2Out">—</div></div>
+<div class="spacer"></div>
+<button id="copyFn" class="btn ghost">Copy fₙ</button>
+<label class="f">mic <select id="micSel"><option value="">System default input</option></select></label>
+</div>
+<input type="hidden" id="fn1"><input type="hidden" id="fn2"><input type="hidden" id="k2">
+</div>
+
+<div class="card">
+<div class="cardhead">1 · Bench tap (impulse hammer / light tap)</div>
+<div class="controls">
+<button id="tapStart" class="btn go">Start tap test</button>
+<button id="tapReset" class="btn ghost">Reset</button>
+<label class="f">expect f<sub>n</sub><input id="hint" type="number" placeholder="auto" min="50" step="10"> Hz</label>
+<div class="spacer"></div>
+</div>
+<div class="stage">
+<div class="instruct" id="instruct">Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then keep tapping the tool tip until it locks, or it stops after 30&nbsp;s.</div>
+<div class="meter">
+<div class="bartrack"><div class="barfill" id="bar"></div><div class="mark floor" id="mFloor" style="left:0%"></div><div class="mark trig" id="mTrig" style="left:0%"></div></div>
+<div class="mrow2"><span>level</span><span>noise ignored: <b id="ignored">0</b></span></div>
+</div>
+<div class="taps">
+<div class="tap empty" id="t0"><div class="lab">tap 1</div><div class="hz">—</div><div class="hz2"></div></div>
+<div class="tap empty" id="t1"><div class="lab">tap 2</div><div class="hz">—</div><div class="hz2"></div></div>
+<div class="tap empty" id="t2"><div class="lab">tap 3</div><div class="hz">—</div><div class="hz2"></div></div>
+</div>
+<div class="tres idle" id="tapRes">
+<div><div class="rk">fₙ (M1)</div><div class="rv" id="fnVal">—</div></div>
+<div><div class="rk">M2</div><div class="rv2" id="fn2Val">—</div></div>
+<div class="spread" id="spread"></div>
+</div>
+<canvas id="tapSpec" class="pickcv" style="display:none"></canvas>
+<div class="chips" id="tapPickRow" style="display:none">
+<span class="chip" id="chipM1">M1 —</span>
+<span class="chip" id="chipM2">M2 —</span>
+<button id="applyPicks" class="btn act" style="display:none">Picks → result</button>
+<button id="clearPicksT" class="btn ghost">Clear</button>
+<span class="snote" id="tapSpecSrc"></span>
+</div>
+<div class="snote">A clean result fills fₙ above. The spectrum appears after any hit — tap it to pick peaks yourself (first = M1, second = M2), then <b>Picks → result</b>. Note: a microphone struggles to read the tool natural frequency in a noisy shop; a contact sensor + instrumented hammer is the reliable way.</div>
+</div>
+</div>
+
+<div class="card">
+<div class="cardhead">2 · Speaker tap (software tap test · no hammer · experimental)</div>
+<div class="controls">
+<button id="swTool" class="btn go">Sweep · tool in</button>
+<button id="swAir" class="btn ghost">Sweep · baseline (tool out)</button>
+<button id="swClear" class="btn ghost">Clear</button>
+<label class="f">from<input id="swF0" type="number" value="200" min="50" step="50"> Hz</label>
+<label class="f">to<input id="swF1" type="number" value="8000" min="500" step="100"> Hz</label>
+<label class="f">secs<input id="swDur" type="number" value="4" min="1" max="12" step="1"></label>
+<label class="f">level<input id="swVol" type="number" value="35" min="5" max="100" step="5"> %</label>
+<div class="spacer"></div>
+<div class="stat" id="swStat">aim a speaker at the tool</div>
+</div>
+<div class="stage" style="padding-top:0;">
+<canvas id="swSpec" class="sweepcv"></canvas>
+<div class="rgrid">
+<div class="rb fc"><span class="k">fₙ (speaker)</span><span class="v" id="swFn">—</span></div>
+<div class="rb"><span class="k">tap fₙ (M1)</span><span class="v" id="swTapFn">—</span></div>
+<div class="rb shift"><span class="k">difference</span><span class="v" id="swDiff">—</span></div>
+<div></div>
+</div>
+<div class="interp" id="swInterp"><b>Sweep · tool in</b> plays a tone low → high → low while the mic records. Then pull the tool back and press <b>Sweep · baseline</b>. The app subtracts the two; the peak of the difference is fₙ. Then <b>Set fₙ</b>.</div>
+<div class="chips"><button id="swSetFn" class="btn act" style="display:none">Set fₙ</button></div>
+<div class="snote">Unproven on a microphone. Prove it on a steel ruler in a vise first: if the difference peak tracks your hand tap and moves when you change tools, it works; if peaks stay fixed, the mic cannot do it and you keep the hammer tap above.</div>
+</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const FFTSIZE = 8192, HALF = FFTSIZE/2;
+const hann = new Float32Array(FFTSIZE);
+for (let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
+function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
+for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+function median(a){ if(!a.length)return 0; const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function pickPeak(arr, lk, binHz, fLo, fHi){
+const n=arr.length; let i0=Math.round(fLo/binHz)-lk, i1=Math.round(fHi/binHz)-lk;
+i0=Math.max(0,Math.min(n-1,i0)); i1=Math.max(0,Math.min(n-1,i1)); if(i1<i0) return null;
+let bi=i0; for(let i=i0;i<=i1;i++) if(arr[i]>arr[bi]) bi=i;
+while(bi>0 && arr[bi-1]>arr[bi]) bi--; while(bi<n-1 && arr[bi+1]>arr[bi]) bi++;
+let off=0; if(bi>0 && bi<n-1){ const a=arr[bi-1],b=arr[bi],c=arr[bi+1],dd=a-2*b+c; if(dd!==0) off=Math.max(-0.5,Math.min(0.5,0.5*(a-c)/dd)); }
+return (lk+bi+off)*binHz;
+}
+function avgSpecs(list){ if(!list.length) return null; const n=list[0].arr.length, out=new Float32Array(n); let used=0;
+for(const s of list){ if(s.arr.length!==n) continue; for(let i=0;i<n;i++) out[i]+=s.arr[i]; used++; } if(!used) return null;
+for(let i=0;i<n;i++) out[i]/=used; return out; }
+/*TAPCORE*/
+const TAPCFG = { CALIB_S:5, MARGIN_DB:12, HARDMIN_RMS:1.8e-5, TRANSIENT_MAX:0.06, FLOOR_CEIL_RMS:0.10,
+WINDOW_MS:250, PRE_MS:10, REFRACTORY_MS:300, ATTACK_MAX_MS:9, DECAY_RATIO_MAX:0.50,
+PROMINENCE_DB:12, MODE_SEP_PCT:0.15, MODE_SEP_HZ:30, SECOND_MODE_MIN:1e-5,
+MODE2_PROM_DB:20, THIRD_PEAK_MAX:0.35, SEARCH_LO:120, SEARCH_HI:6000, TOL_GREEN:0.03, TOL_ORANGE:0.07 };
+function validateTap(win, sr, band, cfg){
+const pre = Math.round(cfg.PRE_MS/1000*sr), N = win.length; const look = Math.min(N-1, pre + Math.round(0.030*sr));
+let pIdx=pre, pv=0; for(let i=pre;i<=look;i++){ const a=Math.abs(win[i]); if(a>pv){pv=a; pIdx=i;} } if(pv<=0) return {ok:false};
+const attackMs = Math.max(0,(pIdx-pre))/sr*1000; if(attackMs > cfg.ATTACK_MAX_MS) return {ok:false, why:'slow onset'};
+const post=N-pIdx; if(post<Math.round(0.04*sr)) return {ok:false};
+const third=Math.floor(post/3); let e1=0,e3=0; for(let i=0;i<third;i++){ const a=win[pIdx+i], b=win[pIdx+post-1-i]; e1+=a*a; e3+=b*b; }
+if(!(e1>0)) return {ok:false}; if(e3/e1 > cfg.DECAY_RATIO_MAX) return {ok:false, why:'sustained'};
+const tailStart = pIdx + Math.floor(post*0.05), tailLen = N - tailStart;
+const re=new Float32Array(FFTSIZE), im=new Float32Array(FFTSIZE);
+for(let i=0;i<FFTSIZE;i++){ im[i]=0; re[i]=(i<tailLen)? win[tailStart+i]*(0.5*(1-Math.cos(2*Math.PI*i/Math.max(1,tailLen-1)))) : 0; }
+fft(re,im); const binHz=sr/FFTSIZE, lo=band[0], hi=band[1];
+const lk=Math.max(2,Math.floor(lo/binHz)), hk=Math.min(HALF-2,Math.floor(hi/binHz));
+const pow=new Float32Array(HALF); for(let k=lk;k<=hk;k++) pow[k]=re[k]*re[k]+im[k]*im[k];
+const spec={lk:lk, hk:hk, binHz:binHz, arr:pow.slice(lk,hk+1)};
+const maxima=[]; for(let k=lk+1;k<hk;k++){ if(pow[k]>=pow[k-1] && pow[k]>=pow[k+1] && pow[k]>0) maxima.push(k); }
+if(!maxima.length) return {ok:false, spec:spec}; maxima.sort((a,b)=>pow[b]-pow[a]);
+const p1=maxima[0], main=pow[p1]; const bandPow=[]; for(let k=lk;k<=hk;k++) bandPow.push(pow[k]); const bandMed=median(bandPow)||1e-12;
+if(10*Math.log10(main/bandMed) < cfg.PROMINENCE_DB) return {ok:false, why:'no clear peak', spec:spec};
+const interp = k => { let off=0; const a=pow[k-1],b=pow[k],c=pow[k+1],dd=a-2*b+c; if(dd!==0) off=0.5*(a-c)/dd; return (k+off)*binHz; };
+const f1 = interp(p1); const sepHz = Math.max(cfg.MODE_SEP_HZ, f1*cfg.MODE_SEP_PCT);
+let p2=-1; for(const k of maxima){ if(k===p1) continue; if(Math.abs(k*binHz - f1) < sepHz) continue; p2=k; break; }
+let f2=null; if(p2>0 && pow[p2]/main >= cfg.SECOND_MODE_MIN && 10*Math.log10(pow[p2]/bandMed) >= cfg.MODE2_PROM_DB){ f2 = interp(p2); }
+let p3pow=0; for(const k of maxima){ if(k===p1) continue; if(Math.abs(k*binHz - f1) < sepHz) continue; if(p2>0 && Math.abs(k*binHz - p2*binHz) < sepHz) continue; p3pow=pow[k]; break; }
+if(p3pow/main > cfg.THIRD_PEAK_MAX) return {ok:false, why:'broadband', spec:spec};
+return {ok:true, freq:f1, freq2:f2, spec:spec};
+}
+function modeTwo(tapsArr, cfg){ const f2s = tapsArr.map(t=>t.f2).filter(x=>x>0); if(f2s.length<2) return null;
+const med = median(f2s); const close = f2s.filter(x=>Math.abs(x-med)/med <= cfg.TOL_ORANGE); if(close.length<2) return null;
+return close.reduce((s,x)=>s+x,0)/close.length; }
+const ui={};
+['fn1','fn2','k2','fnOut','fn2Out','copyFn','micSel','hint','tapStart','tapReset','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread','tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
+'swTool','swAir','swClear','swF0','swF1','swDur','swVol','swStat','swSpec','swFn','swTapFn','swDiff','swSetFn'].forEach(id=>ui[id]=$(id));
+const tapBoxes=[ui.t0,ui.t1,ui.t2];
+function showResult(){ ui.fnOut.innerHTML = (+ui.fn1.value>0)? Math.round(+ui.fn1.value)+'<small> Hz</small>':'—'; ui.fn2Out.innerHTML=(+ui.fn2.value>0)?Math.round(+ui.fn2.value)+'<small> Hz</small>':'—'; if(typeof swDOM==='function') swDOM(); }
+ui.copyFn.onclick=()=>{ const v=+ui.fn1.value; if(v>0){ try{navigator.clipboard.writeText(String(Math.round(v)));}catch(e){} ui.copyFn.textContent='Copied '+Math.round(v); setTimeout(()=>ui.copyFn.textContent='Copy fₙ',1200); } };
+// ---- shared mic ----
+let micCtx=null,micStream=null,micSrc=null,micCap=null,micScript=null,micSilent=null,micOwner=null,micSelId='';
+async function refreshMicList(){ if(!ui.micSel||!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices) return;
+try{ const devs=await navigator.mediaDevices.enumerateDevices(); const ins=devs.filter(d=>d.kind==='audioinput'); const cur=micSelId;
+ui.micSel.innerHTML=''; const def=document.createElement('option'); def.value=''; def.textContent='System default input'; ui.micSel.appendChild(def);
+ins.forEach((d,i)=>{ const o=document.createElement('option'); o.value=d.deviceId; o.textContent=d.label||('Input '+(i+1)); ui.micSel.appendChild(o); }); ui.micSel.value=cur||''; }catch(e){} }
+if(ui.micSel){ ui.micSel.addEventListener('change',()=>{ micSelId=ui.micSel.value||''; }); refreshMicList();
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener){ try{ navigator.mediaDevices.addEventListener('devicechange',refreshMicList); }catch(e){} } }
+async function micStart(owner, onChunk){ if(micOwner) micRelease();
+micCtx=new (window.AudioContext||window.webkitAudioContext)(); await micCtx.resume();
+const _ac={echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1}; if(micSelId) _ac.deviceId={exact:micSelId};
+micStream=await navigator.mediaDevices.getUserMedia({audio:_ac,video:false}); try{ refreshMicList(); }catch(e){}
+micSrc=micCtx.createMediaStreamSource(micStream); micSilent=micCtx.createGain(); micSilent.gain.value=0; micSilent.connect(micCtx.destination);
+if(micCtx.audioWorklet){ const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
+const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await micCtx.audioWorklet.addModule(url);
+micCap=new AudioWorkletNode(micCtx,'cap'); micCap.port.onmessage=e=>onChunk(e.data); micSrc.connect(micCap); micCap.connect(micSilent);
+} else { micScript=micCtx.createScriptProcessor(2048,1,1); micScript.onaudioprocess=e=>onChunk(new Float32Array(e.inputBuffer.getChannelData(0))); micSrc.connect(micScript); micScript.connect(micSilent); }
+micOwner=owner; return micCtx.sampleRate; }
+function micStop(){ try{if(micCap){micCap.port.onmessage=null;micCap.disconnect();}}catch(e){} try{if(micScript){micScript.onaudioprocess=null;micScript.disconnect();}}catch(e){}
+try{if(micSrc)micSrc.disconnect();}catch(e){} try{if(micSilent)micSilent.disconnect();}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(micCtx)micCtx.close();}catch(e){}
+micCtx=micStream=micSrc=micCap=micScript=micSilent=null; micOwner=null; }
+function micRelease(){ const o=micOwner; micStop(); if(o==='tap') tapCancel(true); if(o==='sweep') swCancel(true); }
+// ---- tap module ----
+let tapSR=44100; const TRING=16384; const tapRing=new Float32Array(TRING); let tapTotal=0;
+function tapWrite(s){ tapRing[tapTotal%TRING]=s; tapTotal++; }
+function tapRead(start,len){ const out=new Float32Array(len); for(let j=0;j<len;j++){ const idx=start+j; out[j]= idx>=0 ? tapRing[((idx%TRING)+TRING)%TRING] : 0; } return out; }
+const tapST={IDLE:'idle',CALIB:'calib',READY:'ready',NOISY:'noisy',DONE:'done'};
+let tapState=tapST.IDLE, tapRunning=false; let calStart=0,calRms=[],tapFloor=0,tapTrig=0; let tapFrameAcc=0,tapFrameN=0;
+let tapCapturing=false,tapOnset=0,tapCapEnd=0,tapLastCap=-1e9,tapIgnored=0; let taps=[];
+let tapSpecs=[],tapManual={m1:null,m2:null},tapCur=null; const TAPHOP=256, SPEC_KEEP=8;
+const MLIN=Math.pow(10,TAPCFG.MARGIN_DB/20);
+const tapWin=()=>Math.round(TAPCFG.WINDOW_MS/1000*tapSR); const tapPre=()=>Math.round(TAPCFG.PRE_MS/1000*tapSR); const tapRefr=()=>Math.round(TAPCFG.REFRACTORY_MS/1000*tapSR);
+function tapBand(){ const h=parseFloat(ui.hint.value); if(h>0) return [Math.max(60,h*0.6), Math.min(tapSR/2,h*1.7)]; return [TAPCFG.SEARCH_LO, Math.min(TAPCFG.SEARCH_HI,tapSR/2)]; }
+function tapFeed(s){ tapWrite(s); tapFrameAcc+=s*s; tapFrameN++; if(tapFrameN>=TAPHOP){ const rms=Math.sqrt(tapFrameAcc/tapFrameN); tapFrameAcc=0; tapFrameN=0; tapFrame(rms); } if(tapCapturing && tapTotal>=tapCapEnd) tapFinishCap(); }
+const dbfs=r=>20*Math.log10(r+1e-9);
+function tapFrame(rms){ ui.bar.style.width=Math.max(0,Math.min(100,(dbfs(rms)+90)/90*100)).toFixed(1)+'%';
+if(tapState===tapST.CALIB){ calRms.push(rms); if(tapTotal-calStart>=TAPCFG.CALIB_S*tapSR) tapEndCalib(); }
+else if(tapState===tapST.READY){ if(!tapCapturing && (tapTotal-tapLastCap)>tapRefr() && rms>tapTrig){ tapCapturing=true; tapOnset=tapTotal-TAPHOP; tapCapEnd=tapOnset+tapWin(); } } }
+function tapMarks(){ ui.mFloor.style.left=Math.max(0,Math.min(100,(dbfs(tapFloor)+90)/90*100)).toFixed(1)+'%'; ui.mTrig.style.left=Math.max(0,Math.min(100,(dbfs(tapTrig)+90)/90*100)).toFixed(1)+'%'; }
+function tapEndCalib(){ tapFloor=median(calRms)||TAPCFG.HARDMIN_RMS; const trans=calRms.filter(r=>r>tapFloor*MLIN).length/Math.max(1,calRms.length);
+tapTrig=Math.max(tapFloor*MLIN,TAPCFG.HARDMIN_RMS); const tooLoud=tapFloor>TAPCFG.FLOOR_CEIL_RMS||tapTrig>0.7;
+if(trans>TAPCFG.TRANSIENT_MAX||tooLoud){ tapState=tapST.NOISY; ui.instruct.className='instruct warn';
+ui.instruct.innerHTML= tooLoud ? 'Too loud to test. Wait for a quieter moment, then press <b>Start</b> again.' : 'Too noisy — frequent bangs during the listen. Wait for a quiet window, then press <b>Start</b> again.'; tapMarks(); return; }
+tapState=tapST.READY; ui.instruct.className='instruct ready'; ui.instruct.innerHTML='Floor learned. <b>Keep tapping the tool.</b> It locks when the taps agree, or stops after 30 s. Stray noise is ignored.'; tapMarks(); }
+function tapFinishCap(){ tapCapturing=false; tapLastCap=tapTotal; const start=tapOnset-tapPre(); const win=tapRead(start,tapPre()+tapWin());
+const res=validateTap(win,tapSR,tapBand(),TAPCFG);
+if(res.spec){ tapSpecs.push({arr:res.spec.arr,lk:res.spec.lk,binHz:res.spec.binHz,ok:res.ok}); if(tapSpecs.length>SPEC_KEEP) tapSpecs.shift(); tapDrawSpec(); }
+if(res.ok){ taps.push({f1:res.freq,f2:res.freq2}); tapAccepted(); } else { tapIgnored++; ui.ignored.textContent=tapIgnored; } }
+function colorOf(f,med){ const d=Math.abs(f-med)/med; return d<=TAPCFG.TOL_GREEN?'green':(d<=TAPCFG.TOL_ORANGE?'orange':'red'); }
+function tapF1s(){ return taps.map(t=>t.f1); }
+function tapSetBox(i,cls,html2,sub){ const el=tapBoxes[i]; el.className='tap'+(cls?' '+cls:''); el.querySelector('.hz').innerHTML=html2; el.querySelector('.hz2').textContent=sub||''; }
+let tapTimer=null; function tapClearTimer(){ if(tapTimer){ clearTimeout(tapTimer); tapTimer=null; } } function tapStartTimer(){ tapClearTimer(); tapTimer=setTimeout(tapTimeout,30000); }
+function bestCluster(arr,tol){ let best=[]; for(const c of arr){ const g=arr.filter(x=>Math.abs(x-c)/c<=tol); if(g.length>best.length) best=g; } return best; }
+function tapAccepted(){ const all=tapF1s(); const cl=bestCluster(all,TAPCFG.TOL_GREEN); const ctr= cl.length>=2 ? cl.reduce((s,x)=>s+x,0)/cl.length : median(all);
+const recent=taps.slice(-3); for(let i=0;i<3;i++){ if(i<recent.length){ const t=recent[i]; tapSetBox(i,colorOf(t.f1,ctr),Math.round(t.f1)+'<small> Hz</small>', t.f2?'+ '+Math.round(t.f2)+' Hz':''); } else tapSetBox(i,'empty','—',''); }
+if(cl.length>=3){ tapFinishOK(cl); return; } const est= cl.length>=2 ? Math.round(ctr) : null;
+ui.instruct.className='instruct ready'; ui.instruct.innerHTML='Captured <b>'+all.length+'</b> tap'+(all.length===1?'':'s')+' · '+cl.length+' agree'+(est?' · about <b>'+est+' Hz</b>':'')+' — keep tapping until it locks.'; }
+function tapFinishOK(cl){ const fn=cl.reduce((s,x)=>s+x,0)/cl.length; const fn2=modeTwo(taps,TAPCFG); const all=tapF1s(), spread=Math.max(...cl)-Math.min(...cl);
+tapState=tapST.DONE; tapStopUI(); ui.tapRes.className='tres ok'; ui.fnVal.innerHTML=Math.round(fn)+'<small> Hz</small>'; ui.fn2Val.innerHTML=fn2?Math.round(fn2)+'<small> Hz</small>':'—';
+ui.spread.innerHTML=cl.length+' of '+all.length+' agree · spread '+spread.toFixed(0)+' Hz<br>locked fₙ from '+cl.length+' taps';
+ui.instruct.className='instruct ready'; ui.instruct.innerHTML='Locked — <b>fₙ = '+Math.round(fn)+' Hz'+(fn2?' · M2 = '+Math.round(fn2)+' Hz':'')+'</b>.'; applyToInputs(fn,fn2); }
+function tapTimeout(){ tapTimer=null; if(tapState===tapST.DONE) return; if(micOwner==='tap') micStop(); tapRunning=false; tapState=tapST.IDLE;
+ui.tapStart.textContent='Start tap test'; ui.tapStart.classList.add('go'); const all=tapF1s(), cl=bestCluster(all,TAPCFG.TOL_GREEN); let why;
+if(all.length<2) why='only '+all.length+' clean tap'+(all.length===1?'':'s')+' got through in 30 s — too noisy, or the taps were too soft';
+else { const sp=Math.max(...all)-Math.min(...all); why='the '+all.length+' taps never agreed (best cluster '+cl.length+', need 3; spread '+sp.toFixed(0)+' Hz)'; }
+ui.fn1.value=''; ui.fn2.value=''; showResult(); for(let i=0;i<3;i++) tapSetBox(i,'empty','—','');
+ui.tapRes.className='tres idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent='';
+ui.instruct.className='instruct warn'; ui.instruct.innerHTML='Tap test stopped at 30 s — '+why+'. Type fₙ by hand, use the speaker tap below, or press <b>Start</b> to try again.'; }
+function tapStopUI(){ tapClearTimer(); if(micOwner==='tap') micStop(); tapRunning=false; ui.tapStart.textContent='Start tap test'; ui.tapStart.classList.add('go'); }
+function tapCancel(taken){ tapStopUI(); tapState=tapST.IDLE; ui.instruct.className='instruct'; ui.instruct.innerHTML= taken ? 'Tap test stopped — the mic switched to the sweep.' : 'Cancelled. Press <b>Start</b> to measure.'; }
+function tapResetAll(){ tapClearTimer(); if(micOwner==='tap') micStop(); tapRunning=false; tapState=tapST.IDLE; tapTotal=0; calRms=[]; tapFloor=0; tapTrig=0;
+tapCapturing=false; tapLastCap=-1e9; tapIgnored=0; taps=[]; tapFrameAcc=0; tapFrameN=0; tapSpecs=[]; tapManual={m1:null,m2:null}; tapCur=null; tapDrawSpec();
+ui.ignored.textContent='0'; ui.bar.style.width='0%'; ui.mFloor.style.left='0%'; ui.mTrig.style.left='0%'; for(let i=0;i<3;i++) tapSetBox(i,'empty','—','');
+ui.tapRes.className='tres idle'; ui.fnVal.textContent='—'; ui.fn2Val.textContent='—'; ui.spread.textContent=''; ui.tapStart.textContent='Start tap test';
+ui.instruct.className='instruct'; ui.instruct.innerHTML='Press <b>Start</b>, stay quiet for 5&nbsp;seconds while it learns the room noise, then keep tapping until it locks, or it stops after 30&nbsp;s.'; }
+ui.tapStart.onclick=async()=>{ if(tapRunning){ tapCancel(false); return; } tapResetAll();
+try{ tapSR=await micStart('tap', chunk=>{ for(let i=0;i<chunk.length;i++) tapFeed(chunk[i]); }); }
+catch(err){ ui.instruct.className='instruct warn'; ui.instruct.innerHTML='Mic error: '+(err.name||'?')+'. Allow microphone access.'; return; }
+tapRunning=true; tapState=tapST.CALIB; calStart=tapTotal; tapStartTimer(); ui.tapStart.textContent='Cancel'; ui.instruct.className='instruct'; ui.instruct.innerHTML='<b>Learning the room noise… 5&nbsp;s.</b> Keep quiet.'; };
+ui.tapReset.onclick=tapResetAll;
+function tapXof(f,W){ const a=Math.log(tapCur.fLo), b=Math.log(tapCur.fHi); return (Math.log(Math.max(tapCur.fLo,Math.min(tapCur.fHi,f)))-a)/(b-a)*W; }
+function tapFof(x,W){ const a=Math.log(tapCur.fLo), b=Math.log(tapCur.fHi); return Math.exp(a+(b-a)*Math.max(0,Math.min(1,x/W))); }
+function tapDrawSpec(){
+if(!tapSpecs.length){ ui.tapSpec.style.display='none'; ui.tapPickRow.style.display='none'; tapCur=null; return; }
+ui.tapSpec.style.display='block'; ui.tapPickRow.style.display='flex';
+let list=tapSpecs.filter(s=>s.ok), label; if(list.length){ label='avg of '+list.length+' accepted tap'+(list.length>1?'s':''); } else { list=tapSpecs.slice(); label='no clean tap — avg of '+list.length+' rejected hit'+(list.length>1?'s':''); }
+const ref=list[list.length-1]; list=list.filter(s=>s.lk===ref.lk && s.arr.length===ref.arr.length && Math.abs(s.binHz-ref.binHz)<1e-6); const avg=avgSpecs(list);
+if(!avg){ ui.tapSpec.style.display='none'; tapCur=null; return; }
+tapCur={arr:avg, lk:ref.lk, binHz:ref.binHz, fLo:Math.max(1,ref.lk*ref.binHz), fHi:(ref.lk+avg.length-1)*ref.binHz}; ui.tapSpecSrc.textContent=label;
+const cv=ui.tapSpec, dpr=window.devicePixelRatio||1; const W=cv.clientWidth||300, H=cv.clientHeight||150; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); let mx=0; for(let i=0;i<avg.length;i++) if(avg[i]>mx) mx=avg[i]; if(mx<=0) return;
+const RANGE=70; const yOf=p=>{ const db=10*Math.log10((p+1e-20)/mx); return 8+Math.min(RANGE,-db)/RANGE*(H-22); };
+g.font='9px sans-serif'; g.lineWidth=1; [200,500,1000,2000,5000,10000].forEach(f=>{ if(f>tapCur.fLo*1.02&&f<tapCur.fHi*0.98){ const x=tapXof(f,W); g.strokeStyle='#ededed'; g.beginPath(); g.moveTo(x,4); g.lineTo(x,H-12); g.stroke(); g.fillStyle='#aaa'; g.fillText(f>=1000?(f/1000+'k'):String(f), x+2, H-3); } });
+g.strokeStyle='#666'; g.lineWidth=1.3; g.beginPath(); let started=false;
+for(let i=0;i<avg.length;i++){ const f=(tapCur.lk+i)*tapCur.binHz; if(f<tapCur.fLo) continue; const x=tapXof(f,W), y=yOf(avg[i]); if(!started){ g.moveTo(x,y); started=true; } else g.lineTo(x,y); } g.stroke();
+const mark=(f,color,lab)=>{ const x=tapXof(f,W); g.strokeStyle=color; g.lineWidth=2; g.beginPath(); g.moveTo(x,4); g.lineTo(x,H-12); g.stroke(); g.fillStyle=color; g.font='bold 10px sans-serif'; const t=lab+' '+Math.round(f); const tw=g.measureText(t).width; g.fillText(t, Math.min(Math.max(2,x+3), W-tw-2), 14); };
+if(tapManual.m1!=null) mark(tapManual.m1,'#b89400','M1'); if(tapManual.m2!=null) mark(tapManual.m2,'#1f7cb8','M2');
+ui.chipM1.className='chip'+(tapManual.m1!=null?' on1':''); ui.chipM1.textContent=tapManual.m1!=null?('M1 '+Math.round(tapManual.m1)+' Hz ×'):'M1 —';
+ui.chipM2.className='chip'+(tapManual.m2!=null?' on2':''); ui.chipM2.textContent=tapManual.m2!=null?('M2 '+Math.round(tapManual.m2)+' Hz ×'):'M2 —';
+ui.applyPicks.style.display = tapManual.m1!=null ? '' : 'none'; }
+ui.tapSpec.addEventListener('pointerdown', e=>{ if(!tapCur) return; e.preventDefault(); const r=ui.tapSpec.getBoundingClientRect(); const x=e.clientX-r.left, W=r.width;
+for(const key of ['m1','m2']){ const m=tapManual[key]; if(m!=null && Math.abs(tapXof(m,W)-x)<=14){ tapManual[key]=null; tapDrawSpec(); return; } }
+const fA=tapFof(Math.max(0,x-16),W), fB=tapFof(Math.min(W,x+16),W); const p=pickPeak(tapCur.arr, tapCur.lk, tapCur.binHz, fA, fB); if(p==null) return;
+if(tapManual.m1==null) tapManual.m1=p; else if(tapManual.m2==null) tapManual.m2=p; else { if(Math.abs(tapXof(tapManual.m1,W)-x)<=Math.abs(tapXof(tapManual.m2,W)-x)) tapManual.m1=p; else tapManual.m2=p; } tapDrawSpec(); });
+ui.chipM1.addEventListener('click',()=>{ if(tapManual.m1!=null){ tapManual.m1=null; tapDrawSpec(); }});
+ui.chipM2.addEventListener('click',()=>{ if(tapManual.m2!=null){ tapManual.m2=null; tapDrawSpec(); }});
+ui.clearPicksT.addEventListener('click',()=>{ tapManual={m1:null,m2:null}; tapDrawSpec(); });
+ui.applyPicks.addEventListener('click',()=>{ if(tapManual.m1!=null) applyToInputs(tapManual.m1, tapManual.m2); });
+function applyToInputs(f1,f2){ if(!(f1>0)) return; ui.fn1.value=Math.round(f1); if(f2>0){ ui.fn2.value=Math.round(f2); if(!(+ui.k2.value>0)) ui.k2.value=5; } showResult(); }
+// ---- sweep module ----
+const swEl={}; ['swTool','swAir','swClear','swF0','swF1','swDur','swVol','swStat','swSpec','swFn','swTapFn','swDiff','swSetFn'].forEach(id=>swEl[id]=$(id));
+let swToolSpec=null, swAirSpec=null, swDifSpec=null, swPeak=0, swPeakProm=0, swRec=null, swRecLen=0, swRunning=false, swSR=44100;
+function swReadParams(){ let f0=Math.max(50, +swEl.swF0.value||200); let f1=Math.max(f0+100, +swEl.swF1.value||8000); const dur=Math.max(1, Math.min(12, +swEl.swDur.value||4)); const vol=Math.max(0.05, Math.min(1, (+swEl.swVol.value||35)/100)); return {f0,f1,dur,vol}; }
+function specOfSamples(samples, sr){ const pema=new Float32Array(HALF), re=new Float32Array(FFTSIZE), im=new Float32Array(FFTSIZE); const hop=FFTSIZE>>1; let n=0;
+for(let pos=0; pos+FFTSIZE<=samples.length; pos+=hop){ for(let i=0;i<FFTSIZE;i++){ re[i]=samples[pos+i]*hann[i]; im[i]=0; } fft(re,im); for(let k=0;k<HALF;k++) pema[k]+=re[k]*re[k]+im[k]*im[k]; n++; }
+if(!n) return null; for(let k=0;k<HALF;k++) pema[k]/=n; return {pema, sr, bh:sr/FFTSIZE}; }
+function swCompute(){ swDifSpec=null; swPeak=0; swPeakProm=0;
+if(swToolSpec&&swAirSpec){ const bh=swToolSpec.bh, p=swReadParams(); const raw=new Float32Array(HALF), ds=new Float32Array(HALF);
+for(let k=0;k<HALF;k++) raw[k]=10*Math.log10(swToolSpec.pema[k]+1e-20)-10*Math.log10(swAirSpec.pema[k]+1e-20);
+for(let k=0;k<HALF;k++){ const a=raw[Math.max(0,k-1)],b=raw[k],c=raw[Math.min(HALF-1,k+1)]; ds[k]=(a+b+c)/3; } swDifSpec={arr:ds, bh};
+const lo=Math.max(p.f0*1.05, bh), hi=p.f1*0.95; const pk=pickPeak(ds,0,bh,lo,hi);
+if(pk!=null&&pk>0){ swPeak=pk; const k0=Math.max(0,Math.floor(lo/bh)), k1=Math.min(HALF-1,Math.floor(hi/bh)), band=[]; for(let k=k0;k<=k1;k++) band.push(ds[k]);
+const m=median(band), pkbin=Math.max(0,Math.min(HALF-1,Math.round(pk/bh))); swPeakProm=ds[pkbin]-m; const weak=swPeakProm<3;
+swEl.swStat.textContent='difference peak '+Math.round(pk)+' Hz · +'+swPeakProm.toFixed(1)+' dB'+(weak?' · weak, swap tools to confirm':' · swap tools to confirm it tracks'); swEl.swStat.className='stat'+(weak?' warn':''); }
+else { swEl.swStat.textContent='no clear difference peak in range'; swEl.swStat.className='stat'; } } swDraw(); swDOM(); }
+function swDraw(){ const cv=swEl.swSpec; if(!cv) return; const dpr=Math.min(window.devicePixelRatio||1,2); const W=Math.round((cv.clientWidth||600)*dpr), H=Math.round((cv.clientHeight||200)*dpr); cv.width=W; cv.height=H;
+const g=cv.getContext('2d'); if(!g) return; g.clearRect(0,0,W,H); const p=swReadParams(), f0=p.f0, f1=p.f1; const xL=34*dpr, xR=W-8*dpr, yT=10*dpr, yB=H-16*dpr; const xOf=f=>xL+((f-f0)/Math.max(1,(f1-f0)))*(xR-xL);
+g.font='600 '+Math.round(9.5*dpr)+'px Helvetica,Arial'; g.strokeStyle='#ededed'; g.lineWidth=dpr; g.fillStyle='#aaa'; g.textAlign='center'; g.textBaseline='top';
+const span=f1-f0, step= span>6000?2000:(span>3000?1000:500); for(let f=Math.ceil(f0/step)*step; f<=f1; f+=step){ const x=xOf(f); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); g.fillText(f>=1000?(f/1000)+'k':f, x, yB+3*dpr); }
+if(swDifSpec){ const arr=swDifSpec.arr, bh=swDifSpec.bh; const k0=Math.max(1,Math.floor(f0/bh)), k1=Math.min(HALF-1,Math.floor(f1/bh)); let lo=-6, hi=6; for(let k=k0;k<=k1;k++){ if(arr[k]>hi)hi=arr[k]; if(arr[k]<lo)lo=arr[k]; } hi=Math.min(Math.max(hi,8),60); lo=Math.max(Math.min(lo,-8),-60);
+const yOf=db=>yB-((Math.max(lo,Math.min(hi,db))-lo)/(hi-lo))*(yB-yT); g.strokeStyle='#cfcfcf'; g.lineWidth=1.2*dpr; g.beginPath(); g.moveTo(xL,yOf(0)); g.lineTo(xR,yOf(0)); g.stroke();
+g.textAlign='right'; g.textBaseline='middle'; g.fillStyle='#aaa'; const ys=(hi-lo)>40?12:((hi-lo)>22?6:3); for(let db=Math.ceil(lo/ys)*ys; db<=hi; db+=ys){ const y=yOf(db); g.fillText((db>0?'+':'')+db, xL-3*dpr, y); }
+g.beginPath(); let st=false; for(let k=k0;k<=k1;k++){ const x=xOf(k*bh), y=yOf(arr[k]); if(!st){g.moveTo(x,y); st=true;} else g.lineTo(x,y); } g.strokeStyle='#e5484d'; g.lineWidth=1.5*dpr; g.lineJoin='round'; g.stroke();
+if(swPeak>0){ const x=xOf(swPeak); g.strokeStyle='#1f9d57'; g.lineWidth=1.4*dpr; g.setLineDash([4*dpr,3*dpr]); g.beginPath(); g.moveTo(x,yT); g.lineTo(x,yB); g.stroke(); g.setLineDash([]); g.fillStyle='#1f9d57'; g.textBaseline='top'; g.font='800 '+Math.round(11*dpr)+'px Helvetica,Arial'; g.textAlign=x>xR-70*dpr?'right':'left'; g.fillText(Math.round(swPeak)+' Hz', x+(x>xR-70*dpr?-6*dpr:6*dpr), yT+2*dpr); }
+g.fillStyle='#999'; g.textAlign='left'; g.textBaseline='top'; g.font='600 '+Math.round(9.5*dpr)+'px Helvetica,Arial'; g.fillText('tool minus baseline (dB)', xL+2*dpr, yT+1*dpr);
+} else if(swToolSpec){ const pema=swToolSpec.pema, bh=swToolSpec.bh; const k0=Math.max(1,Math.floor(f0/bh)), k1=Math.min(HALF-1,Math.floor(f1/bh)); let mx=0; for(let k=k0;k<=k1;k++) if(pema[k]>mx)mx=pema[k]; if(mx<=0)mx=1;
+const yOf=db=>yB-((Math.max(-60,db)+60)/60)*(yB-yT); g.beginPath(); let st=false; for(let k=k0;k<=k1;k++){ const db=10*Math.log10(pema[k]/mx+1e-20), x=xOf(k*bh), y=yOf(db); if(!st){g.moveTo(x,y); st=true;} else g.lineTo(x,y); } g.strokeStyle='#b89400'; g.lineWidth=1.4*dpr; g.lineJoin='round'; g.stroke();
+g.fillStyle='#999'; g.textAlign='left'; g.textBaseline='top'; g.fillText('tool response captured — now run the baseline', xL+2*dpr, yT+1*dpr);
+} else { g.fillStyle='#cfcfcf'; g.textAlign='center'; g.textBaseline='middle'; g.font='600 '+Math.round(12*dpr)+'px Helvetica,Arial'; g.fillText('run a sweep', (xL+xR)/2, (yT+yB)/2); } }
+function swDOM(){ const tapFn=Math.max(0,+ui.fn1.value||0); swEl.swTapFn.innerHTML= tapFn>0 ? Math.round(tapFn)+'<small> Hz</small>' : '<small>none</small>';
+if(swPeak>0){ swEl.swFn.innerHTML=Math.round(swPeak)+'<small> Hz</small>'; swEl.swSetFn.style.display=''; swEl.swSetFn.textContent='Set fₙ = '+Math.round(swPeak)+' Hz'; if(tapFn>0){ const d=swPeak-tapFn; swEl.swDiff.innerHTML=(d>=0?'+':'')+Math.round(d)+'<small> Hz</small>'; } else swEl.swDiff.innerHTML='<small>—</small>'; }
+else { swEl.swFn.innerHTML='<small>—</small>'; swEl.swSetFn.style.display='none'; swEl.swDiff.innerHTML='<small>—</small>'; } }
+function setSwButtons(running){ swEl.swTool.disabled=running; swEl.swAir.disabled=running; swEl.swClear.disabled=running; }
+async function swRun(kind){ if(swRunning) return; const p=swReadParams(); swRunning=true; setSwButtons(true); swEl.swStat.className='stat'; swEl.swStat.textContent='● '+(kind==='air'?'baseline':'tool')+' sweep '+p.f0+' → '+p.f1+' Hz…'; swRec=[]; swRecLen=0;
+try{ swSR=await micStart('sweep', chunk=>{ if(swRunning){ swRec.push(chunk); swRecLen+=chunk.length; } }); } catch(err){ swRunning=false; setSwButtons(false); swEl.swStat.textContent='mic error: '+(err.name||'?')+' — allow microphone access'; return; }
+const ctx=micCtx; try{ const osc=ctx.createOscillator(), g=ctx.createGain(); osc.type='sine'; const t0=ctx.currentTime+0.06, tm=t0+p.dur/2, te=t0+p.dur;
+osc.frequency.setValueAtTime(p.f0,t0); osc.frequency.linearRampToValueAtTime(p.f1,tm); osc.frequency.linearRampToValueAtTime(p.f0,te);
+g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(p.vol,t0+0.04); g.gain.setValueAtTime(p.vol,te-0.04); g.gain.exponentialRampToValueAtTime(0.0001,te);
+osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(te+0.05); }catch(e){ swRunning=false; setSwButtons(false); if(micOwner==='sweep') micStop(); swEl.swStat.textContent='audio error: '+(e.message||e); return; }
+setTimeout(()=>swFinish(kind), Math.round((p.dur+0.5)*1000)); }
+function swFinish(kind){ if(!swRunning) return; swRunning=false; setSwButtons(false); const total=swRecLen, buf=new Float32Array(total); let o=0; for(const c of (swRec||[])){ buf.set(c,o); o+=c.length; } if(micOwner==='sweep') micStop(); swRec=null; swRecLen=0;
+const spec=specOfSamples(buf, swSR); if(!spec){ swEl.swStat.textContent='no audio captured — check the mic and try again'; return; } if(kind==='air') swAirSpec=spec; else swToolSpec=spec;
+swEl.swStat.textContent=(kind==='air'?'baseline':'tool')+' captured · '+(buf.length/swSR).toFixed(1)+' s'+((swToolSpec&&swAirSpec)?' · computing difference…':' · now run the other one'); swCompute(); }
+function swClearAll(){ swToolSpec=swAirSpec=swDifSpec=null; swPeak=0; swPeakProm=0; swEl.swStat.className='stat'; swEl.swStat.textContent='cleared'; swDraw(); swDOM(); }
+function swCancel(taken){ swRunning=false; setSwButtons(false); swEl.swStat.className='stat'; swEl.swStat.textContent= taken?'sweep stopped — the mic moved to the tap test':'cancelled'; }
+swEl.swTool.onclick=()=>swRun('tool'); swEl.swAir.onclick=()=>swRun('air'); swEl.swClear.onclick=swClearAll;
+swEl.swSetFn.onclick=()=>{ if(swPeak>0){ applyToInputs(swPeak); swEl.swStat.className='stat'; swEl.swStat.textContent='fₙ set to '+Math.round(swPeak)+' Hz'; swDOM(); } };
+window.addEventListener('resize',()=>{ if(tapSpecs.length) tapDrawSpec(); swDraw(); });
+swDraw(); showResult();
+</script>
+</body>
+</html>
