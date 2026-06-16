@@ -205,7 +205,7 @@
     <div class="res"><span>Entry &rarr; exit</span><span id="rArc"></span></div>
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
     <div class="res"><span>Max chip h<sub>ex</sub></span><span id="rHmax"></span></div>
-    <div class="res"><span>Chip thinning sin&kappa;<sub>r</sub></span><span id="rThin"></span></div>
+    <div class="res"><span>Chip thinning h<sub>ex</sub>/f<sub>z</sub></span><span id="rThin"></span></div>
     <div class="res"><span>Teeth in cut (avg)</span><span id="rZc"></span></div>
 
     <h2 class="mt">Force</h2>
@@ -343,7 +343,7 @@ function compute(){
   const arc=g.phex-g.phst;
   const hm=arc>1e-9? fz*(Math.cos(g.phst)-Math.cos(g.phex))/arc : 0;
   const hmaxPhi=Math.min(Math.max(Math.PI/2,g.phst),g.phex);
-  const hmax=fz*Math.sin(hmaxPhi), thin=Math.sin(g.phc);
+  const hmax=fz*Math.sin(hmaxPhi), thin=Math.sin(hmaxPhi);   // hex/fz chip-thinning factor (1.0 at slot / ae>=D/2)
   // helix wrap over ap, flutes in cut, and ae sweet-spots for smooth (whole-flute) engagement
   const psiH=(D>0)?2*ap*Math.tan(Math.min(Math.max(helix,0),88)*Math.PI/180)/D:0;
   const pitch2=2*Math.PI/z, NcutH=z*(arc+psiH)/(2*Math.PI), balFrac=Math.abs(NcutH-Math.round(NcutH));
@@ -368,7 +368,7 @@ function run(){
   $('rArc').textContent=(r.g.phst*180/Math.PI).toFixed(0)+'° → '+(r.g.phex*180/Math.PI).toFixed(0)+'°';
   $('rHm').textContent=r.hm.toFixed(4)+' mm';
   $('rHmax').textContent=r.hmax.toFixed(4)+' mm';
-  $('rThin').textContent=r.thin.toFixed(2)+'  (κr '+(r.g.phc*180/Math.PI).toFixed(0)+'°)';
+  $('rThin').textContent=r.thin.toFixed(2)+'  (a_e/D '+(r.ae/r.D*100).toFixed(0)+'%)';
   $('rZc').textContent=r.zc.toFixed(2);
   $('rFt').textContent=fmt(r.peakFt)+' N';
   $('rFr').textContent=fmt(r.peakFr)+' N';
@@ -408,7 +408,7 @@ function run(){
   else if(r.balFrac>0.28){bp='b';bt='uneven';}
   else if(r.balFrac>0.14){bp='a';bt='fair';}
   const sweetTxt=r.sweet.length? r.sweet.map(s=>'<b>'+s.ae.toFixed(2)+'</b> ('+s.k+'z)').join(', ') : 'none ≤ Ø';
-  $('balanceBox').innerHTML='Flutes in cut <b>'+r.NcutH.toFixed(2)+'</b> = radial '+r.zc.toFixed(2)+' + helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'°. Force balance <span class="pill '+bp+'">'+bt+'</span>. Sweet-spot a<sub>e</sub> for whole flutes: '+sweetTxt+(r.nearest?'; nearest to yours <b>'+r.nearest.ae.toFixed(2)+' mm</b>':'')+'. More helix → more wrap → sweet spot moves to lower a<sub>e</sub>.';
+  $('balanceBox').innerHTML='Avg teeth in cut <b>'+r.NcutH.toFixed(2)+'</b> = radial '+r.zc.toFixed(2)+' + helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'° (can exceed z when the helix wraps far). Force balance <span class="pill '+bp+'">'+bt+'</span>. Sweet-spot a<sub>e</sub> for whole-tooth engagement: '+sweetTxt+(r.nearest?'; nearest to yours <b>'+r.nearest.ae.toFixed(2)+' mm</b>':'')+'. More helix → more wrap → sweet spot moves to lower a<sub>e</sub>.';
   draw(r); drawFront(r); drawAebar(r); drawPT();
 }
 
@@ -506,7 +506,7 @@ function drawFront(r){
   for(let yy=yTop-dyA; yy<yBot+sp; yy+=sp){const tt=Math.max(0,Math.min(1,(yy-yTop)/toolLenPx)),xo=cx-off(tt);ctx.beginPath();ctx.moveTo(xo-w/2,yy+dyA);ctx.lineTo(xo+w/2,yy);ctx.stroke();}
   ctx.restore();
   // engaged cutting edges (flutes in cut) along ap on the cutting side
-  const nShow=Math.max(r.NcutH>0.05?1:0, Math.round(r.NcutH));
+  const nShow=Math.min(r.z, Math.max(r.NcutH>0.05?1:0, Math.round(r.NcutH)));   // cap drawn edges at the flute count
   ctx.fillStyle='#d62828';ctx.font='9px monospace';
   for(let i=0;i<nShow;i++){const t=(nShow<=1)?(1-apPx/toolLenPx*0.5):(1-(apPx/toolLenPx)*(i/(nShow-1)));const y=yTop+t*toolLenPx,x=cx-off(t)+w/2;ctx.beginPath();ctx.arc(x,y,3.2,0,2*Math.PI);ctx.fill();ctx.fillText('C'+(i+1),x+5,y+3);}
   // ---- force bundle at the cutting zone ----
@@ -528,7 +528,7 @@ function drawFront(r){
   ctx.fillStyle='#888';ctx.font='9px monospace';ctx.fillText('x',txx+22,tyy+3);ctx.fillText('z',txx-3,tyy-22);ctx.fillText('y',txx+13,tyy+18);
   // header labels
   ctx.fillStyle='#1a1a1a';ctx.font='bold 12px monospace';ctx.fillText('δ '+(dum<10?dum.toFixed(1):Math.round(dum))+' µm',6,16);
-  ctx.fillStyle='#777';ctx.font='10px monospace';ctx.fillText('L '+(+$('L').value)+'  Ø'+(+$('D').value)+'  ('+(L/D).toFixed(1)+'×D)  ·  flutes in cut '+r.NcutH.toFixed(1),6,30);
+  ctx.fillStyle='#777';ctx.font='10px monospace';ctx.fillText('L '+(+$('L').value)+'  Ø'+(+$('D').value)+'  ('+(L/D).toFixed(1)+'×D)  ·  avg teeth '+r.NcutH.toFixed(1),6,30);
   ctx.strokeStyle='#bbb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(12,yTop);ctx.lineTo(12,yBot);ctx.stroke();
   ctx.beginPath();ctx.moveTo(9,yTop);ctx.lineTo(15,yTop);ctx.moveTo(9,yBot);ctx.lineTo(15,yBot);ctx.stroke();
 }
@@ -555,7 +555,7 @@ function drawPT(){
   if(!(N>0&&KW>0&&NM>0)){ctx.fillStyle='#999';ctx.font='12px Helvetica Neue';ctx.fillText('enter max rpm, kW and Nm',mL+14,mT+ph/2);return;}
   const nb=9550*KW/NM;                       // base / corner speed
   const n0=(LAST&&LAST.rpm>0)?LAST.rpm:0;
-  const axisMax=Math.max(N, nb*1.12, n0*1.05);   // show the knee and the operating point
+  const axisMax=Math.max(N, n0*1.05);   // x-axis = machine max rpm (extended only if the operating rpm is beyond it)
   const Taxis=NM*1.18, Paxis=KW*1.18;
   const X=n=>mL+pw*Math.min(1,n/axisMax);
   const YT=t=>mT+ph*(1-Math.min(1,t/Taxis));
@@ -577,7 +577,7 @@ function drawPT(){
   // axis titles
   ctx.fillStyle='#d62828';ctx.font='10px monospace';ctx.fillText('Nm',6,mT+8);
   ctx.fillStyle='#2b8de0';ctx.textAlign='right';ctx.fillText('kW',W-6,mT+8);ctx.textAlign='left';
-  let note='Spindle envelope: torque flat to base '+Math.round(nb)+' rpm, then constant power. Dotted 100% duty, solid 80%. Grey = beyond machine max rpm.';
+  let note='Spindle envelope: torque flat to base '+Math.round(nb)+' rpm, then constant power. Dotted 100% duty, solid 80%.';
   if(n0>0){
     const Treq=LAST.meanT, Preq=LAST.power/1000;
     const capT1=torque(n0,1.0), capP1=power(n0,1.0), capT8=torque(n0,0.8), capP8=power(n0,0.8);
@@ -591,6 +591,7 @@ function drawPT(){
     note='At '+Math.round(n0)+' rpm you use <b>'+Math.round(uT*100)+'%</b> of torque and <b>'+Math.round(uP*100)+'%</b> of power ('+limit+'-limited). '+
          (overspeed?'<b style="color:#d62828">rpm exceeds machine max '+Math.round(N)+'.</b>':(over<=0.8?'Comfortable.':over<=1?'Within 100% duty, above the 80% line.':'<b>Over the 100% envelope — reduce a_p/f_z or rpm.</b>'));
   }
+  if(nb>N) note+=' <b style="color:#c98a00">Base speed '+Math.round(nb)+' rpm is past your max rpm, so this spindle never reaches rated power — check kW and Nm are not swapped.</b>';
   $('ptNote').innerHTML=note;
 }
 
