@@ -145,6 +145,15 @@ table.lib td.res-stable{color:var(--green); font-weight:700;}
 table.lib td.res-marginal{color:var(--orange); font-weight:700;}
 table.lib td.res-chatter{color:var(--red); font-weight:700;}
 footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; padding-bottom:4px;}
+details.fold{background:var(--card); border:1px solid var(--border); border-radius:12px;}
+details.fold>summary{cursor:pointer; list-style:none; padding:11px 12px; font-size:11px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:8px;}
+details.fold>summary::-webkit-details-marker{display:none;}
+details.fold>summary::before{content:'\25B8'; font-size:12px; color:var(--yellow-ink);}
+details.fold[open]>summary::before{content:'\25BE';}
+details.fold>summary:hover{color:var(--ink);}
+.grid2b{display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:0 9px 10px;}
+@media (max-width:900px){ .grid2b{grid-template-columns:1fr;} }
+.subcard{border:1px solid var(--border); border-radius:10px; min-width:0;}
 </style>
 </head>
 <body>
@@ -195,7 +204,10 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 </details>
 </div>
 <!-- ───────── speaker tap (software tap test) ───────── -->
-<div class="card">
+<details class="fold">
+<summary>1 · Tap test &amp; speaker tap &middot; measure tool fₙ (open when needed)</summary>
+<div class="grid2b">
+<div class="subcard">
 <div class="cardhead">1b · Speaker tap (software tap test · no hammer · experimental)</div>
 <div class="controls">
 <button id="swTool" class="btn go">Sweep · tool in</button>
@@ -223,9 +235,8 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="snote">Test method, unproven on a microphone: the speaker shakes the tool, the baseline subtraction cancels the speaker and the room. Prove it first on an easy ringer — a steel ruler clamped in a vise. If the difference peak tracks your hand tap and moves when you change tools, it works. If you only see fixed peaks that do not move, the mic cannot do it here and you keep the hammer tap above.</div>
 </div>
 </div>
-<div class="grid2">
-<!-- ───────── tap test ───────── -->
-<div class="card">
+<!-- tap test -->
+<div class="subcard">
 <div class="cardhead">1 · Tap test (bench fₙ)</div>
 <div class="controls">
 <button id="tapStart" class="btn go">Start tap test</button>
@@ -259,7 +270,9 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <div class="snote">A clean result fills M1/M2 in the inputs automatically. The spectrum appears after any hit — tap it to pick peaks yourself (first = M1, second = M2), then <b>Picks → inputs</b>.</div>
 </div>
 </div>
-<!-- ───────── tune ───────── -->
+</div>
+</details>
+<!-- tune (full width) -->
 <div class="card">
 <div class="cardhead">3 · Tune (in-cut verify · mic)</div>
 <div class="controls">
@@ -289,7 +302,6 @@ footer{font-size:10px; color:var(--muted); text-align:center; line-height:1.45; 
 <button id="sendPick" class="btn act" style="display:none">Picked → M1 fₙ</button>
 <button id="clearPickT2" class="btn ghost" style="display:none">Clear pick</button>
 <button id="setFnBtn" class="btn act" style="display:none">Set fn</button>
-</div>
 </div>
 </div>
 </div>
