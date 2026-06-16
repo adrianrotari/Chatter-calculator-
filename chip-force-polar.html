@@ -3,50 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chip-Load · Force · Polar — playground</title>
+<title>Chip · Force · Polar — CHATTER.CALC</title>
 <style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   :root{
-    --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --line:#2a3340;
-    --txt:#e6edf3; --dim:#8b98a8; --accent:#4cc2ff; --accent2:#ffb454;
-    --good:#3fb950; --warn:#d29922; --bad:#f85149; --chip:#4cc2ff;
+    --accent:#f5c518; --bg:#fafafa; --panel:#ffffff; --panel2:#f4f4f4; --line:#e0e0e0;
+    --txt:#1a1a1a; --dim:#777; --accent2:#e8a400; --good:#2e9e3f; --warn:#c98a00; --bad:#d62828; --chip:#2b8de0;
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
-  header .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);padding:2px 7px;border-radius:10px}
-  .scratch{color:var(--accent2)}
-  .wrap{display:grid;grid-template-columns:330px 1fr 300px;gap:14px;padding:14px;align-items:start}
+  html,body{background:var(--bg);color:var(--txt);font-family:'Helvetica Neue','Arial Narrow',sans-serif;font-stretch:condensed;-webkit-font-smoothing:antialiased}
+  header{padding:12px 16px;border-bottom:2px solid var(--accent);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;max-width:1240px;margin:0 auto}
+  .back{color:var(--dim);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.5px}
+  .back:hover{color:#000}
+  .brand{font-size:21px;font-weight:900;letter-spacing:-.4px}
+  .brand b{color:var(--accent)}
+  .sub{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+  .wrap{display:grid;grid-template-columns:330px 1fr 300px;gap:14px;padding:14px;align-items:start;max-width:1240px;margin:0 auto}
   @media(max-width:1100px){.wrap{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
-  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin:0 0 10px}
-  label{display:block;font-size:12px;color:var(--dim);margin:9px 0 3px}
-  input[type=number]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 8px;font:13px monospace}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:13px 14px}
+  .card h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:0 0 10px;font-weight:700}
+  label{display:block;font-size:12px;color:var(--dim);margin:9px 0 3px;font-weight:700;letter-spacing:.3px}
+  input[type=number]{width:100%;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:6px 8px;font:13px monospace}
+  input[type=number]:focus{outline:none;border-color:var(--accent)}
   input[type=range]{width:100%;accent-color:var(--accent)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-  .seg button{flex:1;background:var(--panel2);border:0;color:var(--dim);padding:7px 4px;font-size:12px;cursor:pointer}
-  .seg button.on{background:var(--accent);color:#04121c;font-weight:600}
+  .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .seg button{flex:1;background:#fff;border:0;color:var(--dim);padding:7px 4px;font-size:12px;cursor:pointer;font-weight:700}
+  .seg button.on{background:var(--accent);color:#1a1a1a}
   .matbtn{display:flex;gap:8px;margin-bottom:6px}
-  .matbtn button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px;border-radius:7px;cursor:pointer;font-size:13px}
-  .matbtn button.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .matbtn button{flex:1;background:#fff;border:1px solid var(--line);color:var(--txt);padding:9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700}
+  .matbtn button.on{border-color:var(--accent);background:#fffdf2;box-shadow:0 0 0 1px var(--accent) inset}
   .sllbl{display:flex;justify-content:space-between;align-items:baseline}
   .sllbl b{color:var(--txt);font:13px monospace}
-  canvas{width:100%;display:block}
-  .res{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px;padding:3px 0}
+  canvas{width:100%;display:block;background:#fff;border-radius:5px}
+  .res{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px;padding:3px 0;border-bottom:1px solid #f0f0f0}
   .res span:first-child{color:var(--dim)}
-  .res span:last-child{font-family:monospace;text-align:right}
-  .big{font-size:15px}
-  .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-family:monospace}
-  .g{background:rgba(63,185,80,.15);color:var(--good)} .a{background:rgba(210,153,34,.18);color:var(--warn)} .b{background:rgba(248,81,73,.16);color:var(--bad)}
+  .res span:last-child{font-family:monospace;text-align:right;font-weight:600}
+  .big span:last-child{font-size:15px}
+  .pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-family:monospace;font-weight:700}
+  .g{background:rgba(46,158,63,.14);color:var(--good)} .a{background:rgba(201,138,0,.16);color:var(--warn)} .b{background:rgba(214,40,40,.12);color:var(--bad)}
   details{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
-  summary{cursor:pointer;color:var(--accent);font-size:12px}
-  .note{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.5}
+  summary{cursor:pointer;color:#1167b1;font-size:12px;font-weight:700}
+  .note{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.55}
   .note b{color:var(--txt)}
-  .ctl{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .ctl button{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px}
-  .ctl button.on{border-color:var(--accent2);color:var(--accent2)}
+  .ctl{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .ctl button{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:700}
+  .ctl button.on{border-color:var(--accent2);color:var(--accent2);background:#fffaf0}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
   .matref{font-size:11.5px;color:var(--dim);line-height:1.55}
@@ -56,9 +58,9 @@
 </head>
 <body>
 <header>
-  <h1>Chip-Load · Force · Polar</h1>
-  <span class="tag scratch">scratch build — not in repo</span>
-  <span class="tag">carbide · Ti6Al4V &amp; Inconel 718-AG</span>
+  <a class="back" href="index.html">&lsaquo; All apps</a>
+  <div class="brand">CHATTER<b>.</b>CALC</div>
+  <span class="sub">Chip &middot; Force &middot; Polar &nbsp;&mdash;&nbsp; carbide, Ti6Al4V &amp; Inconel 718-AG</span>
 </header>
 
 <div class="wrap">
@@ -78,7 +80,7 @@
       <div><label>Teeth z</label><input type="number" id="z" value="4" step="1" oninput="run()"></div>
     </div>
     <div class="row">
-      <div><label>Helix (°)</label><input type="number" id="helix" value="38" step="1" oninput="run()"></div>
+      <div><label>Helix (&deg;)</label><input type="number" id="helix" value="38" step="1" oninput="run()"></div>
       <div><label>Corner r (mm)</label><input type="number" id="rc" value="0.5" step="0.1" oninput="run()"></div>
     </div>
 
@@ -101,17 +103,17 @@
     </div>
 
     <details>
-      <summary>Advanced — cutting coefficients &amp; tool stiffness</summary>
+      <summary>Advanced &mdash; cutting coefficients &amp; tool stiffness</summary>
       <div class="row3" style="margin-top:8px">
-        <div><label>k<sub>c1.1</sub> (N/mm²)</label><input type="number" id="kc11" value="2900" step="50" oninput="run()"></div>
+        <div><label>k<sub>c1.1</sub></label><input type="number" id="kc11" value="2900" step="50" oninput="run()"></div>
         <div><label>m<sub>c</sub></label><input type="number" id="mc" value="0.27" step="0.01" oninput="run()"></div>
-        <div><label>K<sub>r</sub>=F<sub>r</sub>/F<sub>t</sub></label><input type="number" id="Kr" value="0.48" step="0.02" oninput="run()"></div>
+        <div><label>K<sub>r</sub></label><input type="number" id="Kr" value="0.48" step="0.02" oninput="run()"></div>
       </div>
       <div class="row">
         <div><label>Tool E (GPa)</label><input type="number" id="Etool" value="600" step="10" oninput="run()"></div>
         <div><label>d<sub>eff</sub>/D</label><input type="number" id="deff" value="0.8" step="0.05" oninput="run()"></div>
       </div>
-      <div class="note">k<sub>c</sub>(h)=k<sub>c1.1</sub>·h<sup>−m<sub>c</sub></sup>. Coefficients are the soft part — they scatter with grade, coating and wear. Defaults are mid-band from the Sandvik/Kienzle ranges, editable. Tool E and d<sub>eff</sub> are the carbide, not the workpiece.</div>
+      <div class="note">k<sub>c</sub>(h)=k<sub>c1.1</sub>&middot;h<sup>&minus;m<sub>c</sub></sup> (N/mm&sup2;). Coefficients are the soft part &mdash; they scatter with grade, coating and wear. Defaults are mid-band of the Sandvik/Kienzle ranges, editable. Tool E and d<sub>eff</sub> are the carbide, not the workpiece.</div>
     </details>
   </div>
 
@@ -120,16 +122,16 @@
     <h2>Chip-thickness polar diagram</h2>
     <canvas id="polar" width="720" height="720"></canvas>
     <div class="ctl">
-      <button id="playBtn" onclick="togglePlay()">▶ Rotate tooth</button>
+      <button id="playBtn" onclick="togglePlay()">&#9654; Rotate tooth</button>
       <button id="regenBtn" onclick="toggleRegen()">Regeneration overlay</button>
-      <span style="font-size:12px;color:var(--dim)">θ <b id="thOut" style="font-family:monospace;color:var(--txt)">0°</b></span>
+      <span style="font-size:12px;color:var(--dim)">&theta; <b id="thOut" style="font-family:monospace;color:var(--txt)">0&deg;</b></span>
       <input type="range" id="theta" min="0" max="360" step="1" value="20" oninput="manualTheta()" style="flex:1">
     </div>
     <div class="legend">
-      <span><i style="background:#4cc2ff"></i>chip removed (h=f<sub>z</sub>·sinφ)</span>
-      <span><i style="background:#2a3340;border:1px solid #4a5a6a"></i>tool body</span>
-      <span><i style="background:#ffb454"></i>engaged tooth</span>
-      <span><i style="background:#f85149"></i>resultant force</span>
+      <span><i style="background:#2b8de0"></i>chip removed (h=f<sub>z</sub>&middot;sin&phi;)</span>
+      <span><i style="background:#eef0f2;border:1px solid #c4c4c4"></i>tool body</span>
+      <span><i style="background:#e8a400"></i>engaged tooth</span>
+      <span><i style="background:#d62828"></i>resultant force</span>
     </div>
     <div id="regenPanel" style="display:none">
       <div class="row3" style="margin-top:10px">
@@ -144,8 +146,8 @@
   <!-- ============ RESULTS ============ -->
   <div class="card">
     <h2>Cut geometry</h2>
-    <div class="res"><span>Engagement φ<sub>c</sub></span><span id="rPhc"></span></div>
-    <div class="res"><span>Entry → exit</span><span id="rArc"></span></div>
+    <div class="res"><span>Engagement &phi;<sub>c</sub></span><span id="rPhc"></span></div>
+    <div class="res"><span>Entry &rarr; exit</span><span id="rArc"></span></div>
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
     <div class="res"><span>Max chip h<sub>max</sub></span><span id="rHmax"></span></div>
     <div class="res"><span>Teeth in cut (avg)</span><span id="rZc"></span></div>
@@ -153,9 +155,9 @@
     <h2 style="margin-top:14px">Force</h2>
     <div class="res"><span>Peak F<sub>t</sub> / tooth</span><span id="rFt"></span></div>
     <div class="res"><span>Peak F<sub>r</sub> / tooth</span><span id="rFr"></span></div>
-    <div class="res big"><span>Peak resultant ⊥</span><span id="rPeak"></span></div>
+    <div class="res big"><span>Peak resultant &perp;</span><span id="rPeak"></span></div>
     <div class="res"><span>Mean resultant</span><span id="rMean"></span></div>
-    <div class="res"><span>Instant @θ (F<sub>x</sub>,F<sub>y</sub>)</span><span id="rInst"></span></div>
+    <div class="res"><span>Instant @&theta; (F<sub>x</sub>,F<sub>y</sub>)</span><span id="rInst"></span></div>
 
     <h2 style="margin-top:14px">Power &amp; rate</h2>
     <div class="res"><span>Mean torque</span><span id="rTq"></span></div>
@@ -164,23 +166,23 @@
     <div class="res"><span>MRR</span><span id="rMrr"></span></div>
 
     <h2 style="margin-top:14px">Tool bending</h2>
-    <div class="res big"><span>Tip deflection δ</span><span id="rDelta"></span></div>
-    <div class="res"><span>δ vs f<sub>z</sub></span><span id="rDfz"></span></div>
+    <div class="res big"><span>Tip deflection &delta;</span><span id="rDelta"></span></div>
+    <div class="res"><span>&delta; vs f<sub>z</sub></span><span id="rDfz"></span></div>
     <div class="note" id="flagNote"></div>
 
     <details>
       <summary>What actually moves these numbers</summary>
       <div class="note">
-        <b>Force &amp; bending:</b> D, z, a<sub>e</sub>, a<sub>p</sub>, f<sub>z</sub>, material, and stickout L. δ ∝ L³, so L dominates bending.<br>
-        <b>rpm:</b> sets V<sub>f</sub>, power and the regeneration phase only — it does <i>not</i> change static force or deflection.<br>
-        <b>Helix:</b> smooths the force ripple over a rotation; negligible on mean force. <b>Corner r:</b> second-order edge/ploughing effect — not in this model.<br>
-        Workpiece UTS/hardness/E inform the cutting coefficient but are <i>not</i> the input — k<sub>c1.1</sub> and m<sub>c</sub> are.
+        <b>Force &amp; bending:</b> D, z, a<sub>e</sub>, a<sub>p</sub>, f<sub>z</sub>, material, and stickout L. &delta; &prop; L&sup3;, so L dominates bending.<br>
+        <b>rpm:</b> sets V<sub>f</sub>, power and the regeneration phase only &mdash; it does <i>not</i> change static force or deflection.<br>
+        <b>Helix:</b> smooths the force ripple over a rotation; negligible on mean force. <b>Corner r:</b> second-order edge/ploughing effect, not in this model.<br>
+        Workpiece UTS/hardness/E inform the cutting coefficient but are <i>not</i> the input &mdash; k<sub>c1.1</sub> and m<sub>c</sub> are.
       </div>
     </details>
     <details>
       <summary>What the Hayati paper adds</summary>
       <div class="note">
-        Same Altintas–Budak coefficients (K<sub>t</sub>, K<sub>r</sub>) that drive this force model also drive the <b>analytical stability lobe</b> diagram — one material table feeds both. The paper tunes the <i>tool's</i> natural frequency (hollow body + screwed core, H=L<sub>h</sub>/L<sub>f</sub>) to <b>shift the lobes onto your rpm</b>, turning "unstable" into "stabilizable" (+40–65% stable depth). It reframes the SLD into four zones: stable, unstable, stabilizable, destabilizable. Takeaway for the app: lobes are movable, not fixed.
+        The same Altintas&ndash;Budak coefficients (K<sub>t</sub>, K<sub>r</sub>) that drive this force model also drive the <b>analytical stability lobe</b> diagram &mdash; one material table feeds both. The paper tunes the <i>tool's</i> natural frequency (hollow body + screwed core, H=L<sub>h</sub>/L<sub>f</sub>) to <b>shift the lobes onto your rpm</b>, turning "unstable" into "stabilizable" (+40&ndash;65% stable depth), and reframes the SLD into four zones: stable, unstable, stabilizable, destabilizable. Takeaway: lobes are movable, not fixed.
       </div>
     </details>
   </div>
@@ -189,9 +191,9 @@
 <script>
 const MAT = {
   ti:{name:'Ti-6Al-4V', kc11:1400, mc:0.23, Kr:0.52,
-      ref:`<b>ISO S — titanium.</b> Datasheet (annealed): UTS <b>895–950 MPa</b>, YS <b>~828 MPa</b>, hardness <b>~334 HB</b>, workpiece E <b>~105 GPa</b>. Cutting band k<sub>c1.1</sub> ≈ 1300–1400, m<sub>c</sub> ≈ 0.23, F<sub>r</sub>/F<sub>t</sub> ≈ 0.5.`},
+      ref:`<b>ISO S &mdash; titanium.</b> Datasheet (annealed): UTS <b>895&ndash;950 MPa</b>, YS <b>~828 MPa</b>, hardness <b>~334 HB</b>, workpiece E <b>~105 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 1300&ndash;1400, m<sub>c</sub> &asymp; 0.23, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.5.`},
   inc:{name:'Inconel 718-AG', kc11:2900, mc:0.27, Kr:0.48,
-      ref:`<b>ISO S — HRSA, aged.</b> Datasheet (aged): UTS <b>1240–1380 MPa</b>, YS <b>1034–1100 MPa</b>, hardness <b>≤40 HRC</b>, workpiece E <b>~200 GPa</b>. Cutting band k<sub>c1.1</sub> ≈ 2400–3100, m<sub>c</sub> ≈ 0.27, F<sub>r</sub>/F<sub>t</sub> ≈ 0.48.`}
+      ref:`<b>ISO S &mdash; HRSA, aged.</b> Datasheet (aged): UTS <b>1240&ndash;1380 MPa</b>, YS <b>1034&ndash;1100 MPa</b>, hardness <b>&le;40 HRC</b>, workpiece E <b>~200 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 2400&ndash;3100, m<sub>c</sub> &asymp; 0.27, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.48.`}
 };
 let mat='inc', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null;
 const $=id=>document.getElementById(id);
@@ -293,9 +295,7 @@ function draw(r){
   const cv=$('polar'), dpr=window.devicePixelRatio||1, S=cv.clientWidth||600;
   cv.width=S*dpr; cv.height=S*dpr; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
   const cx=S/2, cy=S/2, R=S*0.30;
-  const css=getComputedStyle(document.documentElement);
-  const cDim=css.getPropertyValue('--dim')||'#888', cChip=css.getPropertyValue('--chip')||'#4cc2ff',
-        cA2=css.getPropertyValue('--accent2')||'#ffb454', cBad=css.getPropertyValue('--bad')||'#f85149';
+  const cDim='#777', cChip='#2b8de0', cA2='#e8a400', cBad='#d62828';
   ctx.clearRect(0,0,S,S);
   const chipScale=(0.42*R)/Math.max(r.hmax,1e-4);
   const P=(phi,rad)=>[cx-rad*Math.sin(phi), cy-rad*Math.cos(phi)];
@@ -306,19 +306,19 @@ function draw(r){
   ctx.beginPath();
   for(let i=0;i<=steps;i++){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
   for(let i=steps;i>=0;i--){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R+outerH(phi)*chipScale);ctx.lineTo(p[0],p[1]);}
-  ctx.closePath();ctx.fillStyle='rgba(76,194,255,.22)';ctx.fill();
+  ctx.closePath();ctx.fillStyle='rgba(43,141,224,.16)';ctx.fill();
   // engaged arc band
-  ctx.beginPath();ctx.lineWidth=4;ctx.strokeStyle='rgba(76,194,255,.5)';
+  ctx.beginPath();ctx.lineWidth=4;ctx.strokeStyle='rgba(43,141,224,.40)';
   ctx.arc(cx,cy,R, Math.PI/2+r.g.phst, Math.PI/2+r.g.phex);ctx.stroke();
   // tool body
-  ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.fillStyle='#1c232d';ctx.fill();
-  ctx.strokeStyle='#4a5a6a';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.fillStyle='#eef0f2';ctx.fill();
+  ctx.strokeStyle='#c4c4c4';ctx.lineWidth=1.5;ctx.stroke();
   // chip outline on top
   ctx.beginPath();
   for(let i=0;i<=steps;i++){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R+outerH(phi)*chipScale);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
   ctx.strokeStyle=cChip;ctx.lineWidth=1.5;ctx.stroke();
   // hub
-  ctx.beginPath();ctx.arc(cx,cy,3,0,2*Math.PI);ctx.fillStyle='#4a5a6a';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,3,0,2*Math.PI);ctx.fillStyle='#b0b0b0';ctx.fill();
   // teeth at instant theta
   const pitch=2*Math.PI/r.z;
   for(let j=0;j<r.z;j++){
@@ -326,12 +326,12 @@ function draw(r){
     const eng=(phi>=r.g.phst&&phi<=r.g.phex);
     const p=P(phi,R);
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(p[0],p[1]);
-    ctx.strokeStyle=eng?cA2:'#3a4654';ctx.lineWidth=eng?2.5:1;ctx.stroke();
-    ctx.beginPath();ctx.arc(p[0],p[1],eng?5:3,0,2*Math.PI);ctx.fillStyle=eng?cA2:'#56657a';ctx.fill();
+    ctx.strokeStyle=eng?cA2:'#d2d2d2';ctx.lineWidth=eng?2.5:1;ctx.stroke();
+    ctx.beginPath();ctx.arc(p[0],p[1],eng?5:3,0,2*Math.PI);ctx.fillStyle=eng?cA2:'#b8b8b8';ctx.fill();
   }
   // hmax marker + label
   const hp=P(Math.min(Math.max(Math.PI/2,r.g.phst),r.g.phex), R+r.hmax*chipScale);
-  ctx.beginPath();ctx.arc(hp[0],hp[1],3,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
+  ctx.beginPath();ctx.arc(hp[0],hp[1],3,0,2*Math.PI);ctx.fillStyle='#1a1a1a';ctx.fill();
   ctx.font='11px monospace';ctx.fillStyle=cDim;ctx.fillText('h_max '+r.hmax.toFixed(3),hp[0]-78,hp[1]-6);
   // resultant force vector (instant)
   const Fmag=Math.hypot(r.iFx,r.iFy);
@@ -347,7 +347,7 @@ function draw(r){
   $('thOut').textContent=(theta*180/Math.PI).toFixed(0)+'°';
 }
 function manualTheta(){theta=(+$('theta').value)*Math.PI/180;run();}
-function togglePlay(){playing=!playing;$('playBtn').classList.toggle('on',playing);$('playBtn').textContent=playing?'❚❚ Pause':'▶ Rotate tooth';
+function togglePlay(){playing=!playing;$('playBtn').classList.toggle('on',playing);$('playBtn').innerHTML=playing?'&#10073;&#10073; Pause':'&#9654; Rotate tooth';
   if(playing)loop();else cancelAnimationFrame(raf);}
 function loop(){theta=(theta+0.02)%(2*Math.PI);$('theta').value=(theta*180/Math.PI).toFixed(0);run();raf=requestAnimationFrame(loop);}
 function toggleRegen(){regen=!regen;$('regenBtn').classList.toggle('on',regen);$('regenPanel').style.display=regen?'block':'none';run();}
