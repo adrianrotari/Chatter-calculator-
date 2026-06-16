@@ -9,21 +9,24 @@
   :root{
     --accent:#f5c518; --bg:#fafafa; --panel:#ffffff; --panel2:#f4f4f4; --line:#e0e0e0;
     --txt:#1a1a1a; --dim:#777; --accent2:#e8a400; --good:#2e9e3f; --warn:#c98a00; --bad:#d62828; --chip:#2b8de0;
+    --steel:#e9ebee; --steelLn:#aab0b6; --tool:#c9ced4; --toolLn:#888f96; --gold:#f5c518; --goldLn:#d9a900;
   }
   html,body{background:var(--bg);color:var(--txt);font-family:'Helvetica Neue','Arial Narrow',sans-serif;font-stretch:condensed;-webkit-font-smoothing:antialiased}
-  header{padding:12px 16px;border-bottom:2px solid var(--accent);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;max-width:1240px;margin:0 auto}
+  header{padding:12px 16px;border-bottom:2px solid var(--accent);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;max-width:1320px;margin:0 auto}
   .back{color:var(--dim);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.5px}
   .back:hover{color:#000}
   .brand{font-size:21px;font-weight:900;letter-spacing:-.4px}
   .brand b{color:var(--accent)}
   .sub{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
-  .wrap{display:grid;grid-template-columns:330px 1fr 300px;gap:14px;padding:14px;align-items:start;max-width:1240px;margin:0 auto}
-  @media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+  .wrap{display:grid;grid-template-columns:332px 1fr 340px;gap:14px;padding:14px;align-items:start;max-width:1320px;margin:0 auto}
+  @media(max-width:1180px){.wrap{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:13px 14px}
   .card h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:0 0 10px;font-weight:700}
+  .card h2.mt{margin-top:14px}
   label{display:block;font-size:12px;color:var(--dim);margin:9px 0 3px;font-weight:700;letter-spacing:.3px}
-  input[type=number]{width:100%;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:6px 8px;font:13px monospace}
-  input[type=number]:focus{outline:none;border-color:var(--accent)}
+  input[type=number],select{width:100%;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:6px 8px;font:13px monospace}
+  select{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700}
+  input[type=number]:focus,select:focus{outline:none;border-color:var(--accent)}
   input[type=range]{width:100%;accent-color:var(--accent)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -35,7 +38,7 @@
   .matbtn button.on{border-color:var(--accent);background:#fffdf2;box-shadow:0 0 0 1px var(--accent) inset}
   .sllbl{display:flex;justify-content:space-between;align-items:baseline}
   .sllbl b{color:var(--txt);font:13px monospace}
-  canvas{width:100%;display:block;background:#fff;border-radius:5px}
+  canvas{display:block;background:#fff;border-radius:5px}
   .res{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px;padding:3px 0;border-bottom:1px solid #f0f0f0}
   .res span:first-child{color:var(--dim)}
   .res span:last-child{font-family:monospace;text-align:right;font-weight:600}
@@ -54,6 +57,26 @@
   .matref{font-size:11.5px;color:var(--dim);line-height:1.55}
   .matref b{color:var(--txt);font-family:monospace}
   code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .views{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .views .col{flex:1 1 320px;min-width:280px}
+  .views .col.front{flex:0 1 260px;min-width:220px}
+  #polar{width:100%;max-width:230px}
+  #front{width:100%;height:480px}
+  #aebar{width:100%;height:34px;border:0;margin-top:2px}
+  .balance{margin-top:9px;font-size:11.5px;color:var(--dim);line-height:1.55}
+  .balance b{color:var(--txt)}
+  .holderbox{display:flex;gap:11px;align-items:flex-start;margin-top:6px}
+  .holderbox svg{width:62px;height:auto;flex:0 0 auto;background:#fff;border:1px solid var(--line);border-radius:5px;padding:3px}
+  .hnote{font-size:11.3px;color:var(--dim);line-height:1.5}
+  .hnote b{color:var(--txt)}
+  .startvals{font-size:11.5px;color:var(--dim);line-height:1.5;margin-top:7px;background:var(--panel2);border-radius:5px;padding:6px 8px}
+  .startvals b{color:var(--txt);font-family:monospace}
+  .hex{display:flex;justify-content:space-between;align-items:baseline;background:#fffdf2;border:1px solid var(--accent);border-radius:5px;padding:6px 9px;margin-top:6px}
+  .hex .lab{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:700}
+  .hex .val{font:15px monospace;font-weight:700}
+  #ptchart{width:100%;height:236px;border:1px solid var(--line)}
+  .ptlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);margin-top:6px}
+  .ptlegend i{display:inline-block;width:14px;height:0;border-top-width:2px;border-top-style:solid;margin-right:4px;vertical-align:3px}
 </style>
 </head>
 <body>
@@ -73,10 +96,11 @@
       <button id="mInc" class="on" onclick="setMat('inc')">Inconel 718-AG</button>
     </div>
     <div class="matref" id="matref"></div>
+    <div class="startvals" id="startVals"></div>
 
-    <h2 style="margin-top:14px">Tool geometry</h2>
+    <h2 class="mt">Tool geometry</h2>
     <div class="row">
-      <div><label>Dia D (mm)</label><input type="number" id="D" value="10" step="0.5" oninput="run()"></div>
+      <div><label>Dia D (mm)</label><input type="number" id="D" value="10" step="0.5" oninput="onD()"></div>
       <div><label>Teeth z</label><input type="number" id="z" value="4" step="1" oninput="run()"></div>
     </div>
     <div class="row">
@@ -84,7 +108,7 @@
       <div><label>Corner r (mm)</label><input type="number" id="rc" value="0.5" step="0.1" oninput="run()"></div>
     </div>
 
-    <h2 style="margin-top:14px">Engagement</h2>
+    <h2 class="mt">Engagement</h2>
     <label>Milling mode</label>
     <div class="seg" id="modeSeg">
       <button data-m="down" class="on" onclick="setMode('down')">Climb (down)</button>
@@ -97,9 +121,27 @@
     <input type="range" id="ap" min="0.1" max="40" step="0.1" value="5" oninput="run()">
     <div class="sllbl"><label style="margin:0">Feed/tooth f<sub>z</sub> (mm)</label><b id="fzOut"></b></div>
     <input type="range" id="fz" min="0.005" max="0.25" step="0.005" value="0.04" oninput="run()">
-    <div class="row" style="margin-top:9px">
-      <div><label>Spindle n (rpm)</label><input type="number" id="rpm" value="1200" step="50" oninput="run()"></div>
-      <div><label>Stickout L (mm)</label><input type="number" id="L" value="40" step="1" oninput="run()"></div>
+
+    <div class="hex"><span class="lab">h<sub>ex</sub> max chip</span><span class="val" id="hexHead">—</span></div>
+
+    <h2 class="mt">Speeds &amp; holder</h2>
+    <div class="row">
+      <div><label>Spindle n (rpm)</label><input type="number" id="rpm" value="1200" step="50" oninput="onRpm()"></div>
+      <div><label>V<sub>c</sub> (m/min)</label><input type="number" id="vc" value="" step="1" oninput="onVc()"></div>
+    </div>
+    <label>Gauge length / stickout L (mm)</label>
+    <input type="number" id="L" value="40" step="1" oninput="run()">
+    <label>Tool holder</label>
+    <select id="holder" onchange="onHolder()">
+      <option value="er">ER collet</option>
+      <option value="hyd">Hydraulic (CoroChuck 930)</option>
+      <option value="weld">Weldon side-lock</option>
+      <option value="shr" selected>Shrink fit</option>
+      <option value="shell">Shell mill arbor</option>
+    </select>
+    <div class="holderbox">
+      <div id="holderPic"></div>
+      <div class="hnote" id="holderNote"></div>
     </div>
 
     <details>
@@ -109,30 +151,43 @@
         <div><label>m<sub>c</sub></label><input type="number" id="mc" value="0.27" step="0.01" oninput="run()"></div>
         <div><label>K<sub>r</sub></label><input type="number" id="Kr" value="0.48" step="0.02" oninput="run()"></div>
       </div>
-      <div class="row">
+      <div class="row3">
+        <div><label>Rake &gamma; (&deg;)</label><input type="number" id="rake" value="0" step="1" oninput="run()"></div>
         <div><label>Tool E (GPa)</label><input type="number" id="Etool" value="600" step="10" oninput="run()"></div>
         <div><label>d<sub>eff</sub>/D</label><input type="number" id="deff" value="0.8" step="0.05" oninput="run()"></div>
       </div>
-      <div class="note">k<sub>c</sub>(h)=k<sub>c1.1</sub>&middot;h<sup>&minus;m<sub>c</sub></sup> (N/mm&sup2;). Coefficients are the soft part &mdash; they scatter with grade, coating and wear. Defaults are mid-band of the Sandvik/Kienzle ranges, editable. Tool E and d<sub>eff</sub> are the carbide, not the workpiece.</div>
+      <div class="note">k<sub>c</sub>(h)=k<sub>c1.1</sub>&middot;h<sup>&minus;m<sub>c</sub></sup>&middot;(1&minus;&gamma;/100) (N/mm&sup2;). Rake &gamma; follows Sandvik: ~1% k<sub>c</sub> per degree (set 0 to disable). Tool E and d<sub>eff</sub> are the carbide, not the workpiece.</div>
     </details>
   </div>
 
-  <!-- ============ POLAR ============ -->
+  <!-- ============ DIAGRAMS ============ -->
   <div class="card">
-    <h2>Chip-thickness polar diagram</h2>
-    <canvas id="polar" width="720" height="720"></canvas>
-    <div class="ctl">
-      <button id="playBtn" onclick="togglePlay()">&#9654; Rotate tooth</button>
-      <button id="regenBtn" onclick="toggleRegen()">Regeneration overlay</button>
-      <span style="font-size:12px;color:var(--dim)">&theta; <b id="thOut" style="font-family:monospace;color:var(--txt)">0&deg;</b></span>
-      <input type="range" id="theta" min="0" max="360" step="1" value="20" oninput="manualTheta()" style="flex:1">
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+      <div>
+        <h2>Chip thickness &mdash; top view</h2>
+        <canvas id="polar" width="460" height="460"></canvas>
+      </div>
+      <div style="flex:1;min-width:190px">
+        <div class="ctl">
+          <button id="playBtn" onclick="togglePlay()">&#9654; Rotate</button>
+          <button id="regenBtn" onclick="toggleRegen()">Regeneration</button>
+          <span style="font-size:12px;color:var(--dim)">&theta; <b id="thOut" style="font-family:monospace;color:var(--txt)">0&deg;</b></span>
+          <input type="range" id="theta" min="0" max="360" step="1" value="20" oninput="manualTheta()" style="flex:1;min-width:80px">
+        </div>
+        <div class="legend">
+          <span><i style="background:#2b8de0"></i>chip h=f<sub>z</sub>&middot;sin&phi;</span>
+          <span><i style="background:#eef0f2;border:1px solid #c4c4c4"></i>tool body</span>
+          <span><i style="background:#e8a400"></i>engaged tooth</span>
+          <span><i style="background:#d62828"></i>resultant</span>
+        </div>
+        <div class="note" style="margin-top:8px">Front view maps the tool loads: <b style="color:#2b8de0">F&perp;</b> radial (bends the tool), <b style="color:#2e9e3f">F<sub>a</sub></b> axial (pull-out), <b style="color:#d62828">F</b> resultant, <b style="color:#b9860b">F<sub>t</sub></b> tangential/tooth, plus the cutting edges in cut (C1&hellip;Cn).</div>
+      </div>
     </div>
-    <div class="legend">
-      <span><i style="background:#2b8de0"></i>chip removed (h=f<sub>z</sub>&middot;sin&phi;)</span>
-      <span><i style="background:#eef0f2;border:1px solid #c4c4c4"></i>tool body</span>
-      <span><i style="background:#e8a400"></i>engaged tooth</span>
-      <span><i style="background:#d62828"></i>resultant force</span>
-    </div>
+
+    <h2 class="mt">Tool bending &amp; forces &mdash; front view</h2>
+    <canvas id="front" width="760" height="480"></canvas>
+    <div class="balance" id="balanceBox"></div>
+    <canvas id="aebar" width="760" height="34"></canvas>
     <div id="regenPanel" style="display:none">
       <div class="row3" style="margin-top:10px">
         <div><label>Chatter f<sub>c</sub> (Hz)</label><input type="number" id="fc" value="1100" step="10" oninput="run()"></div>
@@ -149,40 +204,51 @@
     <div class="res"><span>Engagement &phi;<sub>c</sub></span><span id="rPhc"></span></div>
     <div class="res"><span>Entry &rarr; exit</span><span id="rArc"></span></div>
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
-    <div class="res"><span>Max chip h<sub>max</sub></span><span id="rHmax"></span></div>
+    <div class="res"><span>Max chip h<sub>ex</sub></span><span id="rHmax"></span></div>
+    <div class="res"><span>Chip thinning sin&kappa;<sub>r</sub></span><span id="rThin"></span></div>
     <div class="res"><span>Teeth in cut (avg)</span><span id="rZc"></span></div>
 
-    <h2 style="margin-top:14px">Force</h2>
+    <h2 class="mt">Force</h2>
     <div class="res"><span>Peak F<sub>t</sub> / tooth</span><span id="rFt"></span></div>
     <div class="res"><span>Peak F<sub>r</sub> / tooth</span><span id="rFr"></span></div>
     <div class="res big"><span>Peak resultant &perp;</span><span id="rPeak"></span></div>
     <div class="res"><span>Mean resultant</span><span id="rMean"></span></div>
-    <div class="res"><span>Instant @&theta; (F<sub>x</sub>,F<sub>y</sub>)</span><span id="rInst"></span></div>
+    <div class="res"><span>Axial F<sub>a</sub> (pull-out)</span><span id="rFa"></span></div>
+    <div class="res"><span>Pull-out risk</span><span id="rPull"></span></div>
 
-    <h2 style="margin-top:14px">Power &amp; rate</h2>
+    <h2 class="mt">Power &amp; rate</h2>
     <div class="res"><span>Mean torque</span><span id="rTq"></span></div>
     <div class="res"><span>Spindle power</span><span id="rPow"></span></div>
     <div class="res"><span>Feed V<sub>f</sub></span><span id="rVf"></span></div>
     <div class="res"><span>MRR</span><span id="rMrr"></span></div>
 
-    <h2 style="margin-top:14px">Tool bending</h2>
+    <h2 class="mt">Tool bending</h2>
     <div class="res big"><span>Tip deflection &delta;</span><span id="rDelta"></span></div>
     <div class="res"><span>&delta; vs f<sub>z</sub></span><span id="rDfz"></span></div>
     <div class="note" id="flagNote"></div>
 
+    <h2 class="mt">Machine power &amp; torque</h2>
+    <div class="row3">
+      <div><label>max rpm</label><input type="number" id="mN" value="" step="500" placeholder="rpm" oninput="drawPT()"></div>
+      <div><label>power kW</label><input type="number" id="mKW" value="" step="0.5" placeholder="kW" oninput="drawPT()"></div>
+      <div><label>torque Nm</label><input type="number" id="mNm" value="" step="1" placeholder="Nm" oninput="drawPT()"></div>
+    </div>
+    <canvas id="ptchart" width="620" height="236" style="margin-top:9px"></canvas>
+    <div class="ptlegend">
+      <span><i style="border-color:#d62828;border-top-style:dotted"></i>torque 100%</span>
+      <span><i style="border-color:#d62828"></i>torque 80%</span>
+      <span><i style="border-color:#2b8de0;border-top-style:dotted"></i>power 100%</span>
+      <span><i style="border-color:#2b8de0"></i>power 80%</span>
+    </div>
+    <div class="note" id="ptNote">Enter machine max rpm, kW and Nm to plot your operating point on the spindle envelope.</div>
+
     <details>
       <summary>What actually moves these numbers</summary>
       <div class="note">
-        <b>Force &amp; bending:</b> D, z, a<sub>e</sub>, a<sub>p</sub>, f<sub>z</sub>, material, and stickout L. &delta; &prop; L&sup3;, so L dominates bending.<br>
-        <b>rpm:</b> sets V<sub>f</sub>, power and the regeneration phase only &mdash; it does <i>not</i> change static force or deflection.<br>
-        <b>Helix:</b> smooths the force ripple over a rotation; negligible on mean force. <b>Corner r:</b> second-order edge/ploughing effect, not in this model.<br>
-        Workpiece UTS/hardness/E inform the cutting coefficient but are <i>not</i> the input &mdash; k<sub>c1.1</sub> and m<sub>c</sub> are.
-      </div>
-    </details>
-    <details>
-      <summary>What the Hayati paper adds</summary>
-      <div class="note">
-        The same Altintas&ndash;Budak coefficients (K<sub>t</sub>, K<sub>r</sub>) that drive this force model also drive the <b>analytical stability lobe</b> diagram &mdash; one material table feeds both. The paper tunes the <i>tool's</i> natural frequency (hollow body + screwed core, H=L<sub>h</sub>/L<sub>f</sub>) to <b>shift the lobes onto your rpm</b>, turning "unstable" into "stabilizable" (+40&ndash;65% stable depth), and reframes the SLD into four zones: stable, unstable, stabilizable, destabilizable. Takeaway: lobes are movable, not fixed.
+        <b>hex is king.</b> Sandvik: max chip thickness is the most important parameter. h<sub>ex</sub>=f<sub>z</sub>&middot;sin&kappa;<sub>r</sub>, &kappa;<sub>r</sub>=cos&minus;&sup1;(1&minus;2a<sub>e</sub>/D). At low a<sub>e</sub> the chip thins, so raise f<sub>z</sub> to hold h<sub>ex</sub>.<br>
+        <b>Force &amp; bending:</b> D, z, a<sub>e</sub>, a<sub>p</sub>, f<sub>z</sub>, material, stickout L. &delta; &prop; L&sup3;.<br>
+        <b>Helix:</b> higher helix lowers radial force/deflection and raises axial F<sub>a</sub> (pull-out) &mdash; choose the holder accordingly.<br>
+        <b>rpm:</b> sets V<sub>c</sub>, V<sub>f</sub>, power and the regeneration phase; it does not change static force.
       </div>
     </details>
   </div>
@@ -190,17 +256,44 @@
 
 <script>
 const MAT = {
-  ti:{name:'Ti-6Al-4V', kc11:1400, mc:0.23, Kr:0.52,
-      ref:`<b>ISO S &mdash; titanium.</b> Datasheet (annealed): UTS <b>895&ndash;950 MPa</b>, YS <b>~828 MPa</b>, hardness <b>~334 HB</b>, workpiece E <b>~105 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 1300&ndash;1400, m<sub>c</sub> &asymp; 0.23, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.5.`},
-  inc:{name:'Inconel 718-AG', kc11:2900, mc:0.27, Kr:0.48,
-      ref:`<b>ISO S &mdash; HRSA, aged.</b> Datasheet (aged): UTS <b>1240&ndash;1380 MPa</b>, YS <b>1034&ndash;1100 MPa</b>, hardness <b>&le;40 HRC</b>, workpiece E <b>~200 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 2400&ndash;3100, m<sub>c</sub> &asymp; 0.27, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.48.`}
+  ti:{name:'Ti-6Al-4V', kc11:1400, mc:0.23, Kr:0.52, vc:[40,120],
+      ref:`<b>ISO S &mdash; titanium.</b> Datasheet (annealed): UTS <b>895&ndash;950 MPa</b>, hardness <b>~334 HB</b>, E <b>~105 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 1300&ndash;1400, m<sub>c</sub> &asymp; 0.23, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.5.`},
+  inc:{name:'Inconel 718-AG', kc11:2900, mc:0.27, Kr:0.48, vc:[25,55],
+      ref:`<b>ISO S &mdash; HRSA, aged.</b> Datasheet (aged): UTS <b>1240&ndash;1380 MPa</b>, hardness <b>&le;40 HRC</b>, E <b>~200 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 2400&ndash;3100, m<sub>c</sub> &asymp; 0.27, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.48.`}
 };
-let mat='inc', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null;
+// Holder library: small icon + clamping suitability (Sandvik SRT) + pull-out rank (5 best)
+const HOLDERS = {
+  er:{name:'ER collet', pull:2,
+    note:'<b>High clamping torque, stable.</b> Use coolant. ER practical limit ~&Oslash;12.',
+    svg:icoER()},
+  hyd:{name:'Hydraulic (CoroChuck 930)', pull:3,
+    note:'<b>Good grip + vibration damping.</b> Beware heat (20&ndash;50&deg;C); use coolant or air.',
+    svg:icoHyd()},
+  weld:{name:'Weldon side-lock', pull:5,
+    note:'<b>Best at resisting pull-out.</b> Worst run-out (side screw pushes off axis).',
+    svg:icoWeld()},
+  shr:{name:'Shrink fit', pull:2,
+    note:'<b>Best run-out and balance, very rigid.</b> Great for finishing; too rigid for HFS.',
+    svg:icoShr()},
+  shell:{name:'Shell mill arbor', pull:4,
+    note:'<b>Face / shell mill on the arbor face</b> via a centre screw. Large diameters.',
+    svg:icoShell()}
+};
+let mat='inc', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null, holder='shr';
 const $=id=>document.getElementById(id);
 
 function setMat(m){mat=m;$('mTi').classList.toggle('on',m==='ti');$('mInc').classList.toggle('on',m==='inc');
   $('kc11').value=MAT[m].kc11;$('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;run();}
 function setMode(m){mode=m;[...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===m));run();}
+
+// ---- vc <-> rpm (ported from test-lobe-tune) ----
+function vcFromRpm(){const D=+$('D').value||0,n=+$('rpm').value||0;return D>0?Math.PI*D*n/1000:0;}
+function rpmFromVc(){const D=+$('D').value||0,v=+$('vc').value||0;return D>0?v*1000/(Math.PI*D):0;}
+function syncVcFromRpm(){const v=vcFromRpm();$('vc').value=v>0?Math.round(v):'';}
+function onRpm(){syncVcFromRpm();run();}
+function onVc(){const n=rpmFromVc();if(n>0)$('rpm').value=Math.round(n);run();}
+function onD(){syncVcFromRpm();run();}
+function onHolder(){holder=$('holder').value;$('holderPic').innerHTML=HOLDERS[holder].svg;$('holderNote').innerHTML=HOLDERS[holder].name+'. '+HOLDERS[holder].note;run();}
 
 function chipGeom(D,ae,mode){
   let aeD=Math.min(Math.max(ae/D,0),1);
@@ -213,9 +306,10 @@ function chipGeom(D,ae,mode){
 }
 function compute(){
   const D=+$('D').value, z=Math.max(1,Math.round(+$('z').value)), ae=+$('ae').value, ap=+$('ap').value,
-        fz=+$('fz').value, rpm=+$('rpm').value, L=+$('L').value,
-        kc11=+$('kc11').value, mc=+$('mc').value, Kr=+$('Kr').value,
+        fz=+$('fz').value, rpm=+$('rpm').value, L=+$('L').value, helix=+$('helix').value,
+        kc11=+$('kc11').value, mc=+$('mc').value, Kr=+$('Kr').value, rake=+$('rake').value||0,
         E=(+$('Etool').value)*1000, deffR=+$('deff').value;
+  const rakeF=Math.max(0.4,1-rake/100);
   const g=chipGeom(D,ae,mode), pitch=2*Math.PI/z, N=720;
   let Rs=[],Fts=[],Tq=[],Zc=[];
   let peakFt=0,peakFr=0;
@@ -226,7 +320,7 @@ function compute(){
       if(phi>=g.phst&&phi<=g.phex){
         const h=fz*Math.sin(phi);
         if(h>1e-6){
-          const kc=kc11*Math.pow(h,-mc);
+          const kc=kc11*Math.pow(h,-mc)*rakeF;
           const dFt=kc*ap*h, dFr=Kr*dFt;
           Fx+=-dFt*Math.cos(phi)-dFr*Math.sin(phi);
           Fy+=dFt*Math.sin(phi)-dFr*Math.cos(phi);
@@ -241,38 +335,53 @@ function compute(){
         meanT=Tq.reduce((a,b)=>a+b,0)/N, power=meanT*(2*Math.PI*rpm/60),
         vf=fz*z*rpm, mrr=g.aeD*D*ap*vf/1000, zc=Zc.reduce((a,b)=>a+b,0)/N;
   const deff=deffR*D, Im=Math.PI*Math.pow(deff,4)/64, delta=peakR*Math.pow(L,3)/(3*E*Im);
-  // instant at theta
+  const Fa=peakFt*Math.tan(helix*Math.PI/180);   // axial / pull-out tendency
   let iFx=0,iFy=0;
   for(let j=0;j<z;j++){let phi=((theta-j*pitch)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
-    if(phi>=g.phst&&phi<=g.phex){const h=fz*Math.sin(phi);if(h>1e-6){const kc=kc11*Math.pow(h,-mc);const dFt=kc*ap*h,dFr=Kr*dFt;
+    if(phi>=g.phst&&phi<=g.phex){const h=fz*Math.sin(phi);if(h>1e-6){const kc=kc11*Math.pow(h,-mc)*rakeF;const dFt=kc*ap*h,dFr=Kr*dFt;
       iFx+=-dFt*Math.cos(phi)-dFr*Math.sin(phi);iFy+=dFt*Math.sin(phi)-dFr*Math.cos(phi);}}}
   const arc=g.phex-g.phst;
   const hm=arc>1e-9? fz*(Math.cos(g.phst)-Math.cos(g.phex))/arc : 0;
   const hmaxPhi=Math.min(Math.max(Math.PI/2,g.phst),g.phex);
-  const hmax=fz*Math.sin(hmaxPhi);
-  // regeneration phase
+  const hmax=fz*Math.sin(hmaxPhi), thin=Math.sin(g.phc);
+  // helix wrap over ap, flutes in cut, and ae sweet-spots for smooth (whole-flute) engagement
+  const psiH=(D>0)?2*ap*Math.tan(Math.min(Math.max(helix,0),88)*Math.PI/180)/D:0;
+  const pitch2=2*Math.PI/z, NcutH=z*(arc+psiH)/(2*Math.PI), balFrac=Math.abs(NcutH-Math.round(NcutH));
+  let sweet=[];
+  for(let k=1;k<=z;k++){const ph=k*pitch2-psiH; if(ph>0.02&&ph<=Math.PI+1e-9){const aeK=(D/2)*(1-Math.cos(ph)); if(aeK>0.02&&aeK<=D)sweet.push({k,ae:aeK});}}
+  const nearest=sweet.length?sweet.reduce((a,b)=>Math.abs(b.ae-ae)<Math.abs(a.ae-ae)?b:a):null;
   const fE=z*rpm/60, fc=+$('fc').value, wavesPerTooth=fc/fE, frac=wavesPerTooth-Math.floor(wavesPerTooth);
   const eps=2*Math.PI*frac, regStable=Math.min(frac,1-frac)<0.12;
-  return {D,z,ae,ap,fz,rpm,L,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deff,hm,hmax,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable};
+  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
 }
 
 function fmt(x,d=0){return (x).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});}
+let LAST=null;
 function run(){
   $('aeOut').textContent=(+$('ae').value).toFixed(1)+' mm ('+((+$('ae').value)/(+$('D').value)*100).toFixed(0)+'% D)';
   $('apOut').textContent=(+$('ap').value).toFixed(1)+' mm';
   $('fzOut').textContent=(+$('fz').value).toFixed(3)+' mm';
   $('ae').max=$('D').value;
-  const r=compute();
+  const r=compute(); LAST=r;
+  $('hexHead').textContent=r.hmax.toFixed(4)+' mm';
   $('rPhc').textContent=(r.g.phc*180/Math.PI).toFixed(0)+'°';
   $('rArc').textContent=(r.g.phst*180/Math.PI).toFixed(0)+'° → '+(r.g.phex*180/Math.PI).toFixed(0)+'°';
   $('rHm').textContent=r.hm.toFixed(4)+' mm';
   $('rHmax').textContent=r.hmax.toFixed(4)+' mm';
+  $('rThin').textContent=r.thin.toFixed(2)+'  (κr '+(r.g.phc*180/Math.PI).toFixed(0)+'°)';
   $('rZc').textContent=r.zc.toFixed(2);
   $('rFt').textContent=fmt(r.peakFt)+' N';
   $('rFr').textContent=fmt(r.peakFr)+' N';
   $('rPeak').innerHTML='<b>'+fmt(r.peakR)+' N</b>';
   $('rMean').textContent=fmt(r.meanR)+' N';
-  $('rInst').textContent=fmt(r.iFx)+', '+fmt(r.iFy)+' N';
+  $('rFa').textContent=fmt(r.Fa)+' N';
+  // pull-out flag from axial force vs holder resistance
+  const pull=HOLDERS[holder].pull, ratio=r.Fa/Math.max(r.peakR,1);
+  let pc='g',pt='low';
+  if(pull<=2 && r.Fa>300){pc='b';pt='high — prefer Weldon/iLock';}
+  else if(pull<=3 && r.Fa>500){pc='a';pt='watch — heat/grip';}
+  else if(r.Fa>800){pc='a';pt='watch';}
+  $('rPull').innerHTML='<span class="pill '+pc+'">'+pt+'</span>';
   $('rTq').textContent=r.meanT.toFixed(2)+' N·m';
   $('rPow').textContent=fmt(r.power)+' W ('+(r.power/1000).toFixed(2)+' kW)';
   $('rVf').textContent=fmt(r.vf)+' mm/min';
@@ -287,13 +396,26 @@ function run(){
   if(regen){
     $('phasePill').className='pill '+(r.regStable?'g':'b');
     $('phasePill').textContent=r.regStable?'in-phase ≈ stable':'out-of-phase ≈ chatter';
-    $('regenNote').innerHTML='Tooth-passing f<sub>E</sub> = z·n/60 = <b>'+fmt(r.fE)+' Hz</b>. Waves left per tooth = f<sub>c</sub>/f<sub>E</sub> = <b>'+r.wavesPerTooth.toFixed(2)+'</b>, fractional <b>'+r.frac.toFixed(2)+'</b>. Whole number → each tooth meets the previous wave in phase, chip thickness steady (the <code>f<sub>E</sub>=f<sub>A</sub></code> / <code>2f<sub>A</sub></code> stable cases in your figure). Near half → maximum regeneration, chip thickness grows = chatter. This fractional part is exactly the lobe phase: change rpm to walk it toward a whole number.';
+    $('regenNote').innerHTML='Tooth-passing f<sub>E</sub> = z·n/60 = <b>'+fmt(r.fE)+' Hz</b>. Waves per tooth = f<sub>c</sub>/f<sub>E</sub> = <b>'+r.wavesPerTooth.toFixed(2)+'</b>, fractional <b>'+r.frac.toFixed(2)+'</b>. Near a whole number the teeth meet the previous wave in phase (steady chip); near half = maximum regeneration = chatter. Change rpm to walk the fraction toward a whole number. Variable pitch/helix de-tunes this.';
   }
-  draw(r);
+  // start values -> rpm band
+  const mv=MAT[mat].vc, D=+$('D').value;
+  const nLo=Math.round(mv[0]*1000/(Math.PI*D)), nHi=Math.round(mv[1]*1000/(Math.PI*D));
+  $('startVals').innerHTML='Sandvik solid-carbide start: V<sub>c</sub> <b>'+mv[0]+'–'+mv[1]+'</b> m/min → at Ø'+D+' that is <b>'+fmt(nLo)+'–'+fmt(nHi)+'</b> rpm. ISO-S start band, verify in CoroPlus.';
+  // flutes in cut (with helix) + ae sweet-spot for force balance
+  let bp='g',bt='smooth';
+  if(r.NcutH<0.85){bp='b';bt='pulsing (<1 flute)';}
+  else if(r.balFrac>0.28){bp='b';bt='uneven';}
+  else if(r.balFrac>0.14){bp='a';bt='fair';}
+  const sweetTxt=r.sweet.length? r.sweet.map(s=>'<b>'+s.ae.toFixed(2)+'</b> ('+s.k+'z)').join(', ') : 'none ≤ Ø';
+  $('balanceBox').innerHTML='Flutes in cut <b>'+r.NcutH.toFixed(2)+'</b> = radial '+r.zc.toFixed(2)+' + helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'°. Force balance <span class="pill '+bp+'">'+bt+'</span>. Sweet-spot a<sub>e</sub> for whole flutes: '+sweetTxt+(r.nearest?'; nearest to yours <b>'+r.nearest.ae.toFixed(2)+' mm</b>':'')+'. More helix → more wrap → sweet spot moves to lower a<sub>e</sub>.';
+  draw(r); drawFront(r); drawAebar(r); drawPT();
 }
+
+// ===================== TOP VIEW (polar) =====================
 function draw(r){
-  const cv=$('polar'), dpr=window.devicePixelRatio||1, S=cv.clientWidth||600;
-  cv.width=S*dpr; cv.height=S*dpr; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  const cv=$('polar'), dpr=window.devicePixelRatio||1, S=cv.clientWidth||380;
+  cv.width=S*dpr; cv.height=S*dpr; cv.style.height=S+'px'; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
   const cx=S/2, cy=S/2, R=S*0.30;
   const cDim='#777', cChip='#2b8de0', cA2='#e8a400', cBad='#d62828';
   ctx.clearRect(0,0,S,S);
@@ -302,24 +424,18 @@ function draw(r){
   const ampV=regen?(+$('amp').value):0;
   const outerH=(phi)=>{let h=r.fz*Math.sin(phi); if(regen){h=h*(1+ampV*0.6*Math.sin(r.wavesPerTooth*(phi-r.g.phst)*r.z + r.eps));} return Math.max(0,h);};
   const steps=140;
-  // filled chip region
   ctx.beginPath();
   for(let i=0;i<=steps;i++){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
   for(let i=steps;i>=0;i--){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R+outerH(phi)*chipScale);ctx.lineTo(p[0],p[1]);}
   ctx.closePath();ctx.fillStyle='rgba(43,141,224,.16)';ctx.fill();
-  // engaged arc band
   ctx.beginPath();ctx.lineWidth=4;ctx.strokeStyle='rgba(43,141,224,.40)';
   ctx.arc(cx,cy,R, Math.PI/2+r.g.phst, Math.PI/2+r.g.phex);ctx.stroke();
-  // tool body
   ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.fillStyle='#eef0f2';ctx.fill();
   ctx.strokeStyle='#c4c4c4';ctx.lineWidth=1.5;ctx.stroke();
-  // chip outline on top
   ctx.beginPath();
   for(let i=0;i<=steps;i++){const phi=r.g.phst+(r.g.phex-r.g.phst)*i/steps;const p=P(phi,R+outerH(phi)*chipScale);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
   ctx.strokeStyle=cChip;ctx.lineWidth=1.5;ctx.stroke();
-  // hub
   ctx.beginPath();ctx.arc(cx,cy,3,0,2*Math.PI);ctx.fillStyle='#b0b0b0';ctx.fill();
-  // teeth at instant theta
   const pitch=2*Math.PI/r.z;
   for(let j=0;j<r.z;j++){
     let phi=((theta-j*pitch)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
@@ -329,29 +445,198 @@ function draw(r){
     ctx.strokeStyle=eng?cA2:'#d2d2d2';ctx.lineWidth=eng?2.5:1;ctx.stroke();
     ctx.beginPath();ctx.arc(p[0],p[1],eng?5:3,0,2*Math.PI);ctx.fillStyle=eng?cA2:'#b8b8b8';ctx.fill();
   }
-  // hmax marker + label
   const hp=P(Math.min(Math.max(Math.PI/2,r.g.phst),r.g.phex), R+r.hmax*chipScale);
   ctx.beginPath();ctx.arc(hp[0],hp[1],3,0,2*Math.PI);ctx.fillStyle='#1a1a1a';ctx.fill();
-  ctx.font='11px monospace';ctx.fillStyle=cDim;ctx.fillText('h_max '+r.hmax.toFixed(3),hp[0]-78,hp[1]-6);
-  // resultant force vector (instant)
+  ctx.font='11px monospace';ctx.fillStyle=cDim;ctx.fillText('hex '+r.hmax.toFixed(3),hp[0]-70,hp[1]-6);
   const Fmag=Math.hypot(r.iFx,r.iFy);
   if(Fmag>1){const fs=(0.85*R)/Math.max(r.peakR,1); const fx=cx+r.iFx*fs, fy=cy-r.iFy*fs;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(fx,fy);ctx.strokeStyle=cBad;ctx.lineWidth=2.5;ctx.stroke();
     const ang=Math.atan2(fy-cy,fx-cx);
     ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx-9*Math.cos(ang-.4),fy-9*Math.sin(ang-.4));
     ctx.lineTo(fx-9*Math.cos(ang+.4),fy-9*Math.sin(ang+.4));ctx.closePath();ctx.fillStyle=cBad;ctx.fill();}
-  // feed arrow
-  ctx.strokeStyle=cDim;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx+R+18,cy);ctx.lineTo(cx+R+50,cy);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx+R+50,cy);ctx.lineTo(cx+R+43,cy-4);ctx.lineTo(cx+R+43,cy+4);ctx.closePath();ctx.fillStyle=cDim;ctx.fill();
-  ctx.fillText('feed',cx+R+22,cy-7);
+  ctx.strokeStyle=cDim;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx+R+14,cy);ctx.lineTo(cx+R+38,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx+R+38,cy);ctx.lineTo(cx+R+32,cy-4);ctx.lineTo(cx+R+32,cy+4);ctx.closePath();ctx.fillStyle=cDim;ctx.fill();
+  ctx.fillText('feed',cx+R+16,cy-7);
+  // spindle rotation arrow (mirrored for climb vs conventional)
+  {const ccw=(mode!=='down'), rr=R*0.52, a0=ccw?-2.3:-0.84, a1=ccw?0.84:2.3;
+   ctx.strokeStyle='#9a9a9a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,rr,a0,a1,!ccw);ctx.stroke();
+   const ex=cx+rr*Math.cos(a1), ey=cy+rr*Math.sin(a1), tg=a1+(ccw?Math.PI/2:-Math.PI/2);
+   ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-8*Math.cos(tg-0.4),ey-8*Math.sin(tg-0.4));ctx.lineTo(ex-8*Math.cos(tg+0.4),ey-8*Math.sin(tg+0.4));ctx.closePath();ctx.fillStyle='#9a9a9a';ctx.fill();
+   ctx.fillStyle='#9a9a9a';ctx.font='11px monospace';ctx.fillText('n',cx-3,cy-rr-3);}
   $('thOut').textContent=(theta*180/Math.PI).toFixed(0)+'°';
 }
+
+// ===================== FRONT VIEW (bending) =====================
+function drawFront(r){
+  const cv=$('front'), dpr=window.devicePixelRatio||1, W=cv.clientWidth||520, H=cv.clientHeight||480;
+  cv.width=W*dpr; cv.height=H*dpr; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  const D=+$('D').value||1, L=+$('L').value||1, ap=+$('ap').value||0, ae=+$('ae').value||0, helix=+$('helix').value||0;
+  const topM=28, botM=28, holderZone=72, cx=W*0.34;
+  // one shared mm->px scale so the projection reads as the true L/D
+  const maxW=Math.min(60, W*0.13);
+  const toolZoneH=Math.max(60, H-topM-botM-holderZone);
+  const pxPerMm=Math.max(0.5, Math.min(toolZoneH/Math.max(L,0.001), maxW/Math.max(D,0.001)));
+  const w=Math.max(5, D*pxPerMm), toolLenPx=Math.max(10, L*pxPerMm);
+  const yTop=topM+holderZone, yBot=yTop+toolLenPx;
+  // chuck (always wider than the tool)
+  const fw=Math.min(W*0.2, Math.max(w*1.5+10, 26)), nw=Math.max(w*0.6+4, w/2+4);
+  ctx.lineJoin='round';ctx.fillStyle='#dde0e4';ctx.strokeStyle='#a4abb1';ctx.lineWidth=2;
+  ctx.beginPath();ctx.rect(cx-fw,topM,fw*2,13);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-fw,topM+13);ctx.lineTo(cx+fw,topM+13);ctx.lineTo(cx+nw,yTop-7);ctx.lineTo(cx-nw,yTop-7);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.rect(cx-nw,yTop-7,nw*2,7);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#f5c518';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(cx-nw-9,yTop);ctx.lineTo(cx-nw,yTop);ctx.stroke();
+  // workpiece + engagement
+  const apPx=Math.min(toolLenPx, ap*pxPerMm), aePx=Math.min(w, ae*pxPerMm), wpX=cx+w/2-aePx;
+  ctx.fillStyle='#eef1f3';ctx.strokeStyle='#c4c4c4';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.rect(wpX, yBot-apPx, Math.max(8,W-wpX-12), apPx);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#9aa6ad';ctx.font='10px monospace';ctx.fillText('workpiece', wpX+6, yBot-apPx-5);
+  // deflection
+  const dum=r.delta*1000, tipPx=Math.max(0,Math.min(toolLenPx*0.16, dum*0.4));   // proportional bend, capped ~16% so it never bananas
+  const off=t=>tipPx*(t*t*(3-t))/2;
+  ctx.fillStyle='rgba(201,206,212,.30)';ctx.fillRect(cx-w/2,yTop,w,toolLenPx);
+  ctx.beginPath();
+  for(let i=0;i<=40;i++){const t=i/40,y=yTop+t*toolLenPx,x=cx-off(t)-w/2;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  for(let i=40;i>=0;i--){const t=i/40,y=yTop+t*toolLenPx,x=cx-off(t)+w/2;ctx.lineTo(x,y);}
+  ctx.closePath();ctx.fillStyle='#c9ced4';ctx.strokeStyle=(dum>75?'#d62828':dum>25?'#c98a00':'#888f96');ctx.lineWidth=(dum>75?2:1.5);ctx.fill();ctx.stroke();
+  // helical flutes (tilt from vertical = helix angle)
+  ctx.save();ctx.beginPath();ctx.rect(cx-w/2,yTop,w,toolLenPx);ctx.clip();
+  ctx.strokeStyle='#9aa1a8';ctx.lineWidth=1;
+  const tanH=Math.tan(Math.min(Math.max(helix,5),85)*Math.PI/180), dyA=w/Math.max(0.2,tanH), sp=Math.max(11,dyA*0.85);
+  for(let yy=yTop-dyA; yy<yBot+sp; yy+=sp){const tt=Math.max(0,Math.min(1,(yy-yTop)/toolLenPx)),xo=cx-off(tt);ctx.beginPath();ctx.moveTo(xo-w/2,yy+dyA);ctx.lineTo(xo+w/2,yy);ctx.stroke();}
+  ctx.restore();
+  // engaged cutting edges (flutes in cut) along ap on the cutting side
+  const nShow=Math.max(r.NcutH>0.05?1:0, Math.round(r.NcutH));
+  ctx.fillStyle='#d62828';ctx.font='9px monospace';
+  for(let i=0;i<nShow;i++){const t=(nShow<=1)?(1-apPx/toolLenPx*0.5):(1-(apPx/toolLenPx)*(i/(nShow-1)));const y=yTop+t*toolLenPx,x=cx-off(t)+w/2;ctx.beginPath();ctx.arc(x,y,3.2,0,2*Math.PI);ctx.fill();ctx.fillText('C'+(i+1),x+5,y+3);}
+  // ---- force bundle at the cutting zone ----
+  const ox=cx-off(1-apPx/toolLenPx*0.5)+w/2, oy=yBot-apPx*0.5;
+  const Fp=r.peakR, Fa=r.Fa, Ft=r.peakFt, Fres=Math.hypot(Fp,Fa), sc=72/Math.max(Fp,Fa,1);
+  function arrow(x1,y1,x2,y2,col,wd){ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=wd;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-9*Math.cos(a-.4),y2-9*Math.sin(a-.4));ctx.lineTo(x2-9*Math.cos(a+.4),y2-9*Math.sin(a+.4));ctx.closePath();ctx.fill();}
+  arrow(ox,oy, ox-Fp*sc, oy, '#2b8de0',2.6);          // F-perp radial (bends tool)
+  arrow(ox,oy, ox, oy-Fa*sc, '#2e9e3f',2.6);          // F-axial pull-out
+  arrow(ox,oy, ox-Fp*sc, oy-Fa*sc, '#d62828',3);      // resultant
+  ctx.setLineDash([3,2]);arrow(ox,oy, ox+24, oy+15, '#e8a400',2);ctx.setLineDash([]);  // tangential (into page)
+  ctx.font='bold 11px monospace';
+  ctx.fillStyle='#2b8de0';ctx.fillText('F⊥ '+Math.round(Fp)+' N', ox-Fp*sc-4, oy+13);
+  ctx.fillStyle='#2e9e3f';ctx.fillText('Fa '+Math.round(Fa)+' N', ox+5, oy-Fa*sc-3);
+  ctx.fillStyle='#d62828';ctx.fillText('F '+Math.round(Fres)+' N', ox-Fp*sc-4, oy-Fa*sc-4);
+  ctx.fillStyle='#b9860b';ctx.fillText('Ft '+Math.round(Ft)+'/z', ox+26, oy+22);
+  // triad top-right
+  const txx=W-54, tyy=44;
+  arrow(txx,tyy,txx+20,tyy,'#888',1.4);arrow(txx,tyy,txx,tyy-20,'#888',1.4);arrow(txx,tyy,txx+12,tyy+9,'#888',1.4);
+  ctx.fillStyle='#888';ctx.font='9px monospace';ctx.fillText('x',txx+22,tyy+3);ctx.fillText('z',txx-3,tyy-22);ctx.fillText('y',txx+13,tyy+18);
+  // header labels
+  ctx.fillStyle='#1a1a1a';ctx.font='bold 12px monospace';ctx.fillText('δ '+(dum<10?dum.toFixed(1):Math.round(dum))+' µm',6,16);
+  ctx.fillStyle='#777';ctx.font='10px monospace';ctx.fillText('L '+(+$('L').value)+'  Ø'+(+$('D').value)+'  ('+(L/D).toFixed(1)+'×D)  ·  flutes in cut '+r.NcutH.toFixed(1),6,30);
+  ctx.strokeStyle='#bbb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(12,yTop);ctx.lineTo(12,yBot);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(9,yTop);ctx.lineTo(15,yTop);ctx.moveTo(9,yBot);ctx.lineTo(15,yBot);ctx.stroke();
+}
+function drawAebar(r){
+  const cv=$('aebar'); if(!cv) return; const dpr=window.devicePixelRatio||1, W=cv.clientWidth||300, H=34;
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px'; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  const D=+$('D').value||1, mL=10, mR=10, bw=W-mL-mR, y=15;
+  const X=a=>mL+bw*Math.min(1,Math.max(0,a/D));
+  ctx.strokeStyle='#ccc';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(W-mR,y);ctx.stroke();
+  ctx.fillStyle='#999';ctx.font='9px monospace';ctx.textAlign='left';ctx.fillText('aₑ sweet-spots  0',mL,H-3);ctx.textAlign='right';ctx.fillText('Ø'+D,W-mR,H-3);ctx.textAlign='left';
+  for(const s of (r.sweet||[])){const x=X(s.ae);ctx.strokeStyle='#2e9e3f';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x,y+7);ctx.stroke();ctx.fillStyle='#2e9e3f';ctx.beginPath();ctx.arc(x,y-7,2.6,0,2*Math.PI);ctx.fill();ctx.fillText(s.k+'z',x+3,y-8);}
+  const xc=X(+$('ae').value);ctx.strokeStyle='#d62828';ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(xc,y-9);ctx.lineTo(xc,y+9);ctx.stroke();ctx.fillStyle='#d62828';ctx.beginPath();ctx.moveTo(xc,y+9);ctx.lineTo(xc-3,y+13);ctx.lineTo(xc+3,y+13);ctx.closePath();ctx.fill();
+}
+
+// ===================== MACHINE POWER / TORQUE =====================
+function drawPT(){
+  const cv=$('ptchart'), dpr=window.devicePixelRatio||1, W=cv.clientWidth||300, H=236;
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px'; const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  const N=+$('mN').value, KW=+$('mKW').value, NM=+$('mNm').value;
+  const mL=42,mR=42,mT=12,mB=26, pw=W-mL-mR, ph=H-mT-mB;
+  ctx.strokeStyle='#e0e0e0';ctx.lineWidth=1;ctx.strokeRect(mL,mT,pw,ph);
+  if(!(N>0&&KW>0&&NM>0)){ctx.fillStyle='#999';ctx.font='12px Helvetica Neue';ctx.fillText('enter max rpm, kW and Nm',mL+14,mT+ph/2);return;}
+  const nb=9550*KW/NM;                       // base / corner speed
+  const n0=(LAST&&LAST.rpm>0)?LAST.rpm:0;
+  const axisMax=Math.max(N, nb*1.12, n0*1.05);   // show the knee and the operating point
+  const Taxis=NM*1.18, Paxis=KW*1.18;
+  const X=n=>mL+pw*Math.min(1,n/axisMax);
+  const YT=t=>mT+ph*(1-Math.min(1,t/Taxis));
+  const YP=p=>mT+ph*(1-Math.min(1,p/Paxis));
+  // grey the unreachable zone beyond machine max rpm
+  if(N<axisMax){ctx.fillStyle='rgba(120,120,120,.08)';ctx.fillRect(X(N),mT,X(axisMax)-X(N),ph);}
+  // x ticks
+  ctx.fillStyle='#999';ctx.font='9px monospace';ctx.textAlign='center';
+  for(let k=0;k<=4;k++){const n=axisMax*k/4,x=X(n);ctx.strokeStyle='#f3f3f3';ctx.beginPath();ctx.moveTo(x,mT);ctx.lineTo(x,mT+ph);ctx.stroke();ctx.fillStyle='#999';ctx.fillText((n/1000).toFixed(n<1000&&n>0?1:0)+'k',x,H-12);}
+  ctx.textAlign='left';
+  function torque(n,f){return n<=nb? NM*f : 9550*KW*f/n;}
+  function power(n,f){return n<=nb? NM*f*n/9550 : KW*f;}
+  function plot(fn,f,axis,color,dash){ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash(dash?[4,3]:[]);ctx.beginPath();let first=true;for(let i=0;i<=140;i++){const n=Math.max(1,axisMax*i/140),v=fn(n,f),x=X(n),y=axis==='T'?YT(v):YP(v);first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);}ctx.stroke();ctx.setLineDash([]);}
+  plot(torque,1.0,'T','#d62828',true);plot(torque,0.8,'T','#d62828',false);
+  plot(power,1.0,'P','#2b8de0',true);plot(power,0.8,'P','#2b8de0',false);
+  // base speed line + machine max-rpm limit line
+  if(nb<=axisMax){ctx.strokeStyle='#bbb';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X(nb),mT);ctx.lineTo(X(nb),mT+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#999';ctx.font='9px monospace';ctx.fillText('base '+Math.round(nb),Math.min(X(nb)+3,W-mR-46),mT+9);}
+  ctx.strokeStyle='#777';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(X(N),mT);ctx.lineTo(X(N),mT+ph);ctx.stroke();ctx.fillStyle='#777';ctx.font='9px monospace';ctx.fillText('max '+Math.round(N),Math.min(X(N)+3,W-mR-40),mT+ph-3);
+  // axis titles
+  ctx.fillStyle='#d62828';ctx.font='10px monospace';ctx.fillText('Nm',6,mT+8);
+  ctx.fillStyle='#2b8de0';ctx.textAlign='right';ctx.fillText('kW',W-6,mT+8);ctx.textAlign='left';
+  let note='Spindle envelope: torque flat to base '+Math.round(nb)+' rpm, then constant power. Dotted 100% duty, solid 80%. Grey = beyond machine max rpm.';
+  if(n0>0){
+    const Treq=LAST.meanT, Preq=LAST.power/1000;
+    const capT1=torque(n0,1.0), capP1=power(n0,1.0), capT8=torque(n0,0.8), capP8=power(n0,0.8);
+    const uT=Treq/capT1, uP=Preq/capP1, over=Math.max(Treq/capT8,Preq/capP8), overspeed=n0>N;
+    const col=overspeed?'#d62828':(over<=1?'#2e9e3f':(over<=1.25?'#c98a00':'#d62828'));
+    const xt=X(n0), yt=YT(Treq), yp=YP(Preq);
+    ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(xt,mT);ctx.lineTo(xt,mT+ph);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(xt,yt,4.5,0,2*Math.PI);ctx.fill();
+    ctx.beginPath();ctx.arc(xt,yp,4.5,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(xt,yp,4.5,0,2*Math.PI);ctx.stroke();
+    const limit=n0<nb?'torque':'power';
+    note='At '+Math.round(n0)+' rpm you use <b>'+Math.round(uT*100)+'%</b> of torque and <b>'+Math.round(uP*100)+'%</b> of power ('+limit+'-limited). '+
+         (overspeed?'<b style="color:#d62828">rpm exceeds machine max '+Math.round(N)+'.</b>':(over<=0.8?'Comfortable.':over<=1?'Within 100% duty, above the 80% line.':'<b>Over the 100% envelope — reduce a_p/f_z or rpm.</b>'));
+  }
+  $('ptNote').innerHTML=note;
+}
+
 function manualTheta(){theta=(+$('theta').value)*Math.PI/180;run();}
 function togglePlay(){playing=!playing;$('playBtn').classList.toggle('on',playing);$('playBtn').innerHTML=playing?'&#10073;&#10073; Pause':'&#9654; Rotate tooth';
   if(playing)loop();else cancelAnimationFrame(raf);}
-function loop(){theta=(theta+0.02)%(2*Math.PI);$('theta').value=(theta*180/Math.PI).toFixed(0);run();raf=requestAnimationFrame(loop);}
+function loop(){const d=(mode==='down')?-1:1;theta=(theta+d*0.02+2*Math.PI)%(2*Math.PI);$('theta').value=(theta*180/Math.PI).toFixed(0);run();raf=requestAnimationFrame(loop);}
 function toggleRegen(){regen=!regen;$('regenBtn').classList.toggle('on',regen);$('regenPanel').style.display=regen?'block':'none';run();}
+window.addEventListener('resize',()=>{if(LAST){draw(LAST);drawFront(LAST);drawPT();}});
+
+// ===================== HOLDER ICONS =====================
+function icoTop(){return '<rect x="42" y="6" width="16" height="6" rx="2"/><rect x="44" y="12" width="12" height="6"/><path d="M40,18 L60,18 L78,44 L22,44 Z"/><rect x="20" y="44" width="60" height="15" rx="2"/><rect x="20" y="50" width="60" height="4" fill="#cdd2d7" stroke="none"/>';}
+function icoER(){return svgWrap(icoTop()+
+  '<path d="M30,59 L70,59 L70,72 L30,72 Z"/><path d="M30,72 L70,72 L63,92 L37,92 Z"/>'+
+  '<path d="M34,92 L66,92 L66,108 L58,120 L42,120 L34,108 Z" fill="#e9ebee" stroke="#d9a900" stroke-width="2.4"/>'+
+  '<rect x="45" y="120" width="10" height="56" rx="2" fill="#c9ced4" stroke="#888f96"/>');}
+function icoHyd(){return svgWrap(icoTop()+
+  '<rect x="28" y="59" width="44" height="52" rx="5" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<circle cx="64" cy="71" r="5" fill="#f5c518" stroke="#d9a900" stroke-width="1.6"/>'+
+  '<rect x="38" y="111" width="24" height="20" rx="2" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<rect x="44" y="131" width="12" height="45" rx="2" fill="#c9ced4" stroke="#888f96"/>');}
+function icoWeld(){return svgWrap(icoTop()+
+  '<rect x="30" y="59" width="40" height="58" rx="3" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<rect x="68" y="92" width="13" height="12" rx="1.5" fill="#f5c518" stroke="#d9a900" stroke-width="1.8"/>'+
+  '<rect x="42" y="117" width="16" height="59" rx="2" fill="#c9ced4" stroke="#888f96"/>'+
+  '<rect x="52" y="119" width="6" height="20" fill="#dfe3e7" stroke="#9aa1a8" stroke-width="1"/>');}
+function icoShr(){return svgWrap(icoTop()+
+  '<path d="M32,59 L68,59 L58,120 L42,120 Z" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<path d="M42,120 L45,104 L55,104 L58,120" fill="none" stroke="#d9a900" stroke-width="2.2"/>'+
+  '<rect x="43" y="120" width="14" height="56" rx="2" fill="#c9ced4" stroke="#888f96"/>');}
+function icoShell(){return svgWrap(icoTop()+
+  '<path d="M34,59 L66,59 L62,90 L38,90 Z" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<rect x="38" y="90" width="24" height="6" fill="#dde0e4" stroke="#a4abb1"/>'+
+  '<path d="M24,96 L76,96 L76,120 L68,130 L32,130 L24,120 Z" fill="#e9ebee" stroke="#aab0b6"/>'+
+  '<circle cx="50" cy="108" r="7" fill="#f5c518" stroke="#d9a900" stroke-width="2"/>'+
+  '<path d="M30,130 L37,130 L35,140 L32,140 Z" fill="#f5c518" stroke="#d9a900" stroke-width="1.6"/>'+
+  '<path d="M44,130 L51,130 L49,140 L46,140 Z" fill="#f5c518" stroke="#d9a900" stroke-width="1.6"/>'+
+  '<path d="M58,130 L65,130 L63,140 L60,140 Z" fill="#f5c518" stroke="#d9a900" stroke-width="1.6"/>');}
+function svgWrap(inner){return '<svg viewBox="0 0 100 184" xmlns="http://www.w3.org/2000/svg"><g fill="#e9ebee" stroke="#aab0b6" stroke-width="2" stroke-linejoin="round">'+inner+'</g></svg>';}
+
+// init
+$('matref').innerHTML=MAT['inc'].ref;
+onHolder();
 setMat('inc');
+syncVcFromRpm();
 </script>
 </body>
 </html>
+                                                                                                                    
