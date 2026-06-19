@@ -91,7 +91,14 @@
   </select></label>
   <label class="f">pitch°<input id="pitch" class="wide" type="text" value="" placeholder="equal"></label>
   <div class="sep"></div>
-  <label class="f">Kt<input id="kt" type="number" value="700" min="50" step="50"> MPa</label>
+  <label class="f">mat<select id="mat">
+    <option value="custom" selected>custom</option>
+    <option value="ti">Ti-6Al-4V</option>
+    <option value="inc">Inconel 718</option>
+  </select></label>
+  <label class="f">kc<sub>1.1</sub><input id="kc11" type="number" value="700" min="50" step="50"> N/mm²</label>
+  <label class="f">m<sub>c</sub><input id="mc" type="number" value="0" min="0" max="0.6" step="0.01"></label>
+  <label class="f">fz<input id="fz" type="number" value="0.05" min="0.005" step="0.005"> mm</label>
   <label class="f">Kr<input id="kr" type="number" value="0.30" min="0.05" max="1" step="0.05"></label>
   <label class="f">rpm<input id="n0" type="number" value="2000" min="100" step="500">–<input id="n1" type="number" value="12000" min="500" step="500"></label>
   <label class="f">now<input id="ncur" type="number" value="4000" min="100" step="100"></label>
@@ -118,6 +125,7 @@
   Engine reproduces the Schmitz machining database analytically (55 of 65 cases at 0.0 to 1.6 percent, incl. multi mode and variable pitch).
   Out of envelope: low speed slotting (process damping) and radial immersion under 5 percent of Ø.
   Pitch field accepts spacings (90,85,95,90) or positions (0,93,178,270); blank = equal.
+  Kt is derived from kc<sub>1.1</sub>, m<sub>c</sub> and the mean chip thickness (Kt = kc<sub>1.1</sub>·h<sub>m</sub><sup>−mc</sup>), so this page and the Chip·Force page share one coefficient set. Pick a material or enter custom; custom with m<sub>c</sub>=0 reproduces a constant Kt.
 </footer>
 
 <script>
@@ -125,7 +133,9 @@
 /* Chatter.calc — stability lobes from a bench tap test.
    Zero order frequency domain solution (Altintas/Budak family) with per tooth
    regeneration delays, so variable pitch endmills are computed exactly, plus
-   multi mode FRFs. Validated against the Schmitz digital machining database. */
+   multi mode FRFs. Validated against the Schmitz digital machining database.
+   Kt is derived from the Kienzle pair (kc1.1, mc) at the cut's mean chip
+   thickness, so the Lobes and Chip/Force pages use one coefficient system. */
 
 const $ = id => document.getElementById(id);
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -235,7 +245,7 @@ function computeLobes(p){
 /*ENGINE-END*/
 
 const ui = {};
-['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kt','kr','n0','n1','ncur','stat','map','vBest','vCur','vGain','interp','chips']
+['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','mat','kc11','mc','fz','kr','n0','n1','ncur','stat','map','vBest','vCur','vGain','interp','chips']
   .forEach(id => ui[id] = $(id));
 
 function parsePitch(txt, Z){
@@ -270,9 +280,22 @@ function recompute(){
   const Z = Math.max(1, Math.round(+ui.flutes.value));
   const pp = parsePitch(ui.pitch.value, Z);
   const d = +ui.dia.value / 1e3, a = Math.min(+ui.ae.value / 1e3, d);
+  const dir = ui.dir.value;
+  // Derive Kt from the Kienzle pair (kc1.1, mc) at the cut's mean chip thickness,
+  // so the Lobes page and the Chip/Force page share one coefficient system.
+  // hm uses the same engagement angles the engine uses below; mc=0 gives a constant Kt = kc1.1.
+  const ratio = Math.min(1, a / d);
+  let phS, phE;
+  if (dir === 'slot'){ phS = 0; phE = Math.PI; }
+  else if (dir === 'up'){ phS = 0; phE = Math.acos(1 - 2 * ratio); }
+  else { phS = Math.acos(2 * ratio - 1); phE = Math.PI; }
+  const arc = phE - phS, fz = +ui.fz.value;
+  let hm = arc > 1e-9 ? fz * (Math.cos(phS) - Math.cos(phE)) / arc : fz;
+  if (!(hm > 1e-4)) hm = 1e-4;                       // mm, floor to keep thin-chip Kt finite
+  const Kt = (+ui.kc11.value) * Math.pow(hm, -(+ui.mc.value));   // N/mm^2
   const p = {
-    modes, kt: +ui.kt.value * 1e6, kr: +ui.kr.value, Nt: Z, pitch: pp.pitch,
-    d, a, dir: ui.dir.value,
+    modes, kt: Kt * 1e6, kr: +ui.kr.value, Nt: Z, pitch: pp.pitch,
+    d, a, dir,
     rpmMin: +ui.n0.value, rpmMax: +ui.n1.value, nRpm: 240, nFc: 6000
   };
   if (!(p.rpmMax > p.rpmMin)){ ui.stat.textContent = 'rpm range?'; return; }
@@ -284,7 +307,8 @@ function recompute(){
   if (pp.label === 'bad pitch, using equal') warn.push(pp.label);
   if (a / d < 0.05) warn.push('ae under 5 percent of Ø: out of envelope');
   if (p.dir === 'slot') warn.push('slotting: low rpm may chatter earlier than shown');
-  ui.stat.textContent = warn.length ? warn.join(' · ') : (pp.label + ' · ' + ms + ' ms');
+  const kInfo = 'Kt ' + Math.round(Kt) + ' N/mm² · h_m ' + hm.toFixed(3);
+  ui.stat.textContent = warn.length ? (kInfo + ' · ' + warn.join(' · ')) : (pp.label + ' · ' + kInfo + ' · ' + ms + ' ms');
   ui.stat.className = 'stat' + (warn.length ? ' warn' : '');
   analyseResult();
   dirty = true;
@@ -403,9 +427,16 @@ function draw(){
 
 function render(){ if (dirty){ draw(); dirty = false; } requestAnimationFrame(render); }
 
+const MAT = { ti:{ kc11:1400, mc:0.23, kr:0.52 }, inc:{ kc11:2900, mc:0.27, kr:0.48 } };
+function setMat(){ const m = ui.mat.value; if (MAT[m]){ ui.kc11.value = MAT[m].kc11; ui.mc.value = MAT[m].mc; ui.kr.value = MAT[m].kr; } recompute(); }
+ui.mat.addEventListener('change', setMat);
+
 let deb = null;
-['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kt','kr','n0','n1','ncur']
-  .forEach(id => ui[id].addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(recompute, 250); }));
+['fn1','k1','z1','fn2','k2','z2','flutes','dia','ae','dir','pitch','kc11','mc','fz','kr','n0','n1','ncur']
+  .forEach(id => ui[id].addEventListener('input', () => {
+    if (id === 'kc11' || id === 'mc' || id === 'kr') ui.mat.value = 'custom';
+    clearTimeout(deb); deb = setTimeout(recompute, 250);
+  }));
 
 window.addEventListener('resize', sizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(sizeCanvas, 300));
