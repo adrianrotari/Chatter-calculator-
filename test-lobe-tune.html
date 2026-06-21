@@ -2006,7 +2006,7 @@ if(id==='ncur'||id==='dia') syncVcFromRpm();
 if(['ncur','flutes','fn1'].includes(id) && tnHave) tnAnalyse();
 }));
 // material picker drives the Kienzle pair (kc1.1, mc, Kr); editing them by hand reverts to custom
-const MAT_LOBE={ c45:{kc11:1700,mc:0.25,kr:0.30}, alloy:{kc11:1950,mc:0.25,kr:0.35}, ss316:{kc11:1950,mc:0.21,kr:0.40}, ci:{kc11:1100,mc:0.26,kr:0.30}, alu:{kc11:700,mc:0.23,kr:0.25}, ti:{kc11:1400,mc:0.23,kr:0.52}, inc:{kc11:2900,mc:0.27,kr:0.48}, hard:{kc11:2600,mc:0.20,kr:0.40} };
+const MAT_LOBE={ c45:{kc11:1700,mc:0.25,kr:0.30}, alloy:{kc11:1950,mc:0.25,kr:0.35}, ss316:{kc11:1950,mc:0.21,kr:0.40}, ci:{kc11:1100,mc:0.26,kr:0.30}, alu:{kc11:700,mc:0.23,kr:0.25}, ti:{kc11:1400,mc:0.23,kr:0.52}, inc:{kc11:2900,mc:0.27,kr:0.48}, hard:{kc11:2900,mc:0.20,kr:0.40} };
 function setMatLobe(){ const m=MAT_LOBE[ui.mat.value]; if(m){ ui.kc11.value=m.kc11; ui.mc.value=m.mc; ui.kr.value=m.kr; } lobesKick(); }
 ui.mat.addEventListener('change',setMatLobe);
 ['kc11','mc','kr'].forEach(id=>ui[id].addEventListener('input',()=>{ if(MAT_LOBE[ui.mat.value]) ui.mat.value='custom'; }));
