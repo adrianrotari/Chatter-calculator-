@@ -92,8 +92,14 @@
   <div class="card">
     <h2>Material</h2>
     <div class="matbtn">
-      <button id="mTi" onclick="setMat('ti')">Ti-6Al-4V</button>
-      <button id="mInc" class="on" onclick="setMat('inc')">Inconel 718-AG</button>
+      <button id="mC45" data-m="c45" onclick="setMat('c45')">Steel C45</button>
+      <button id="mAlloy" data-m="alloy" onclick="setMat('alloy')">Alloy steel</button>
+      <button id="mSs316" data-m="ss316" onclick="setMat('ss316')">Stainless 316L</button>
+      <button id="mCi" data-m="ci" onclick="setMat('ci')">Cast iron</button>
+      <button id="mAlu" data-m="alu" onclick="setMat('alu')">Aluminium</button>
+      <button id="mTi" data-m="ti" onclick="setMat('ti')">Ti-6Al-4V</button>
+      <button id="mInc" data-m="inc" class="on" onclick="setMat('inc')">Inconel 718-AG</button>
+      <button id="mHard" data-m="hard" onclick="setMat('hard')">Hardened steel</button>
     </div>
     <div class="matref" id="matref"></div>
     <div class="startvals" id="startVals"></div>
@@ -256,6 +262,18 @@
 
 <script>
 const MAT = {
+  c45:{name:'Steel C45 (P)', kc11:1700, mc:0.25, Kr:0.30, vc:[150,250],
+      ref:`<b>ISO P &mdash; unalloyed steel (~C45).</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 1700, m<sub>c</sub> &asymp; 0.25, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.30. Calibrate from your cuts.`},
+  alloy:{name:'Alloy steel (P)', kc11:1950, mc:0.25, Kr:0.35, vc:[120,220],
+      ref:`<b>ISO P &mdash; alloy steel (~42CrMo4).</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 1950, m<sub>c</sub> &asymp; 0.25, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.35. Calibrate from your cuts.`},
+  ss316:{name:'Stainless 316L (M)', kc11:1950, mc:0.21, Kr:0.40, vc:[100,180],
+      ref:`<b>ISO M &mdash; austenitic stainless (316L).</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 1950, m<sub>c</sub> &asymp; 0.21, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.40. Calibrate from your cuts.`},
+  ci:{name:'Cast iron (K)', kc11:1100, mc:0.26, Kr:0.30, vc:[120,250],
+      ref:`<b>ISO K &mdash; grey cast iron.</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 1100, m<sub>c</sub> &asymp; 0.26, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.30. Calibrate from your cuts.`},
+  alu:{name:'Aluminium (N)', kc11:700, mc:0.23, Kr:0.25, vc:[300,1000],
+      ref:`<b>ISO N &mdash; wrought aluminium.</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 700, m<sub>c</sub> &asymp; 0.23, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.25. Calibrate from your cuts.`},
+  hard:{name:'Hardened steel (H)', kc11:2600, mc:0.20, Kr:0.40, vc:[80,150],
+      ref:`<b>ISO H &mdash; hardened steel (~50 HRC).</b> Sandvik-typical seed: k<sub>c1.1</sub> &asymp; 2600, m<sub>c</sub> &asymp; 0.20, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.40. Calibrate from your cuts.`},
   ti:{name:'Ti-6Al-4V', kc11:1400, mc:0.23, Kr:0.52, vc:[40,120],
       ref:`<b>ISO S &mdash; titanium.</b> Datasheet (annealed): UTS <b>895&ndash;950 MPa</b>, hardness <b>~334 HB</b>, E <b>~105 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 1300&ndash;1400, m<sub>c</sub> &asymp; 0.23, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.5.`},
   inc:{name:'Inconel 718-AG', kc11:2900, mc:0.27, Kr:0.48, vc:[25,55],
@@ -282,7 +300,7 @@ const HOLDERS = {
 let mat='inc', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null, holder='shr';
 const $=id=>document.getElementById(id);
 
-function setMat(m){mat=m;$('mTi').classList.toggle('on',m==='ti');$('mInc').classList.toggle('on',m==='inc');
+function setMat(m){mat=m;document.querySelectorAll('.matbtn button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   $('kc11').value=MAT[m].kc11;$('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;run();}
 function setMode(m){mode=m;[...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===m));run();}
 
@@ -640,4 +658,3 @@ syncVcFromRpm();
 </script>
 </body>
 </html>
-                                                                                                                    
