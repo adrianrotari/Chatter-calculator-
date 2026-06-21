@@ -189,7 +189,11 @@ details.fold>summary:hover{color:var(--ink);}
 <option value="down" selected>down</option><option value="up">up</option><option value="slot">slot</option>
 </select></label>
 <label class="f">pitch°<input id="pitch" class="wide" type="text" value="" placeholder="equal"></label>
-<label class="f">Kt<input id="kt" type="number" value="700" min="50" step="50"> MPa</label>
+<label class="f">mat<select id="mat"><option value="custom" selected>custom</option><option value="ti">Ti-6Al-4V</option><option value="inc">Inconel 718</option></select></label>
+<label class="f">kc<sub>1.1</sub><input id="kc11" type="number" value="700" min="50" step="50"> N/mm²</label>
+<label class="f">m<sub>c</sub><input id="mc" type="number" value="0" min="0" max="0.6" step="0.01"></label>
+<label class="f">fz<input id="fz" type="number" value="0.05" min="0.001" step="0.005"> mm</label>
+<label class="f">Kt<input id="kt" type="number" value="700" min="50" step="50" readonly title="derived from kc1.1, mc and the mean chip thickness"> MPa</label>
 <label class="f">Kr<input id="kr" type="number" value="0.30" min="0.05" max="1" step="0.05"></label>
 <label class="f">rpm max<input id="nmax" class="n5" type="number" value="12000" min="500" step="500"></label>
 <label class="f">now<input id="ncur" class="n5" type="number" value="4000" min="100" step="100"></label>
@@ -203,15 +207,8 @@ details.fold>summary:hover{color:var(--ink);}
 <div class="controls" id="opForm"></div>
 </details>
 </div>
-<!-- ───────── 1 · residual (air-split, embedded) ───────── -->
-<div class="card">
-<div class="cardhead">1 · Residual &middot; Air-Split — record live or load a cut · real vibration with pump, shop noise &amp; tooth-passing removed</div>
-<div class="stage" style="padding-top:8px;">
-<iframe src="./air-split.html" title="Residual Air-Split" allow="microphone" style="width:100%;height:1020px;border:1px solid var(--border);border-radius:8px;background:#fff"></iframe>
-</div>
-</div>
-<!-- old tap + speaker tap, hidden (superseded by Residual above; not deleted to keep the engine intact) -->
-<details class="fold" style="display:none">
+<!-- ───────── speaker tap (software tap test) ───────── -->
+<details class="fold">
 <summary>1 · Tap test &amp; speaker tap &middot; measure tool fₙ (open when needed)</summary>
 <div class="grid2b">
 <div class="subcard">
@@ -662,7 +659,7 @@ return { pitch: Array(Z).fill(360 / Z), label: 'bad pitch, using equal' };
 /*ENGINE-END*/
 // ─────────────────── ui refs ───────────────────
 const ui = {};
-['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur','vcCur','statL',
+['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','mat','kc11','mc','fz','kt','kr','nmax','ncur','vcCur','statL',
 'opPanel','opForm',
 'tapStart','tapReset','hint','instruct','bar','mFloor','mTrig','ignored','t0','t1','t2','tapRes','fnVal','fn2Val','spread',
 'tapSpec','tapPickRow','chipM1','chipM2','applyPicks','clearPicksT','tapSpecSrc',
@@ -672,7 +669,7 @@ const ui = {};
 'saveModal','saveSummary','saveConfirmBtn','saveReviseBtn','ovReadout']
 .forEach(id => ui[id] = $(id));
 const tapBoxes=[ui.t0,ui.t1,ui.t2];
-const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','kt','kr','nmax','ncur'];
+const INPUT_IDS=['fn1','k1','z1','fn2','k2','z2','fn3','k3','z3','flutes','dia','ae','dir','pitch','mat','kc11','mc','fz','kt','kr','nmax','ncur'];
 // ─────────────────── operation info panel ───────────────────
 /*OPCORE-START*/
 const OPFIELDS=[
@@ -1437,7 +1434,16 @@ if(!modes.length){ ui.statL.textContent='enter mode 1'; lbCur=null; ui.vBest.inn
 const Z=Math.max(1,Math.round(+ui.flutes.value));
 const pp=parsePitch(ui.pitch.value,Z);
 const d=+ui.dia.value/1e3, a=Math.min(+ui.ae.value/1e3,d);
-const p={ modes, kt:+ui.kt.value*1e6, kr:+ui.kr.value, Nt:Z, pitch:pp.pitch,
+// derive Kt from the Kienzle pair (kc1.1, mc) at the cut's mean chip thickness,
+// so this page and the Chip·Force page share one coefficient set; mc=0 -> constant Kt=kc1.1.
+const fzv=+ui.fz.value||0, kc11=+ui.kc11.value||0, mc=+ui.mc.value||0;
+const rr=Math.min(1,a/d), eng=Math.acos(Math.max(-1,Math.min(1,1-2*rr)));
+let phS,phE; const cutd=ui.dir.value;
+if(cutd==='up'){ phS=0; phE=eng; } else if(cutd==='down'){ phS=Math.PI-eng; phE=Math.PI; } else { phS=0; phE=Math.PI; }
+const arc=phE-phS, hm=arc>1e-6?fzv*(Math.cos(phS)-Math.cos(phE))/arc:fzv;
+const KtMPa = kc11>0 ? kc11*Math.pow(Math.max(hm,1e-4),-mc) : (+ui.kt.value||700);
+ui.kt.value=Math.round(KtMPa);
+const p={ modes, kt:KtMPa*1e6, kr:+ui.kr.value, Nt:Z, pitch:pp.pitch,
 d, a, dir:ui.dir.value, rpmMin:LOBE_MIN_RPM, rpmMax:+ui.nmax.value, nRpm:240, nFc:6000 };
 if(!(p.rpmMax>LOBE_MIN_RPM)){ ui.statL.textContent='set max rpm'; return; }
 const t0=performance.now();
@@ -1999,6 +2005,11 @@ lobesKick();
 if(id==='ncur'||id==='dia') syncVcFromRpm();
 if(['ncur','flutes','fn1'].includes(id) && tnHave) tnAnalyse();
 }));
+// material picker drives the Kienzle pair (kc1.1, mc, Kr); editing them by hand reverts to custom
+const MAT_LOBE={ ti:{kc11:1400,mc:0.23,kr:0.52}, inc:{kc11:2900,mc:0.27,kr:0.48} };
+function setMatLobe(){ const m=MAT_LOBE[ui.mat.value]; if(m){ ui.kc11.value=m.kc11; ui.mc.value=m.mc; ui.kr.value=m.kr; } lobesKick(); }
+ui.mat.addEventListener('change',setMatLobe);
+['kc11','mc','kr'].forEach(id=>ui[id].addEventListener('input',()=>{ if(MAT_LOBE[ui.mat.value]) ui.mat.value='custom'; }));
 if(ui.vcCur) ui.vcCur.addEventListener('input',()=>{ const n=rpmFromVc(); if(n>0){ ui.ncur.value=Math.round(n); lobesKick(); if(tnHave) tnAnalyse(); } });
 window.addEventListener('resize', sizeCanvases);
 buildOpForm();
