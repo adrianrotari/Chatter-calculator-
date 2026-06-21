@@ -208,35 +208,21 @@ details.fold>summary:hover{color:var(--ink);}
 </details>
 </div>
 <!-- ───────── speaker tap (software tap test) ───────── -->
-<details class="fold">
-<summary>1 · Tap test &amp; speaker tap &middot; measure tool fₙ (open when needed)</summary>
+<details class="fold" open>
+<summary>1 · Lobes &amp; tap test</summary>
 <div class="grid2b">
 <div class="subcard">
-<div class="cardhead">1b · Speaker tap (software tap test · no hammer · experimental)</div>
-<div class="controls">
-<button id="swTool" class="btn go">Sweep · tool in</button>
-<button id="swAir" class="btn ghost">Sweep · baseline (tool out)</button>
-<button id="swClear" class="btn ghost">Clear</button>
-<label class="f">from<input id="swF0" type="number" value="200" min="50" step="50"> Hz</label>
-<label class="f">to<input id="swF1" type="number" value="8000" min="500" step="100"> Hz</label>
-<label class="f">secs<input id="swDur" type="number" value="4" min="1" max="12" step="1"></label>
-<label class="f">level<input id="swVol" type="number" value="35" min="5" max="100" step="5"> %</label>
-<div class="spacer"></div>
-<div class="stat" id="swStat">uses the mic chosen in Tune · aim a speaker at the tool</div>
-</div>
-<div class="stage" style="padding-top:0;">
-<canvas id="swSpec" class="sweepcv"></canvas>
+<div class="cardhead">2 · Stability lobes (from the inputs above)</div>
+<div class="stage" style="padding-top:6px;">
+<canvas id="map" class="mapcv"></canvas>
 <div class="rgrid" style="grid-template-columns:repeat(3,auto) 1fr;">
-<div class="rb fc"><span class="k">fₙ (speaker)</span><span class="v" id="swFn">—</span></div>
-<div class="rb"><span class="k">tap fₙ (M1)</span><span class="v" id="swTapFn">—</span></div>
-<div class="rb shift"><span class="k">difference</span><span class="v" id="swDiff">—</span></div>
+<div class="rb best"><span class="k">best pocket</span><span class="v" id="vBest">—</span></div>
+<div class="rb cur"><span class="k">at current rpm</span><span class="v" id="vCur">—</span></div>
+<div class="rb"><span class="k">depth gain</span><span class="v" id="vGain">—</span></div>
 <div></div>
 </div>
-<div class="interp" id="swInterp">Aim a speaker at the tool. <b>Sweep · tool in</b> plays a tone that slides low → high → low while the mic records. Then pull the tool back and press <b>Sweep · baseline</b>. The app subtracts the two, so what is left is the tool answering — the peak of that difference is fₙ. Then <b>Set M1 fₙ</b> feeds it to the lobes.</div>
-<div class="chips">
-<button id="swSetFn" class="btn act" style="display:none">Set M1 fₙ</button>
-</div>
-<div class="snote">Test method, unproven on a microphone: the speaker shakes the tool, the baseline subtraction cancels the speaker and the room. Prove it first on an easy ringer — a steel ruler clamped in a vise. If the difference peak tracks your hand tap and moves when you change tools, it works. If you only see fixed peaks that do not move, the mic cannot do it here and you keep the hammer tap above.</div>
+<div class="interp" id="interpL">Enter the tap test natural frequency, stiffness and damping, the tool and the cut. The map shows the stable depth limit per spindle speed; the chips are the pocket speeds worth running. Click a pocket to set the "now" rpm and vc.</div>
+<div class="chips" id="chipsL"></div>
 </div>
 </div>
 <!-- tap test -->
@@ -310,18 +296,11 @@ details.fold>summary:hover{color:var(--ink);}
 </div>
 </div>
 <!-- ───────── lobes ───────── -->
-<div class="card">
-<div class="cardhead">2 · Stability lobes (from the inputs above)</div>
+<div class="card" id="asRoot">
+<div class="cardhead">Residual &middot; Air-Split &mdash; read the cut</div>
 <div class="stage" style="padding-top:6px;">
-<canvas id="map" class="mapcv"></canvas>
-<div class="rgrid" style="grid-template-columns:repeat(3,auto) 1fr;">
-<div class="rb best"><span class="k">best pocket</span><span class="v" id="vBest">—</span></div>
-<div class="rb cur"><span class="k">at current rpm</span><span class="v" id="vCur">—</span></div>
-<div class="rb"><span class="k">depth gain</span><span class="v" id="vGain">—</span></div>
-<div></div>
-</div>
-<div class="interp" id="interpL">Enter the tap test natural frequency, stiffness and damping, the tool and the cut. The map shows the stable depth limit per spindle speed; the chips are the pocket speeds worth running. Click a pocket to set the "now" rpm and vc.</div>
-<div class="chips" id="chipsL"></div>
+<div class="interp" id="asHint">Record (or load) in Tune above — the same cut loads here and is read after the coolant pump, shop noise and tooth-passing are cancelled.</div>
+<iframe id="asFrame" src="./air-split.html" title="Air-Split read the cut" style="width:100%;height:780px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;"></iframe>
 </div>
 </div>
 <!-- ───────── library ───────── -->
@@ -849,7 +828,7 @@ function micRelease(){
 const o=micOwner; micStop();
 if(o==='tap') tapCancel(true);
 if(o==='tune') tuneStopUI(true);
-	if(o==='sweep') swCancel(true);
+	/* speaker tap removed */
 }
 // ---- polar chatter map ----
 let polarBuf=null, polarN=0, polarLastT=0, polarFrac=-1;
@@ -1313,6 +1292,12 @@ ui.rec.textContent='Record';
 ui.saveRec.disabled=!(recChunks&&recChunks.length);
 ui.statT.textContent= taken ? 'stopped — the mic switched to the tap test' : 'stopped'+(recChunks&&recChunks.length?' · ready to save':'');
 }
+function airSplitSend(samples,sr){
+const fr=document.getElementById('asFrame');
+if(!fr||!fr.contentWindow||!(sr>0)) return;
+const arr=samples instanceof Float32Array?samples:new Float32Array(samples);
+try{ fr.contentWindow.postMessage({type:'ascut',samples:arr,sr:sr,dia:+ui.dia.value,z:Math.round(+ui.flutes.value)},'*'); }catch(e){}
+}
 ui.rec.onclick=async()=>{
 if(!tnRecording){
 tnHave=false; Pema.fill(0); tnPos=0; tnHop=0; tnManual=null; tnDirty=true;
@@ -1326,7 +1311,7 @@ catch(err){ ui.statT.textContent='mic error: '+(err.name||'?'); return; }
 recSR=tnSR; R.binHz=tnSR/FFTSIZE;
 tnRecording=true; ui.rec.textContent='Stop'; ui.saveRec.disabled=true;
 ui.statT.textContent='● listening…';
-} else tuneStopUI(false);
+} else { tuneStopUI(false); if(recChunks&&recChunks.length){ const all=new Float32Array(recLen); let o=0; for(const c of recChunks){ all.set(c,o); o+=c.length; } airSplitSend(all, recSR); } }
 };
 function buildMeta(){
 const eff=tnManual!=null?tnManual:((!R.stable&&R.fc>0)?R.fc:null);
@@ -1407,6 +1392,7 @@ for(let i=0;i<r.samples.length;i++) tnFeed(r.samples[i]);
 TNHOP=2048;
 try{ polarReset(); polarFeed(r.samples); }catch(e){}
 if(!tnHave) tnAnalyse();
+airSplitSend(r.samples, r.sr);
 ui.statT.textContent=fname+' · '+(r.samples.length/r.sr).toFixed(1)+' s · '+r.sr+' Hz'+restored;
 tnDirty=true;
 },30);
@@ -1820,7 +1806,7 @@ updateOvStat();
 };
 /*OVCORE-END*/
 // ─────────────────── speaker tap (sweep) module ───────────────────
-/*SWEEPCORE-START*/
+/*SWEEPCORE-START*/ if(false){ /* speaker tap removed — disabled, DOM gone */
 const swEl={};
 ['swTool','swAir','swClear','swF0','swF1','swDur','swVol','swStat','swSpec','swFn','swTapFn','swDiff','swSetFn'].forEach(id=>swEl[id]=$(id));
 let swToolSpec=null, swAirSpec=null, swDifSpec=null, swPeak=0, swPeakProm=0, swRec=null, swRecLen=0, swRunning=false, swSR=44100;
@@ -1975,7 +1961,7 @@ swEl.swAir.onclick=()=>swRun('air');
 swEl.swClear.onclick=swClearAll;
 swEl.swSetFn.onclick=()=>{ if(swPeak>0){ applyToInputs(swPeak); swEl.swStat.className='stat'; swEl.swStat.textContent='M1 fₙ set to '+Math.round(swPeak)+' Hz — lobes updated'; swDOM(); } };
 swDraw();
-/*SWEEPCORE-END*/
+} /*SWEEPCORE-END*/
 // ─────────────────── shared render + wiring ───────────────────
 let dprT=1, tnDirty=true, lbDirty=true;
 // vc (cutting speed) <-> rpm — shown on top, applied by clicking a pocket/speed chip

@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Residual · Air-Split — CHATTER.CALC</title>
+<title>Read the Cut · Air-Split — CHATTER.CALC</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{--accent:#f5c518;--yellow-ink:#b89400;--bg:#fafafa;--card:#fff;--border:#e3e3e3;--ink:#333;--muted:#8a8a8a;
---green:#1f9d57;--blue:#1f7cb8;--red:#e5484d;--grid:#ededed;}
+--green:#1f9d57;--blue:#1f7cb8;--red:#e5484d;--orange:#e8932e;--grid:#ededed;}
 html,body{background:var(--bg);color:var(--ink);font:14px/1.4 'Helvetica Neue','Arial Narrow',Helvetica,Arial,sans-serif;}
 body{max-width:1100px;margin:0 auto;padding:10px 14px 30px;}
 a.back{display:inline-block;margin:6px 0 4px;font:700 11px Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:#555;background:#fff;border:1px solid #ddd;border-radius:5px;padding:6px 12px;}
@@ -30,32 +30,45 @@ label.f select{padding:5px 6px;border:1px solid var(--border);border-radius:8px;
 .badge.rec{background:rgba(229,72,77,.12);border-color:var(--red);color:var(--red);}
 .stage{padding:6px 12px 12px;}
 canvas{width:100%;display:block;background:#fff;border:1px solid var(--border);border-radius:8px;touch-action:manipulation;}
-#tl{height:150px;} #sp{height:300px;}
+#tl{height:140px;} #sp{height:280px;cursor:crosshair;} #pl{height:240px;max-width:300px;margin:8px auto 0;}
+.row2{display:grid;grid-template-columns:1fr 300px;gap:10px;align-items:start;}
+@media(max-width:820px){.row2{grid-template-columns:1fr;} #pl{max-width:260px;}}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0 2px;}
 .chip{border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;font-weight:700;color:var(--ink);background:#fff;cursor:pointer;white-space:nowrap;}
 .chip.on{border-color:var(--accent);background:rgba(245,197,24,.12);color:var(--yellow-ink);}
 .chip.air{border-color:var(--green);color:var(--green);background:rgba(31,157,87,.08);cursor:default;}
+.chip.rpm{border-color:var(--blue);color:var(--blue);background:rgba(31,124,184,.07);}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:7px;}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
-.rgrid{display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:14px;align-items:end;margin:8px 2px 0;}
+.verdict{font-size:16px;font-weight:800;padding:10px 13px;border-radius:9px;border:1.5px solid var(--border);margin:2px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.verdict .vlab{font-size:18px;}
+.verdict small{font-size:12px;font-weight:600;color:var(--muted);}
+.verdict.stable{background:rgba(31,157,87,.10);border-color:var(--green);color:var(--green);}
+.verdict.marginal{background:rgba(232,147,46,.12);border-color:var(--orange);color:var(--orange);}
+.verdict.chatter{background:rgba(229,72,77,.10);border-color:var(--red);color:var(--red);}
+.verdict.none{color:var(--muted);}
+.rgrid{display:grid;grid-template-columns:repeat(4,auto) 1fr;gap:14px;align-items:end;margin:10px 2px 0;}
 .rb{display:flex;flex-direction:column;gap:1px;} .rb .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
 .rb .v{font-size:18px;font-weight:800;white-space:nowrap;line-height:1;} .rb .v small{font-size:11px;font-weight:600;color:var(--muted);}
-.rb.res .v{color:var(--red);} .rb.pump .v{color:var(--blue);}
+.rb.res .v{color:var(--red);} .rb.pump .v{color:var(--blue);} .rb.fix .v{color:var(--blue-ink,#1f7cb8);}
 .note{font-size:11.5px;color:var(--muted);line-height:1.55;padding:0 12px 12px;}
 .note b{color:var(--ink);}
 .interp{font-size:12.5px;color:var(--ink);line-height:1.4;margin:8px 2px 0;}
-.interp b{font-weight:800;} .interp.green{color:var(--green);} .interp.red{color:var(--red);}
+.interp b{font-weight:800;}
 @keyframes blink{50%{opacity:.35;}} .blink{animation:blink 1s infinite;}
+/* embedded in test-lobe-tune via iframe: hide own chrome + recording controls */
+.embedded .back, .embedded header, .embedded #recCard { display:none !important; }
+.embedded body { padding:6px 8px 14px; }
 </style>
 </head>
 <body>
 <a class="back" href="./index.html">&#8249; All apps</a>
 <header>
-<h1>Residual <span>·</span> Air-Split</h1>
-<div class="sub">record live or load a cut → split cut vs coolant-on air gaps → see the real vibration with pump, shop noise, spindle and tooth-passing removed</div>
+<h1>Read the Cut <span>·</span> Air-Split</h1>
+<div class="sub">record live or load a cut → cancel pump, shop noise &amp; tooth-passing → verdict + the rpm to run · click any peak to test it</div>
 </header>
 
-<div class="card">
+<div class="card" id="recCard">
 <div class="cardhead">Recording</div>
 <div class="controls">
 <button id="rec" class="btn rec">● Record live</button>
@@ -63,6 +76,7 @@ canvas{width:100%;display:block;background:#fff;border:1px solid var(--border);b
 <input id="file" type="file" accept=".wav,audio/wav,audio/x-wav" style="display:none">
 <label class="f">mic <select id="mic"><option value="">default input</option></select></label>
 <label class="f">rpm<input id="rpm" type="number" value="2976" min="100" step="1"></label>
+<label class="f" style="font-size:11px"><input type="checkbox" id="autoRpm" checked> auto rpm</label>
 <label class="f">flutes z<input id="z" type="number" value="9" min="1" step="1"></label>
 <label class="f">Ø mm<input id="dia" type="number" value="12" min="0.5" step="0.1"></label>
 <label class="f">air gap<input id="sens" type="range" min="0" max="100" value="50" style="width:90px"></label>
@@ -75,40 +89,47 @@ canvas{width:100%;display:block;background:#fff;border:1px solid var(--border);b
 <div class="card">
 <div class="cardhead">1 · Timeline — green = coolant-on air cut (reposition), grey = cutting</div>
 <div class="stage">
-<canvas id="tl" width="1040" height="150"></canvas>
+<canvas id="tl" width="1040" height="140"></canvas>
 <div class="chips" id="segChips"></div>
 <div class="legend">
 <span><i style="background:#cfcfcf"></i>cutting</span>
 <span><i style="background:#1f9d57"></i>air cut (coolant on, no cut)</span>
-<span id="tlhint">live: scrolls as you record · loaded file: click a cut to analyze it</span>
+<span id="tlhint">live: scrolls as you record · loaded file: click a cut</span>
 </div>
 </div>
 </div>
 
 <div class="card">
-<div class="cardhead">2 · Residual map — the real vibration after cancelling everything else</div>
+<div class="cardhead">2 · Read the cut — verdict · real vibration (spectrum) · repetition (polar)</div>
 <div class="stage">
-<canvas id="sp" width="1040" height="300"></canvas>
+<div class="verdict none" id="verdict"><span class="vlab">—</span><small id="verdictSub">record or load a cut</small></div>
+<div class="row2">
+<canvas id="sp" width="1040" height="280"></canvas>
+<canvas id="pl" width="300" height="240"></canvas>
+</div>
 <div class="rgrid">
 <div class="rb res"><span class="k">real vibration peak</span><span class="v" id="vRes">—</span></div>
+<div class="rb"><span class="k">repetition (chatter index)</span><span class="v" id="vIdx">—</span></div>
 <div class="rb pump"><span class="k">pump / machine (fixed)</span><span class="v" id="vPump">—</span></div>
 <div class="rb"><span class="k">tooth-passing</span><span class="v" id="vTooth">—</span></div>
-<div class="rb"><span class="k">analyzing</span><span class="v" id="vWhich">—</span></div>
 <div></div>
 </div>
-<div class="interp" id="interp">Press <b>Record live</b> and start cutting. The app learns the coolant-on air level during repositioning, builds a baseline from it, and subtracts it from the cutting sound in real time. Tooth-passing is masked. What is left in red is the vibration the cut actually adds.</div>
+<div class="interp" id="interp">Record a cut. The app cancels the coolant pump, spindle and shop noise using the quiet air gaps, masks tooth-passing, and judges chatter two ways: a surviving spectrum peak (red) and whether the cut repeats every spindle turn (polar). <b>Click any peak</b> on the spectrum to test it — you get the rpm to run to dodge it.</div>
+<div class="chips" id="pickchips"></div>
 <div class="legend">
 <span><i style="background:#bbb"></i>cut (raw)</span>
 <span><i style="background:#1f7cb8"></i>air baseline = pump+spindle+shop</span>
 <span><i style="background:#e5484d"></i>residual = real vibration</span>
 <span><i style="background:#f5c518"></i>tooth-passing (removed)</span>
+<span><i style="background:#1f9d57"></i>your pick</span>
 </div>
 </div>
 </div>
-<div class="note">Method: cut spectrum minus air-gap spectrum cancels anything common to both — coolant pump, spindle harmonics, steady shop noise. The tooth-passing comb (z·rpm/60 and multiples) is masked because it is forced, not chatter. A peak that survives is real cutting vibration; a peak strong in the blue air baseline is the pump or machine, not the cut. Live mode learns the air level automatically from the quiet repositioning moments — keep the tool out of cut for a second or two now and then so it can refresh the baseline. A mic still cannot read the tool natural frequency.</div>
+<div class="note">Method (data only, no verdict): (1) subtract the coolant-on air gaps — removes coolant pump, shop noise, spindle idle. (2) Mask the full rotation comb, every rpm/60 harmonic: this cutter is variable pitch + variable helix, so its tooth-passing repeats once per revolution and its forced energy lands across the whole comb, not on one z·rpm/60 line. (3) rpm is auto-detected from the recording (the fold that repeats best), so the polar repetition % is trustworthy. What is left in red is the only place a chatter / tool-mode tone could be, since a mic can't read the tool natural frequency directly. Reading it: a chattering cut leaves one strong off-comb tone that repeats across cuts plus a high non-repeating %; a stable cut (Markus's, confirmed no chatter marks) leaves low broadband and ~13 to 21% non-repeating in the steady part of the cut. Click a spectrum peak to get the rpm that would put whole waves between teeth. Validate the chatter end against a known bad cut when one occurs.</div>
 
 <script>
 "use strict";
+try{ if(window.self!==window.top) document.documentElement.classList.add('embedded'); }catch(e){ document.documentElement.classList.add('embedded'); }
 const $=id=>document.getElementById(id);
 const FFT=8192, HALF=FFT/2;
 const hann=new Float32Array(FFT); for(let i=0;i<FFT;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFT-1)));
@@ -134,9 +155,11 @@ function parseWAV(buf){
   mean/=n||1; for(let i=0;i<n;i++) out[i]-=mean;
   return {sr:fmt.sr,samples:out,meta};
 }
-let SAM=null, SR=48000, SEG=null, sel='all', live=false;
-const fE=()=>(+$('z').value)*(+$('rpm').value)/60;
-const fS=()=>(+$('rpm').value)/60;
+let SAM=null, SR=48000, SEG=null, sel='all', live=false, pickHz=0, AUTORPM=0;
+const wrpm=()=>{const a=$('autoRpm');return (a&&a.checked&&AUTORPM>0)?AUTORPM:(+$('rpm').value||0);};
+function syncRpmLock(){const a=$('autoRpm'),r=$('rpm');if(!r)return;const lock=!!(a&&a.checked&&AUTORPM>0);r.readOnly=lock;r.style.opacity=lock?'0.55':'1';r.title=lock?'detected from the recording — uncheck auto rpm to type your own':'';}
+const fE=()=>(+$('z').value)*wrpm()/60;
+const fS=()=>wrpm()/60;
 const binHz=()=>SR/FFT;
 function freqs(){const f=new Float32Array(HALF);for(let k=0;k<HALF;k++)f[k]=k*binHz();return f;}
 function maskTooth(f){const m=new Uint8Array(f.length);const e=fE(),s=fS();
@@ -146,9 +169,58 @@ function maskTooth(f){const m=new Uint8Array(f.length);const e=fE(),s=fS();
 function peaks(f,arr,mask,lo,hi,n){const out=[];for(let i=2;i<arr.length-2;i++){if(f[i]<lo||f[i]>hi||(mask&&mask[i]))continue;
   if(arr[i]>=arr[i-1]&&arr[i]>=arr[i+1]&&arr[i]>=arr[i-2]&&arr[i]>=arr[i+2]) out.push([arr[i],f[i]]);}
   out.sort((a,b)=>b[0]-a[0]);const res=[];for(const o of out){if(res.every(r=>Math.abs(r[1]-o[1])>20))res.push(o);if(res.length>=n)break;}return res;}
+// suggested rpm: put a whole number of vibration waves between teeth (in-phase = stable)
+function suggestRPM(fc,Z,nCur){
+  if(!(fc>0&&Z>0&&nCur>0)) return [];
+  const wpt=60*fc/(Z*nCur), kS=Math.max(1,Math.round(wpt)), out=[];
+  for(let k=kS-1;k<=kS+1;k++){ if(k<1)continue; const n=60*fc/(Z*k); if(n<300||n>40000)continue; out.push({k,n,cur:k===kS}); }
+  return out.sort((a,b)=>a.n-b.n);
+}
+// chatter index from the time signal: how much does NOT repeat each spindle turn (0..1) + polar bins
+function chatterIndex(samples,start,len,sr,rpm){
+  const rev=sr*60/rpm; if(!(rev>12)) return {frac:-1,bins:null};
+  const NREV=Math.min(Math.floor(len/rev),30); if(NREV<3) return {frac:-1,bins:null};
+  const total=Math.floor(NREV*rev); let mean=0; for(let i=0;i<total;i++) mean+=samples[start+i]; mean/=total;
+  const B=360, sumB=new Float64Array(B), sqB=new Float64Array(B), cntB=new Float64Array(B);
+  for(let r=0;r<NREV;r++){ const rs=start+Math.floor(r*rev), steps=Math.floor(rev);
+    for(let k=0;k<steps;k++){ const v=samples[rs+k]-mean, b=Math.floor((k/rev)*B)%B; sumB[b]+=v; sqB[b]+=v*v; cntB[b]++; } }
+  let SQ=0,SUM=0,n=0,asy=0; const bins=new Float64Array(B);
+  for(let b=0;b<B;b++){ if(cntB[b]>0){ const mb=sumB[b]/cntB[b]; bins[b]=mb; SQ+=sqB[b]; SUM+=sumB[b]; n+=cntB[b]; asy+=sqB[b]-cntB[b]*mb*mb; } }
+  const gM=SUM/(n||1), tot=SQ-n*gM*gM, frac=tot>1e-9?Math.max(0,Math.min(1,asy/tot)):0;
+  return {frac,bins};
+}
+// auto-detect the true spindle rpm = the fold that repeats best (lowest non-repeating), searched around the nominal
+function autoDetectRpm(samples,start,len,sr,nominal){
+  const lo=Math.max(300, nominal*0.75), hi=Math.min(40000, nominal*1.25);
+  let best=nominal, bestFrac=2; const step=Math.max(2,Math.round((hi-lo)/180));
+  for(let r=lo;r<=hi;r+=step){ const ci=chatterIndex(samples,start,len,sr,r); if(ci.frac>=0&&ci.frac<bestFrac){bestFrac=ci.frac;best=r;} }
+  for(let r=Math.max(lo,best-step);r<=Math.min(hi,best+step);r++){ const ci=chatterIndex(samples,start,len,sr,r); if(ci.frac>=0&&ci.frac<bestFrac){bestFrac=ci.frac;best=r;} }
+  return {rpm:best, frac:bestFrac};
+}
+// robust repetition: slide 2.5s windows across the steady interior of the cut (skip entry/exit), take the median — rejects tool entry, exit and repositioning transients that otherwise spike it toward 100%
+function robustIndex(cutSeg){
+  if(!cutSeg||!SEG) return {frac:-1,bins:null};
+  const hop=SEG.hop, a=cutSeg.a*hop, b=cutSeg.b*hop, sr=SR, rpm=wrpm();
+  const L=Math.floor(sr*2.5), skip=Math.floor(sr*0.7);
+  let a2=a+skip, b2=b-skip; if(b2-a2<L){ a2=a; b2=b; }
+  const fr=[], bn=[];
+  for(let s=a2; s+L<=b2; s+=Math.floor(sr*1.0)){ const ci=chatterIndex(SAM,s,L,sr,rpm); if(ci.frac>=0){ fr.push(ci.frac); bn.push(ci.bins); } }
+  if(!fr.length){ return chatterIndex(SAM,a,Math.min(L,b-a-1),sr,rpm); }
+  const ord=fr.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]); const m=ord[Math.floor(ord.length/2)];
+  return {frac:m[0], bins:bn[m[1]]};
+}
+function autoRpmFromCuts(){
+  AUTORPM=0;
+  if(!$('autoRpm')||!$('autoRpm').checked||!SEG) return;
+  const cuts=SEG.segs.filter(s=>s.cut).sort((a,b)=>(b.b-b.a)-(a.b-a.a)); const c=cuts[0]; if(!c) return;
+  const a=c.a*SEG.hop, len=Math.min((c.b-c.a)*SEG.hop, Math.floor(SR*3));
+  const nominal=Math.max(300,+$('rpm').value||3000);
+  const det=autoDetectRpm(SAM,a,len,SR,nominal);
+  if(det.rpm>0){ AUTORPM=Math.round(det.rpm); $('rpm').value=AUTORPM; }
+  syncRpmLock();
+}
 
-// ---------- shared residual builder + spectrum draw ----------
-let RES=null;
+let RES=null, IDX=-1, POLB=null;
 function buildRES(Pc,Pa,whichTxt){
   const f=freqs(), band=[]; for(let k=0;k<HALF;k++) if(f[k]>=150&&f[k]<=4400) band.push(k);
   const medC=median(band.map(k=>Pc?Pc[k]:0))||1e-12, medA=median(band.map(k=>Pa?Pa[k]:0))||1e-12;
@@ -158,19 +230,38 @@ function buildRES(Pc,Pa,whichTxt){
   const resPk=peaks(f,diff,tm,200,4300,1)[0];
   const pumpPk=Pa?peaks(f,adb,null,150,4300,3).filter(p=>{const r=p[1]/fS();return Math.abs(r-Math.round(r))>0.12;})[0]:null;
   RES={f,cdb,adb,diff,tm,resPk,pumpPk};
+  const prom=resPk?resPk[0]:0, idx=IDX;
+  // DATA ONLY — no stable/marginal/chatter verdict (rpm-sensitive, not reliable). Show the numbers.
+  const idxTxt = idx>=0 ? Math.round(idx*100)+'%' : '—';
+  $('verdict').className='verdict none';
+  $('verdict').querySelector('.vlab').textContent='DATA';
+  $('verdictSub').textContent='repetition '+idxTxt+(resPk?(' · real peak '+Math.round(resPk[1])+' Hz +'+prom.toFixed(0)+' dB'):' · no clear peak')+(pumpPk?(' · pump '+Math.round(pumpPk[1])+' Hz'):'')+' · tooth '+Math.round(fE())+' Hz · '+whichTxt;
   $('vRes').innerHTML=resPk&&resPk[0]>3?Math.round(resPk[1])+'<small> Hz · +'+resPk[0].toFixed(0)+' dB</small>':'<small>none > 3 dB</small>';
+  $('vIdx').innerHTML= idx>=0? Math.round(idx*100)+'<small>% non-repeating</small>':'<small>—</small>';
   $('vPump').innerHTML=pumpPk?Math.round(pumpPk[1])+'<small> Hz</small>':'<small>—</small>';
   $('vTooth').innerHTML=Math.round(fE())+'<small> Hz family</small>';
-  $('vWhich').innerHTML=whichTxt;
-  const ip=$('interp');
-  if(resPk&&resPk[0]>6){ ip.className='interp red'; ip.innerHTML='Real cutting vibration at <b>'+Math.round(resPk[1])+' Hz</b> (+'+resPk[0].toFixed(0)+' dB over the air baseline), tooth-passing and pump removed.'; }
-  else if(resPk&&resPk[0]>3){ ip.className='interp'; ip.innerHTML='Weak residual at <b>'+Math.round(resPk[1])+' Hz</b> (+'+resPk[0].toFixed(0)+' dB). Mostly broadband, no strong chatter tone.'; }
-  else { ip.className='interp green'; ip.innerHTML='No residual peak above the air baseline. After removing pump, shop noise and tooth-passing, the cut adds only broadband energy — looks stable.'; }
-  drawSpec();
+  drawPickChips();
+  drawSpec(); drawPolar();
+}
+function drawPickChips(){
+  const box=$('pickchips'); box.innerHTML='';
+  const fc = pickHz>0 ? pickHz : (RES&&RES.resPk?RES.resPk[1]:0);
+  if(!(fc>0)){ return; }
+  const lab=document.createElement('span'); lab.style.cssText='font-size:11px;color:var(--muted);align-self:center';
+  lab.innerHTML='for <b style="color:#1f9d57">'+Math.round(fc)+' Hz</b> run:';
+  box.appendChild(lab);
+  const Z=+$('z').value, nCur=+$('rpm').value;
+  const sug=suggestRPM(fc,Z,nCur), D=+$('dia').value||0;
+  if(!sug.length){ const s=document.createElement('span'); s.style.cssText='font-size:11px;color:var(--muted)'; s.textContent='set rpm/z'; box.appendChild(s); return; }
+  sug.forEach(s=>{ const el=document.createElement('div'); el.className='chip rpm'+(s.cur?' on':'');
+    const vc=D>0?Math.round(Math.PI*D*s.n/1000):0;
+    el.innerHTML=Math.round(s.n)+'<small> rpm'+(vc?' · '+vc+' m/min':'')+(s.cur?' (now)':'')+'</small>';
+    el.title='k='+s.k+' waves per tooth — suggestion for your NEXT cut'; el.onclick=()=>{ const a=$('autoRpm'); if(a&&a.checked) return; $('rpm').value=Math.round(s.n); if(SAM)analyzeFile(false); };
+    box.appendChild(el); });
 }
 function drawSpec(){
   const cv=$('sp'),dpr=Math.min(window.devicePixelRatio||1,2);
-  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(300*dpr);cv.width=W;cv.height=H;
+  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(280*dpr);cv.width=W;cv.height=H;
   const g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(!RES){return;}
   const {f,cdb,adb,diff,tm,resPk,pumpPk}=RES;
@@ -178,6 +269,7 @@ function drawSpec(){
   let dmax=14; for(let k=0;k<HALF;k++) if(f[k]>=200&&f[k]<=fHi&&!tm[k]&&diff[k]>dmax) dmax=diff[k];
   const lo=-12, hi=Math.min(dmax+5,40);
   const xOf=fr=>xL+(fr/fHi)*(xR-xL), yOf=d=>yB-((Math.max(lo,Math.min(hi,d))-lo)/(hi-lo))*(yB-yT);
+  cv._xOf=xOf; cv._fHi=fHi; cv._xL=xL; cv._xR=xR; cv._dpr=dpr;
   g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--grid')||'#eee';g.lineWidth=dpr;
   g.fillStyle='#999';g.font=(9.5*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='top';
   for(let fr=0;fr<=fHi;fr+=1000){const x=xOf(fr);g.beginPath();g.moveTo(x,yT);g.lineTo(x,yB);g.stroke();g.fillText((fr/1000)+'k',x,yB+3*dpr);}
@@ -193,9 +285,38 @@ function drawSpec(){
   for(let k=1;k<HALF;k++){if(f[k]<120||f[k]>fHi)continue;if(tm[k]){st=false;continue;}const x=xOf(f[k]),y=yOf(diff[k]);if(!st){g.moveTo(x,y);st=true;}else g.lineTo(x,y);}g.stroke();
   if(resPk&&resPk[0]>3){const x=xOf(resPk[1]),y=yOf(resPk[0]);g.fillStyle='#b02a2f';g.font='bold '+(11*dpr)+'px Helvetica,Arial';g.textAlign=x>xR-90*dpr?'right':'left';g.textBaseline='bottom';g.fillText(Math.round(resPk[1])+' Hz +'+resPk[0].toFixed(0)+'dB',x+(x>xR-90*dpr?-5*dpr:5*dpr),y-3*dpr);}
   if(pumpPk){const x=xOf(pumpPk[1]),y=yOf(pumpPk[0]);g.fillStyle='#1f7cb8';g.font='bold '+(10*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='bottom';g.fillText('pump '+Math.round(pumpPk[1]),x,y-3*dpr);}
+  if(pickHz>0){const x=xOf(pickHz);g.strokeStyle='#1f9d57';g.lineWidth=1.4*dpr;g.setLineDash([5*dpr,3*dpr]);g.beginPath();g.moveTo(x,yT);g.lineTo(x,yB);g.stroke();g.setLineDash([]);
+    g.fillStyle='#1f9d57';g.font='bold '+(11*dpr)+'px Helvetica,Arial';g.textAlign=x>xR-90*dpr?'right':'left';g.textBaseline='top';g.fillText('pick '+Math.round(pickHz),x+(x>xR-90*dpr?-5*dpr:5*dpr),yT+1*dpr);}
 }
+function drawPolar(){
+  const cv=$('pl'),dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=Math.round((cv.clientWidth||280)*dpr),H=Math.round(240*dpr);cv.width=W;cv.height=H;
+  const g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.40;
+  g.strokeStyle='rgba(0,0,0,0.10)';g.lineWidth=dpr;
+  for(let q=1;q<=4;q++){g.beginPath();g.arc(cx,cy,R*q/4,0,2*Math.PI);g.stroke();}
+  if(!POLB||IDX<0){ g.fillStyle='#aaa';g.font=(12*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='middle';g.fillText('need a few turns',cx,cy);return;}
+  const B=POLB.length; let peak=1e-9; for(let b=0;b<B;b++) if(Math.abs(POLB[b])>peak)peak=Math.abs(POLB[b]);
+  const amp=0.42*R/peak, baseR=R*0.62;
+  g.beginPath();let st=false;
+  for(let b=0;b<=B;b++){const bb=b%B,ph=(b/B)*2*Math.PI-Math.PI/2,rad=baseR+POLB[bb]*amp,x=cx+Math.cos(ph)*rad,y=cy+Math.sin(ph)*rad;if(!st){g.moveTo(x,y);st=true;}else g.lineTo(x,y);}
+  g.closePath();g.strokeStyle='#222';g.lineWidth=1.4*dpr;g.stroke();
+  g.fillStyle='#333';g.font='bold '+(15*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='middle';
+  g.fillText(Math.round(IDX*100)+'%',cx,cy-6*dpr);
+  g.fillStyle='#999';g.font=(9.5*dpr)+'px Helvetica,Arial';g.fillText('non-repeating',cx,cy+9*dpr);
+}
+$('sp').addEventListener('click',e=>{
+  if(!RES) return; const cv=$('sp'); const r=cv.getBoundingClientRect();
+  const xCss=(e.clientX-r.left)*(cv.width/r.width);
+  const fr=(xCss-cv._xL)/(cv._xR-cv._xL)*cv._fHi; if(!(fr>0)) return;
+  // snap to nearest residual peak within +/- 80 Hz, else exact freq
+  const f=RES.f, diff=RES.diff, tm=RES.tm; let best=fr,bd=1e9;
+  for(let k=2;k<HALF-2;k++){ if(tm[k]||f[k]<150||f[k]>4400)continue; if(diff[k]>=diff[k-1]&&diff[k]>=diff[k+1]){ const d=Math.abs(f[k]-fr); if(d<bd&&d<80){bd=d;best=f[k];} } }
+  pickHz=best; drawSpec(); drawPickChips();
+  $('interp').innerHTML='Picked <b style="color:#1f9d57">'+Math.round(pickHz)+' Hz</b>. If that is the chatter mode, run one of the rpm below — it puts a whole number of waves between teeth (in phase = stable). Re-cut at that rpm and check the verdict.';
+});
 
-// ---------- FILE MODE (precise per-cut segmentation) ----------
+// ---------- FILE MODE ----------
 function segment(){
   const x=SAM, sr=SR, hop=Math.round(sr*0.05), nf=Math.floor(x.length/hop);
   const db=new Float32Array(nf);
@@ -212,16 +333,11 @@ function segment(){
 function avgSpec(frameOK){
   const N=FFT,hop=N/2; const acc=new Float64Array(HALF); let cnt=0;
   const re=new Float32Array(N), im=new Float32Array(N);
-  for(let pos=0;pos+N<=SAM.length;pos+=hop){
-    const fi=Math.floor(pos/SEG.hop);
-    if(!frameOK(fi)) continue;
-    for(let i=0;i<N;i++){re[i]=SAM[pos+i]*hann[i];im[i]=0;}
-    fft(re,im); for(let k=0;k<HALF;k++) acc[k]+=re[k]*re[k]+im[k]*im[k];
-    cnt++;
-  }
+  for(let pos=0;pos+N<=SAM.length;pos+=hop){ const fi=Math.floor(pos/SEG.hop); if(!frameOK(fi)) continue;
+    for(let i=0;i<N;i++){re[i]=SAM[pos+i]*hann[i];im[i]=0;} fft(re,im); for(let k=0;k<HALF;k++) acc[k]+=re[k]*re[k]+im[k]*im[k]; cnt++; }
   if(!cnt) return null; for(let k=0;k<HALF;k++) acc[k]/=cnt; return acc;
 }
-function analyzeFile(){ if(!SAM) return; live=false; SEG=segment(); drawTimeline(); buildChips(); fileResidual(); }
+function analyzeFile(doAuto){ if(!SAM) return; live=false; SEG=segment(); if(doAuto) autoRpmFromCuts(); drawTimeline(); buildChips(); fileResidual(); }
 function buildChips(){
   const box=$('segChips'); box.innerHTML='';
   const cuts=SEG.segs.filter(s=>s.cut), airs=SEG.segs.filter(s=>!s.cut);
@@ -232,19 +348,22 @@ function buildChips(){
     el.onclick=()=>{sel=i;buildChips();fileResidual();}; box.appendChild(el);});
   airs.forEach(s=>{const el=document.createElement('div'); el.className='chip air';
     el.textContent='air '+(s.a*0.05).toFixed(0)+'–'+(s.b*0.05).toFixed(0)+'s'; box.appendChild(el);});
-  $('stat').textContent=(SAM.length/SR).toFixed(1)+'s · '+SR+' Hz · '+cuts.length+' cuts, '+airs.length+' air gaps · tooth-pass '+Math.round(fE())+' Hz';
+  $('stat').textContent=(SAM.length/SR).toFixed(1)+'s · '+SR+' Hz · '+cuts.length+' cuts, '+airs.length+' air gaps · tooth-pass '+Math.round(fE())+' Hz'+(AUTORPM?' · rpm auto '+AUTORPM+' (best fold)':'');
 }
 function fileResidual(){
   const cuts=SEG.segs.filter(s=>s.cut), airs=SEG.segs.filter(s=>!s.cut);
   const inAir=fi=>airs.some(s=>fi>=s.a&&fi<s.b);
-  let inCut, w;
-  if(sel==='all'){ inCut=fi=>cuts.some(s=>fi>=s.a&&fi<s.b); w='all cuts'; }
-  else { const s=cuts[sel]; if(!s){sel='all';return fileResidual();} inCut=fi=>fi>=s.a&&fi<s.b; w='cut '+(sel+1); }
+  let inCut, w, cutSeg;
+  if(sel==='all'){ inCut=fi=>cuts.some(s=>fi>=s.a&&fi<s.b); w='all cuts'; cutSeg=cuts.slice().sort((a,b)=>(b.b-b.a)-(a.b-a.a))[0]; }
+  else { const s=cuts[sel]; if(!s){sel='all';return fileResidual();} inCut=fi=>fi>=s.a&&fi<s.b; w='cut '+(sel+1); cutSeg=s; }
+  // chatter index + polar from the (longest) cut samples
+  if(cutSeg){ const ci=robustIndex(cutSeg); IDX=ci.frac; POLB=ci.bins; }
+  else { IDX=-1; POLB=null; }
   buildRES(avgSpec(inCut), avgSpec(inAir), w);
 }
 function drawTimeline(){
   const cv=$('tl'),dpr=Math.min(window.devicePixelRatio||1,2);
-  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(150*dpr);cv.width=W;cv.height=H;
+  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(140*dpr);cv.width=W;cv.height=H;
   const g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(!SEG)return;
   const nf=SEG.nf, dur=SAM.length/SR, xL=36*dpr,xR=W-8*dpr,yT=8*dpr,yB=H-18*dpr;
@@ -264,44 +383,35 @@ $('tl').addEventListener('click',e=>{
   for(let i=0;i<cuts.length;i++){ if(fi>=cuts[i].a&&fi<cuts[i].b){ sel=i; buildChips(); fileResidual(); return; } }
 });
 
-// ---------- LIVE MODE (compute while recording) ----------
+// ---------- LIVE MODE ----------
 let micCtx,micStream,micSrc,micNode,recording=false;
 let recBuf=[],recLen=0,SRlive=48000;
-let lvHist=[],stHist=[];            // per-50ms level(dB) + state(0 air/1 cut)
+let lvHist=[],stHist=[];
 let frameAcc=0,frameCnt=0,hopN=0;
 let fr=new Float32Array(FFT),frPos=0,sinceFFT=0;
 const FFTHOP=2048;
-let airB=null,cutB=null,airN=0,cutN=0;
-let aLvl=0,cLvl=0,have2=false,curAir=false,everCut=false,everAir=false;
-let raf=null,drawAcc=0;
+let airB=null,cutB=null,airN=0,cutN=0,curAir=false,everCut=false,everAir=false,raf=null;
 async function listMics(){ try{ const ds=await navigator.mediaDevices.enumerateDevices(); const sel=$('mic'); const cur=sel.value;
   sel.innerHTML='<option value="">default input</option>'; ds.filter(d=>d.kind==='audioinput').forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('input '+(i+1));sel.appendChild(o);}); sel.value=cur; }catch(e){} }
 async function micStart(onChunk){
   micCtx=new (window.AudioContext||window.webkitAudioContext)(); await micCtx.resume();
   const ac={echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1};
   const id=$('mic').value; if(id) ac.deviceId={exact:id};
-  micStream=await navigator.mediaDevices.getUserMedia({audio:ac,video:false});
-  listMics();
+  micStream=await navigator.mediaDevices.getUserMedia({audio:ac,video:false}); listMics();
   micSrc=micCtx.createMediaStreamSource(micStream);
   const sink=micCtx.createGain(); sink.gain.value=0; sink.connect(micCtx.destination);
   if(micCtx.audioWorklet){
     const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
     const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await micCtx.audioWorklet.addModule(url);
     micNode=new AudioWorkletNode(micCtx,'cap'); micNode.port.onmessage=e=>onChunk(e.data); micSrc.connect(micNode); micNode.connect(sink);
-  } else {
-    micNode=micCtx.createScriptProcessor(2048,1,1); micNode.onaudioprocess=e=>onChunk(new Float32Array(e.inputBuffer.getChannelData(0))); micSrc.connect(micNode); micNode.connect(sink);
-  }
+  } else { micNode=micCtx.createScriptProcessor(2048,1,1); micNode.onaudioprocess=e=>onChunk(new Float32Array(e.inputBuffer.getChannelData(0))); micSrc.connect(micNode); micNode.connect(sink); }
   return micCtx.sampleRate;
 }
 function micStop(){ try{if(micNode){micNode.onaudioprocess=null;if(micNode.port)micNode.port.onmessage=null;micNode.disconnect();}}catch(e){}
   try{micSrc&&micSrc.disconnect();}catch(e){} try{micStream&&micStream.getTracks().forEach(t=>t.stop());}catch(e){} try{micCtx&&micCtx.close();}catch(e){}
   micCtx=micStream=micSrc=micNode=null; }
-function liveReset(){
-  recBuf=[];recLen=0;lvHist=[];stHist=[];frameAcc=0;frameCnt=0;
-  fr=new Float32Array(FFT);frPos=0;sinceFFT=0;
-  airB=new Float64Array(HALF);cutB=new Float64Array(HALF);airN=0;cutN=0;
-  aLvl=0;cLvl=0;have2=false;curAir=false;everCut=false;everAir=false;
-}
+function liveReset(){ recBuf=[];recLen=0;lvHist=[];stHist=[];frameAcc=0;frameCnt=0;fr=new Float32Array(FFT);frPos=0;sinceFFT=0;
+  airB=new Float64Array(HALF);cutB=new Float64Array(HALF);airN=0;cutN=0;curAir=false;everCut=false;everAir=false;pickHz=0;IDX=-1;POLB=null; }
 function liveSpectrum(){ const re=new Float32Array(FFT),im=new Float32Array(FFT);
   for(let i=0;i<FFT;i++){re[i]=fr[(frPos+i)%FFT]*hann[i];im[i]=0;} fft(re,im);
   const P=new Float64Array(HALF); for(let k=0;k<HALF;k++)P[k]=re[k]*re[k]+im[k]*im[k]; return P; }
@@ -309,82 +419,91 @@ function onChunk(ch){
   if(!recording) return;
   if(recLen<SRlive*180){ recBuf.push(ch); recLen+=ch.length; }
   for(let i=0;i<ch.length;i++){
-    const s=ch[i];
-    frameAcc+=s*s; frameCnt++;
-    if(frameCnt>=hopN){
-      const rms=Math.sqrt(frameAcc/hopN); frameAcc=0; frameCnt=0;
-      const ldb=20*Math.log10(rms+1e-9);
-      lvHist.push(ldb);
-      // classify against recent history — mirrors the file-mode threshold so live == loaded
+    const s=ch[i]; frameAcc+=s*s; frameCnt++;
+    if(frameCnt>=hopN){ const rms=Math.sqrt(frameAcc/hopN); frameAcc=0; frameCnt=0;
+      const ldb=20*Math.log10(rms+1e-9); lvHist.push(ldb);
       const win=lvHist.slice(-600); win.sort((x,y)=>x-y);
       const lo=win[Math.floor(0.10*win.length)], hi=win[Math.floor(0.90*win.length)];
       const sens=(+$('sens').value)/100;
-      if(hi-lo<4){ curAir=true; }            // no clear cut yet → keep learning the baseline
-      else { const thr=lo+(hi-lo)*(0.30+0.40*sens); curAir = ldb<=thr; }
+      if(hi-lo<4){ curAir=true; } else { const thr=lo+(hi-lo)*(0.30+0.40*sens); curAir = ldb<=thr; }
       if(curAir) everAir=true; else everCut=true;
-      stHist.push(curAir?0:1);
-      if(lvHist.length>3000){lvHist.shift();stHist.shift();}
+      stHist.push(curAir?0:1); if(lvHist.length>3000){lvHist.shift();stHist.shift();}
     }
     fr[frPos++]=s; if(frPos>=FFT)frPos=0;
-    if(++sinceFFT>=FFTHOP){ sinceFFT=0;
-      const P=liveSpectrum();
+    if(++sinceFFT>=FFTHOP){ sinceFFT=0; const P=liveSpectrum();
       if(curAir){ if(airN===0)airB.set(P); else for(let k=0;k<HALF;k++)airB[k]=0.92*airB[k]+0.08*P[k]; airN++; }
       else { if(cutN===0)cutB.set(P); else for(let k=0;k<HALF;k++)cutB[k]=0.85*cutB[k]+0.15*P[k]; cutN++; }
     }
   }
 }
+function liveRecentSamples(secs){ // last `secs` of audio, flattened
+  const need=Math.floor(SRlive*secs); const out=new Float32Array(need); let got=0,o=need;
+  for(let i=recBuf.length-1;i>=0&&got<need;i--){ const c=recBuf[i]; const take=Math.min(c.length,need-got); o-=take; out.set(c.subarray(c.length-take),o); got+=take; }
+  return out.subarray(o);
+}
 function liveTick(){
   if(!recording) return;
   drawLiveTL();
   $('badge').className='badge '+(curAir?'air':'cut'); $('badge').textContent=(curAir?'● AIR (baseline)':'● CUTTING');
-  const secs=(recLen/SRlive).toFixed(0);
-  $('stat').textContent='● recording '+secs+'s · air frames '+airN+', cut frames '+cutN+' · tooth-pass '+Math.round(fE())+' Hz';
-  if(airN>3&&cutN>3){ buildRES(cutB,airB,'live'); }
-  else { $('interp').className='interp'; $('interp').innerHTML= everCut? 'Learning the air baseline — let the tool sit out of cut (coolant on) for a second.' : 'Listening… start cutting. Keep a short air gap now and then so it can learn the baseline.'; }
+  $('stat').textContent='● recording '+(recLen/SRlive).toFixed(0)+'s · air frames '+airN+', cut frames '+cutN+' · tooth-pass '+Math.round(fE())+' Hz';
+  if(airN>3&&cutN>3){
+    const rs=liveRecentSamples(2.5); const ci=chatterIndex(rs,0,rs.length,SRlive,+$('rpm').value); IDX=ci.frac; POLB=ci.bins;
+    buildRES(cutB,airB,'live');
+  } else { $('verdict').className='verdict none'; $('verdict').querySelector('.vlab').textContent='…';
+    $('verdictSub').textContent= everCut?'learning air baseline — let the tool idle out of cut a second':'listening… start cutting, keep short air gaps'; }
   raf=requestAnimationFrame(liveTick);
 }
 function drawLiveTL(){
   const cv=$('tl'),dpr=Math.min(window.devicePixelRatio||1,2);
-  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(150*dpr);cv.width=W;cv.height=H;
-  const g=cv.getContext('2d');g.clearRect(0,0,W,H);
-  const n=lvHist.length; if(!n){return;}
+  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(140*dpr);cv.width=W;cv.height=H;
+  const g=cv.getContext('2d');g.clearRect(0,0,W,H); const n=lvHist.length; if(!n){return;}
   const xL=36*dpr,xR=W-8*dpr,yT=8*dpr,yB=H-18*dpr;
   let lo=pctl(lvHist,5),hi=pctl(lvHist,98); if(hi-lo<6)hi=lo+6;
   const xOf=i=>xL+(i/Math.max(1,n-1))*(xR-xL), yOf=d=>yB-((Math.max(lo,Math.min(hi,d))-lo)/(hi-lo))*(yB-yT);
-  // shade air frames green
   let i=0; while(i<n){ let j=i; while(j<n&&stHist[j]===stHist[i])j++; if(stHist[i]===0){ g.fillStyle='rgba(31,157,87,0.16)'; g.fillRect(xOf(i),yT,xOf(j)-xOf(i),yB-yT);} i=j; }
   g.strokeStyle='#444';g.lineWidth=1*dpr;g.beginPath();
   for(let k=0;k<n;k++){const x=xOf(k),y=yOf(lvHist[k]);k?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();
-  g.fillStyle='#999';g.font=(9.5*dpr)+'px Helvetica,Arial';g.textAlign='right';g.textBaseline='bottom';
-  g.fillText((n*0.05).toFixed(0)+'s window',xR,yB-2*dpr);
 }
 async function recStart(){
   liveReset(); live=true; SEG=null; $('segChips').innerHTML='';
-  try{ SRlive=await micStart(onChunk); }
-  catch(err){ $('stat').textContent='mic error: '+(err.name||err)+' — allow microphone access'; return; }
+  try{ SRlive=await micStart(onChunk); }catch(err){ $('stat').textContent='mic error: '+(err.name||err)+' — allow microphone access'; return; }
   SR=SRlive; hopN=Math.round(SRlive*0.05);
   recording=true; $('rec').textContent='■ Stop'; $('rec').classList.add('blink'); $('badge').className='badge rec'; $('badge').textContent='● REC';
   raf=requestAnimationFrame(liveTick);
 }
 function recStop(){
   recording=false; if(raf)cancelAnimationFrame(raf); micStop();
-  $('rec').textContent='● Record live'; $('rec').classList.remove('blink');
-  $('badge').className='badge'; $('badge').textContent='stopped';
-  // assemble full recording and run the precise per-cut pass
-  if(recLen>FFT){ const all=new Float32Array(recLen); let o=0; for(const c of recBuf){all.set(c,o);o+=c.length;} SAM=all; SR=SRlive; sel='all'; setTimeout(analyzeFile,10); }
+  $('rec').textContent='● Record live'; $('rec').classList.remove('blink'); $('badge').className='badge'; $('badge').textContent='stopped';
+  if(recLen>FFT){ const all=new Float32Array(recLen); let o=0; for(const c of recBuf){all.set(c,o);o+=c.length;} SAM=all; SR=SRlive; sel='all'; setTimeout(()=>analyzeFile(true),10); }
 }
 $('rec').onclick=()=>{ if(recording) recStop(); else recStart(); };
 $('load').onclick=()=>{ if(recording) recStop(); $('file').click(); };
 $('file').addEventListener('change',()=>{const fl=$('file').files&&$('file').files[0];$('file').value='';if(!fl)return;
   const rd=new FileReader(); rd.onload=()=>{const r=parseWAV(rd.result);
     if(r.err){$('stat').textContent='load failed: '+r.err;return;}
-    SAM=r.samples;SR=r.sr;sel='all';
+    SAM=r.samples;SR=r.sr;sel='all';pickHz=0;
+    const nm=fl.name||''; const mR=nm.match(/(\d{3,5})\s*rpm/i), mZ=nm.match(/[_-]z(\d+)/i), mD=nm.match(/[_-]d(\d+(?:\.\d+)?)/i);
+    if(mR)$('rpm').value=mR[1]; if(mZ)$('z').value=mZ[1]; if(mD)$('dia').value=mD[1];
     if(r.meta&&r.meta.inputs){const I=r.meta.inputs;if(I.ncur)$('rpm').value=I.ncur;if(I.flutes)$('z').value=I.flutes;if(I.dia)$('dia').value=I.dia;}
-    $('stat').textContent='analyzing '+fl.name+'…'; setTimeout(analyzeFile,20);
+    $('stat').textContent='analyzing '+fl.name+'…'; setTimeout(()=>analyzeFile(true),20);
   }; rd.readAsArrayBuffer(fl);});
-['rpm','z','dia','sens'].forEach(id=>$(id).addEventListener('input',()=>{ if(!recording&&SAM&&SEG)analyzeFile(); }));
-window.addEventListener('resize',()=>{ if(live){drawLiveTL();drawSpec();} else if(SEG){drawTimeline();drawSpec();} });
+['rpm','z','dia','sens'].forEach(id=>$(id).addEventListener('input',()=>{ if(!recording&&SAM&&SEG)analyzeFile(false); }));
+if($('autoRpm')) $('autoRpm').addEventListener('change',()=>{ if(!recording&&SAM&&SEG) analyzeFile($('autoRpm').checked); syncRpmLock(); });
+syncRpmLock();
+window.addEventListener('resize',()=>{ if(live){drawLiveTL();drawSpec();drawPolar();} else if(SEG){drawTimeline();drawSpec();drawPolar();} });
 if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener){try{navigator.mediaDevices.addEventListener('devicechange',listMics);}catch(e){}}
+/* shared recording from the parent test-lobe-tune Tune section */
+window.addEventListener('message',function(ev){
+  var d=ev&&ev.data; if(!d||d.type!=='ascut') return;
+  try{
+    SAM=(d.samples instanceof Float32Array)?d.samples:new Float32Array(d.samples);
+    SR=d.sr||48000; sel='all'; pickHz=0; live=false;
+    if(d.dia!=null&&$('dia')) $('dia').value=d.dia;
+    if(d.z!=null&&$('z')) $('z').value=d.z;
+    if($('stat')) $('stat').textContent='from Tune recording · '+(SAM.length/SR).toFixed(1)+' s';
+    setTimeout(function(){analyzeFile(true);},10);
+  }catch(e){ if($('stat')) $('stat').textContent='analyse error: '+(e.message||e); }
+});
 </script>
 </body>
 </html>
