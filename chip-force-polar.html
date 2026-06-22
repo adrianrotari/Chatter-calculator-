@@ -247,7 +247,8 @@
     <div class="res"><span>MRR</span><span id="rMrr"></span></div>
 
     <h2 class="mt">Tool bending</h2>
-    <div class="res big"><span>Tip deflection &delta;</span><span id="rDelta"></span></div>
+    <div class="res big"><span>Tip deflection &delta; (mean)</span><span id="rDelta"></span></div>
+    <div class="res"><span>&delta; peak (worst tooth)</span><span id="rDeltaPk"></span></div>
     <div class="res"><span>&delta; vs f<sub>z</sub></span><span id="rDfz"></span></div>
     <div class="note" id="flagNote"></div>
 
@@ -373,7 +374,7 @@ function compute(){
   const peakR=Math.max(...Rs), meanR=Rs.reduce((a,b)=>a+b,0)/N,
         meanT=Tq.reduce((a,b)=>a+b,0)/N, power=meanT*(2*Math.PI*rpm/60),
         vf=fz*z*rpm, mrr=g.aeD*D*ap*vf/1000, zc=Zc.reduce((a,b)=>a+b,0)/N;
-  const deff=deffR*D, Im=Math.PI*Math.pow(deff,4)/64, delta=peakR*Math.pow(L,3)/(3*E*Im);
+  const deff=deffR*D, Im=Math.PI*Math.pow(deff,4)/64, kBend=Math.pow(L,3)/(3*E*Im), delta=peakR*kBend, deltaMean=meanR*kBend;
   const Fa=peakFt*Math.tan(helix*Math.PI/180);   // axial / pull-out tendency
   let iFx=0,iFy=0;
   for(let j=0;j<z;j++){let phi=((theta-j*pitch)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
@@ -391,7 +392,7 @@ function compute(){
   const nearest=sweet.length?sweet.reduce((a,b)=>Math.abs(b.ae-ae)<Math.abs(a.ae-ae)?b:a):null;
   const fE=z*rpm/60, fc=+$('fc').value, wavesPerTooth=fc/fE, frac=wavesPerTooth-Math.floor(wavesPerTooth);
   const eps=2*Math.PI*frac, regStable=Math.min(frac,1-frac)<0.12;
-  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
+  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deltaMean,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
 }
 
 function fmt(x,d=0){return (x).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});}
@@ -425,13 +426,14 @@ function run(){
   $('rPow').textContent=fmt(r.power)+' W ('+(r.power/1000).toFixed(2)+' kW)';
   $('rVf').textContent=fmt(r.vf)+' mm/min';
   $('rMrr').textContent=r.mrr.toFixed(1)+' cm³/min';
-  const dum=r.delta*1000;
+  const dum=r.deltaMean*1000, dumPk=r.delta*1000;
   let cls='g',msg='comfortable';
   if(dum>75){cls='b';msg='excessive — reduce a_p, f_z, or stickout';}
   else if(dum>25){cls='a';msg='watch surface/tolerance';}
   $('rDelta').innerHTML='<span class="pill '+cls+'">'+fmt(dum,dum<10?1:0)+' µm</span>';
+  $('rDeltaPk').textContent=fmt(dumPk,dumPk<10?1:0)+' µm';
   $('rDfz').textContent=(dum/1000/r.fz*100).toFixed(0)+'% of f_z';
-  $('flagNote').innerHTML='Bending: <b>'+msg+'</b>. δ ∝ L³ — at L='+r.L+' mm. Peak resultant used as the load.';
+  $('flagNote').innerHTML='Bending on the <b>mean</b> resultant (steady bending, comparable to a Sandvik BENDL): <b>'+msg+'</b>. Peak is the worst single-tooth instant. δ ∝ L³ — at L='+r.L+' mm.';
   if(regen){
     $('phasePill').className='pill '+(r.regStable?'g':'b');
     $('phasePill').textContent=r.regStable?'in-phase ≈ stable':'out-of-phase ≈ chatter';
@@ -466,7 +468,7 @@ function verdict(r){
     utilSp=(r.power/1000)/capP;
     spLabel=(n0<nb)?'torque':'power';
   }
-  const dum=r.delta*1000;                       // tip deflection µm
+  const dum=r.deltaMean*1000;                   // bind on steady MEAN bending (Sandvik-style BENDL), not worst-tooth peak
   const utilDef=dLim>0? dum/dLim : null;
   const utilChip=hLim>0? r.hmax/hLim : null;    // h_ex vs material/tool max chip
   const items=[
