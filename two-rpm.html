@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two-RPM Test · Forced vs Chatter — CHATTER.CALC</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{--accent:#f5c518;--yellow-ink:#b89400;--bg:#fafafa;--card:#fff;--border:#e3e3e3;--ink:#333;--muted:#8a8a8a;
+--green:#1f9d57;--blue:#1f7cb8;--red:#e5484d;--orange:#e8932e;--grid:#ededed;}
+html,body{background:var(--bg);color:var(--ink);font:14px/1.4 'Helvetica Neue','Arial Narrow',Helvetica,Arial,sans-serif;}
+body{max-width:1100px;margin:0 auto;padding:10px 14px 30px;}
+a.back{display:inline-block;margin:6px 0 4px;font:700 11px Helvetica,Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:#555;background:#fff;border:1px solid #ddd;border-radius:5px;padding:6px 12px;}
+header h1{font-size:17px;font-weight:800;margin:6px 0 1px;}
+header h1 span{color:var(--yellow-ink);}
+header .sub{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;}
+.cardhead{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding:9px 12px 0;}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:720px){.slots{grid-template-columns:1fr;}}
+.slot{padding:9px 12px 12px;}
+.slot.A{border-right:1px solid var(--border);}
+@media(max-width:720px){.slot.A{border-right:0;border-bottom:1px solid var(--border);}}
+.controls{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.btn{border:0;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--ink);}
+.btn.rec{background:var(--red);color:#fff;} .btn.ghost{background:#fff;color:var(--muted);border:1px solid var(--border);}
+.btn:disabled{opacity:.45;cursor:default;}
+label.f{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+label.f input{width:74px;padding:5px 6px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;color:var(--ink);text-align:right;}
+.shared{padding:9px 12px;display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;}
+.stat{font-size:11px;color:var(--muted);}
+.badge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);}
+.badge.ready{background:rgba(31,157,87,.12);border-color:var(--green);color:var(--green);}
+.badge.rec{background:rgba(229,72,77,.12);border-color:var(--red);color:var(--red);}
+canvas{width:100%;display:block;background:#fff;border:1px solid var(--border);border-radius:8px;}
+#ov{height:300px;cursor:crosshair;}
+.verdict{font-size:16px;font-weight:800;padding:11px 14px;border-radius:9px;border:1.5px solid var(--border);margin:2px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.verdict .vlab{font-size:19px;}
+.verdict small{font-size:12px;font-weight:600;color:var(--muted);}
+.verdict.chatter{background:rgba(229,72,77,.10);border-color:var(--red);color:var(--red);}
+.verdict.forced{background:rgba(31,124,184,.10);border-color:var(--blue);color:var(--blue);}
+.verdict.none{color:var(--muted);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
+.tbl th,.tbl td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid);}
+.tbl th{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;}
+.tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:12px;}
+.tag.held{background:rgba(229,72,77,.12);color:var(--red);}
+.tag.forced{background:rgba(31,124,184,.12);color:var(--blue);}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0 2px;}
+.chip{border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;font-weight:700;color:var(--ink);background:#fff;}
+.chip.rpm{border-color:var(--blue);color:var(--blue);background:rgba(31,124,184,.07);}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:7px;}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+.note{font-size:11.5px;color:var(--muted);line-height:1.55;padding:0 12px 12px;}
+.note b{color:var(--ink);}
+@keyframes blink{50%{opacity:.35;}} .blink{animation:blink 1s infinite;}
+</style>
+</head>
+<body>
+<a class="back" href="./index.html">&#8249; All apps</a>
+<header>
+<h1>Two-RPM Test <span>·</span> Forced vs Chatter</h1>
+<div class="sub">record the SAME cut at two close rpm → a peak that moves with rpm is forced (tooth-passing); a peak that holds its Hz is chatter at the tool natural frequency</div>
+</header>
+
+<div class="card">
+<div class="cardhead">Same tool, same depth — change only the rpm</div>
+<div class="shared">
+<label class="f">flutes z<input id="z" type="number" value="4" min="1" step="1"></label>
+<label class="f">Ø mm<input id="dia" type="number" value="10" min="0.5" step="0.1"></label>
+<label class="f">air-gap sens<input id="sens" type="range" min="0" max="100" value="50" style="width:90px"></label>
+<div style="flex:1"></div>
+<span class="badge" id="state">load or record both cuts</span>
+</div>
+<div class="slots">
+  <div class="slot A">
+    <div class="controls">
+      <button class="btn rec" data-slot="A" id="recA">● Record A</button>
+      <button class="btn ghost" data-slot="A" id="loadA">Load WAV</button>
+      <label class="f">rpm A<input id="rpmA" type="number" value="3000" min="100" step="1"></label>
+    </div>
+    <div class="stat" id="statA">cut A — empty</div>
+  </div>
+  <div class="slot B">
+    <div class="controls">
+      <button class="btn rec" data-slot="B" id="recB">● Record B</button>
+      <button class="btn ghost" data-slot="B" id="loadB">Load WAV</button>
+      <label class="f">rpm B<input id="rpmB" type="number" value="3600" min="100" step="1"></label>
+    </div>
+    <div class="stat" id="statB">cut B — empty</div>
+  </div>
+</div>
+<input id="file" type="file" accept=".wav,audio/wav,audio/x-wav" style="display:none">
+</div>
+
+<div class="card">
+<div class="cardhead">Verdict</div>
+<div class="stage" style="padding:6px 12px 12px">
+<div class="verdict none" id="verdict"><span class="vlab">—</span><small id="verdictSub">need both cuts</small></div>
+<div class="chips" id="rpmChips"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="cardhead">Overlay — residual spectra (air removed) · A vs B</div>
+<div class="stage" style="padding:6px 12px 12px">
+<canvas id="ov" width="1040" height="300"></canvas>
+<div class="legend">
+<span><i style="background:#1f7cb8"></i>cut A residual</span>
+<span><i style="background:#e8932e"></i>cut B residual</span>
+<span><i style="background:#e5484d"></i>held tone (chatter / fn)</span>
+<span><i style="background:#9aa">·</i>forced (moves with rpm)</span>
+</div>
+<table class="tbl" id="tbl"><thead><tr><th>peak in A</th><th>peak in B</th><th>behaviour</th><th>reading</th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+
+<div class="note">Method: the only reliable way a mic separates forced cutting from chatter is to change the rpm. Tooth-passing and its harmonics are <b>forced</b> — they sit at z·rpm/60 and its multiples, so their frequency <b>scales with rpm</b>. Chatter rings the tool/spindle structure at its natural frequency, which <b>does not move</b> when you change rpm. Run the same depth/width at two rpm 15–25% apart (e.g. 3000 then 3600). A spectrum peak that shifts by the rpm ratio is forced; a peak that stays put is the chatter mode — that frequency is your fn at speed, and the rpm suggestions below put a whole number of vibration waves between teeth to dodge it. Each cut still uses the air gaps to cancel the coolant pump and shop noise.</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const FFT=8192, HALF=FFT/2;
+const hann=new Float32Array(FFT); for(let i=0;i<FFT;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFT-1)));
+function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let b=N>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
+for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+function median(a){if(!a.length)return 0;const s=a.slice().sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function pctl(a,p){const s=a.slice().sort((x,y)=>x-y);return s[Math.max(0,Math.min(s.length-1,Math.floor(p/100*s.length)))];}
+function parseWAV(buf){
+  const v=new DataView(buf); if(v.byteLength<12) return {err:'too small'};
+  const tag=o=>String.fromCharCode(v.getUint8(o),v.getUint8(o+1),v.getUint8(o+2),v.getUint8(o+3));
+  if(tag(0)!=='RIFF'||tag(8)!=='WAVE') return {err:'not a WAV'};
+  let o=12,fmt=null,data=null,meta=null;
+  while(o+8<=v.byteLength){const id=tag(o),sz=v.getUint32(o+4,true);
+    if(id==='fmt ') fmt={code:v.getUint16(o+8,true),ch:v.getUint16(o+10,true),sr:v.getUint32(o+12,true),bits:v.getUint16(o+22,true)};
+    else if(id==='chtr'){try{meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,o+8,Math.min(sz,v.byteLength-(o+8)))));}catch(e){}}
+    else if(id==='data') data={off:o+8,sz:Math.min(sz,v.byteLength-(o+8))};
+    o+=8+sz+(sz&1);}
+  if(!fmt||!data) return {err:'missing fmt/data'};
+  if(fmt.code!==1||fmt.bits!==16) return {err:'only 16-bit PCM'};
+  const n=Math.floor(data.sz/2/fmt.ch), out=new Float32Array(n);
+  let mean=0;
+  for(let i=0;i<n;i++){let s=0;for(let c=0;c<fmt.ch;c++)s+=v.getInt16(data.off+(i*fmt.ch+c)*2,true);out[i]=s/fmt.ch/32768;mean+=out[i];}
+  mean/=n||1; for(let i=0;i<n;i++) out[i]-=mean;
+  return {sr:fmt.sr,samples:out,meta};
+}
+function freqs(sr){const bin=sr/FFT,f=new Float32Array(HALF);for(let k=0;k<HALF;k++)f[k]=k*bin;return f;}
+function segmentOf(x,sr,sens){
+  const hop=Math.round(sr*0.05), nf=Math.floor(x.length/hop);
+  const db=new Float32Array(nf);
+  for(let i=0;i<nf;i++){let s=0;for(let j=0;j<hop;j++){const v=x[i*hop+j];s+=v*v;}db[i]=10*Math.log10(s/hop+1e-12);}
+  const sm=new Float32Array(nf);
+  for(let i=0;i<nf;i++){let s=0,c=0;for(let k=-2;k<=2;k++){const j=i+k;if(j>=0&&j<nf){s+=db[j];c++;}}sm[i]=s/c;}
+  const lo=pctl(Array.from(sm),10), hi=pctl(Array.from(sm),90), sn=sens/100;
+  const thr=lo+(hi-lo)*(0.30+0.40*sn);
+  const cut=new Uint8Array(nf); for(let i=0;i<nf;i++) cut[i]=sm[i]>thr?1:0;
+  const minf=Math.max(1,Math.round(0.3/0.05)); const segs=[];
+  let i=0; while(i<nf){let j=i; while(j<nf&&cut[j]===cut[i])j++; if((j-i)>=minf) segs.push({cut:cut[i],a:i,b:j}); i=j;}
+  return {sm,hop,nf,segs};
+}
+function avgSpecOf(x,sr,SEG,frameOK){
+  const N=FFT,hop=N/2; const acc=new Float64Array(HALF); let cnt=0;
+  const re=new Float32Array(N), im=new Float32Array(N);
+  for(let pos=0;pos+N<=x.length;pos+=hop){ const fi=Math.floor(pos/SEG.hop); if(!frameOK(fi)) continue;
+    for(let i=0;i<N;i++){re[i]=x[pos+i]*hann[i];im[i]=0;} fft(re,im); for(let k=0;k<HALF;k++) acc[k]+=re[k]*re[k]+im[k]*im[k]; cnt++; }
+  if(!cnt) return null; for(let k=0;k<HALF;k++) acc[k]/=cnt; return acc;
+}
+// residual = cut spectrum minus air baseline, in dB above each band's median (same idea as Air-Split)
+function residualOf(x,sr,sens){
+  if(!x||x.length<FFT) return {err:'recording too short'};
+  const SEG=segmentOf(x,sr,sens);
+  const cuts=SEG.segs.filter(s=>s.cut), airs=SEG.segs.filter(s=>!s.cut);
+  if(!cuts.length) return {err:'no cutting found — lower air-gap sens'};
+  const inCut=fi=>cuts.some(s=>fi>=s.a&&fi<s.b);
+  const inAir=airs.length?(fi=>airs.some(s=>fi>=s.a&&fi<s.b)):null;
+  const Pc=avgSpecOf(x,sr,SEG,inCut); if(!Pc) return {err:'no cut frames'};
+  const Pa=inAir?avgSpecOf(x,sr,SEG,inAir):null;
+  const f=freqs(sr), band=[]; for(let k=0;k<HALF;k++) if(f[k]>=150&&f[k]<=6000) band.push(k);
+  const medC=median(band.map(k=>Pc[k]))||1e-12, medA=Pa?(median(band.map(k=>Pa[k]))||1e-12):1;
+  const diff=new Float32Array(HALF);
+  for(let k=0;k<HALF;k++){const cdb=10*Math.log10(Pc[k]/medC+1e-12); const adb=Pa?10*Math.log10(Pa[k]/medA+1e-12):0; diff[k]=cdb-adb;}
+  return {f,diff,sr,cuts:cuts.length,airs:airs.length,dur:x.length/sr};
+}
+// local-median floor so only sharp tones survive (broadband noise has ~0 prominence)
+function localBase(arr,f,halfHz){
+  const bin=f[1]-f[0], half=Math.max(4,Math.round(halfHz/bin)), n=arr.length, out=new Float32Array(n), step=Math.max(1,Math.floor(half/10));
+  for(let k=0;k<n;k++){const a=Math.max(0,k-half),b=Math.min(n-1,k+half),w=[];for(let i=a;i<=b;i+=step)w.push(arr[i]);w.sort((x,y)=>x-y);out[k]=w[w.length>>1];}
+  return out;
+}
+// returns [prominenceDb, freq] sorted by prominence
+function peaks(f,arr,lo,hi,n,minProm){const base=localBase(arr,f,150),cand=[];
+  for(let i=2;i<arr.length-2;i++){if(f[i]<lo||f[i]>hi)continue;
+    if(arr[i]>=arr[i-1]&&arr[i]>=arr[i+1]&&arr[i]>=arr[i-2]&&arr[i]>=arr[i+2]){const prom=arr[i]-base[i];if(prom>=(minProm||0))cand.push([prom,f[i]]);}}
+  cand.sort((a,b)=>b[0]-a[0]);const res=[];for(const o of cand){if(res.every(r=>Math.abs(r[1]-o[1])>20))res.push(o);if(res.length>=n)break;}return res;}
+// ---- the core: classify each A-peak as forced (scales with rpm) or held (constant = chatter/fn) ----
+function classify(A,B,rpmA,rpmB,z,minProm){
+  minProm=minProm||4;
+  const pkA=peaks(A.f,A.diff,150,6000,14,minProm), pkB=peaks(B.f,B.diff,150,6000,14,minProm);
+  const ratio=rpmB/rpmA, fSA=rpmA/60, results=[];
+  for(const [magA,fA] of pkA){
+    if(magA<minProm) continue;
+    let mc=null, ms=null;
+    for(const [magB,fB] of pkB){
+      const dc=Math.abs(fB-fA), ds=Math.abs(fB-fA*ratio);
+      const tolC=Math.max(15,0.02*fA), tolS=Math.max(15,0.02*fA*ratio);
+      if(dc<=tolC && (!mc||dc<mc.d)) mc={fB,magB,d:dc};
+      if(ds<=tolS && (!ms||ds<ms.d)) ms={fB,magB,d:ds};
+    }
+    let label,partnerHz;
+    const relC=mc?mc.d/Math.max(1,fA):9, relS=ms?ms.d/Math.max(1,fA*ratio):9;
+    if(mc && relC<=relS){ label='held'; partnerHz=mc.fB; }
+    else if(ms){ label='forced'; partnerHz=ms.fB; }
+    else { label='unmatched'; partnerHz=null; }
+    results.push({fA,magA,label,partnerHz});
+  }
+  const held=results.filter(r=>r.label==='held').sort((a,b)=>b.magA-a.magA);
+  const fn = held.length? Math.round(held[0].fA) : 0;
+  return {results,ratio,fn,pkA,pkB};
+}
+function suggestRPM(fc,Z,nCur){
+  if(!(fc>0&&Z>0&&nCur>0)) return [];
+  const wpt=60*fc/(Z*nCur), kS=Math.max(1,Math.round(wpt)), out=[];
+  for(let k=kS-1;k<=kS+1;k++){ if(k<1)continue; const n=60*fc/(Z*k); if(n<300||n>40000)continue; out.push({k,n,cur:k===kS}); }
+  return out.sort((a,b)=>a.n-b.n);
+}
+
+// ---------- state ----------
+const SLOT={A:{x:null,sr:48000,res:null},B:{x:null,sr:48000,res:null}};
+let LAST=null;
+const sens=()=>+$('sens').value;
+function analyzeAll(){
+  for(const k of ['A','B']){ const s=SLOT[k];
+    if(s.x){ const r=residualOf(s.x,s.sr,sens()); s.res=r.err?null:r;
+      $('stat'+k).textContent = r.err? ('cut '+k+' — '+r.err) : ('cut '+k+' · '+r.dur.toFixed(1)+'s · '+r.cuts+' cuts, '+r.airs+' air'); }
+  }
+  const A=SLOT.A.res, B=SLOT.B.res;
+  if(A&&B){
+    const z=+$('z').value, rA=+$('rpmA').value, rB=+$('rpmB').value;
+    LAST=classify(A,B,rA,rB,z);
+    renderVerdict(); $('state').className='badge ready'; $('state').textContent='both cuts loaded';
+  } else { LAST=null; $('state').className='badge'; $('state').textContent= (A||B)?'one cut loaded — need the other':'load or record both cuts'; }
+  draw();
+}
+function renderVerdict(){
+  const v=$('verdict'), sub=$('verdictSub'), tb=$('tbl').querySelector('tbody'); tb.innerHTML='';
+  if(!LAST){ v.className='verdict none'; v.querySelector('.vlab').textContent='—'; sub.textContent='need both cuts'; $('rpmChips').innerHTML=''; return; }
+  if(LAST.fn>0){
+    v.className='verdict chatter'; v.querySelector('.vlab').textContent='CHATTER ≈ '+LAST.fn+' Hz';
+    sub.textContent='this peak held its frequency across both rpm — it is the tool/spindle mode at speed, not tooth-passing';
+  } else {
+    v.className='verdict forced'; v.querySelector('.vlab').textContent='FORCED only';
+    sub.textContent='every strong peak moved with rpm — no fixed chatter tone detected in this band. Increase depth/width or try a wider rpm split to surface a mode.';
+  }
+  for(const r of LAST.results){
+    const tr=document.createElement('tr');
+    const beh = r.label==='held'?'<span class="tag held">holds Hz</span>':(r.label==='forced'?'<span class="tag forced">moves with rpm</span>':'—');
+    const read = r.label==='held'?'chatter / fn':(r.label==='forced'?'tooth-passing (forced)':'unmatched');
+    tr.innerHTML='<td>'+Math.round(r.fA)+' Hz <small>+'+r.magA.toFixed(0)+' dB</small></td>'+
+      '<td>'+(r.partnerHz?Math.round(r.partnerHz)+' Hz':'—')+'</td><td>'+beh+'</td><td>'+read+'</td>';
+    tb.appendChild(tr);
+  }
+  // rpm suggestions from fn
+  const box=$('rpmChips'); box.innerHTML='';
+  if(LAST.fn>0){
+    const z=+$('z').value, D=+$('dia').value||0, nCur=+$('rpmB').value;
+    const lab=document.createElement('span'); lab.style.cssText='font-size:11px;color:var(--muted);align-self:center';
+    lab.innerHTML='to dodge <b style="color:#e5484d">'+LAST.fn+' Hz</b> run:'; box.appendChild(lab);
+    suggestRPM(LAST.fn,z,nCur).forEach(s=>{ const el=document.createElement('div'); el.className='chip rpm';
+      const vc=D>0?Math.round(Math.PI*D*s.n/1000):0;
+      el.innerHTML=Math.round(s.n)+'<small> rpm'+(vc?' · '+vc+' m/min':'')+(s.cur?' (near now)':'')+'</small>'; box.appendChild(el); });
+  }
+}
+function draw(){
+  const cv=$('ov'),dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=Math.round((cv.clientWidth||1000)*dpr),H=Math.round(300*dpr);cv.width=W;cv.height=H;
+  const g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const A=SLOT.A.res,B=SLOT.B.res; const fHi=6000, xL=42*dpr,xR=W-10*dpr,yT=10*dpr,yB=H-18*dpr;
+  g.fillStyle='#999';g.font=(9.5*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='top';
+  const xOf=fr=>xL+(fr/fHi)*(xR-xL);
+  g.strokeStyle='#eee';g.lineWidth=dpr;
+  for(let fr=0;fr<=fHi;fr+=1000){const x=xOf(fr);g.beginPath();g.moveTo(x,yT);g.lineTo(x,yB);g.stroke();g.fillText((fr/1000)+'k',x,yB+3*dpr);}
+  if(!A&&!B){ g.fillStyle='#aaa';g.font=(13*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='middle';g.fillText('load or record both cuts',(xL+xR)/2,(yT+yB)/2);return; }
+  let dmax=14; for(const R of [A,B]){ if(!R)continue; for(let k=0;k<HALF;k++) if(R.f[k]>=200&&R.f[k]<=fHi&&R.diff[k]>dmax) dmax=R.diff[k]; }
+  const lo=-10, hi=Math.min(dmax+5,44); const yOf=d=>yB-((Math.max(lo,Math.min(hi,d))-lo)/(hi-lo))*(yB-yT);
+  cv._xOf=xOf;cv._fHi=fHi;cv._xL=xL;cv._xR=xR;
+  g.textAlign='right';g.textBaseline='middle';
+  for(let d=Math.ceil(lo/6)*6;d<=hi;d+=6){const y=yOf(d);g.strokeStyle=(d===0?'#bbb':'#f4f4f4');g.beginPath();g.moveTo(xL,y);g.lineTo(xR,y);g.stroke();g.fillStyle='#999';g.fillText((d>0?'+':'')+d,xL-3*dpr,y);}
+  const line=(R,col)=>{ if(!R)return; g.strokeStyle=col;g.lineWidth=1.1*dpr;g.beginPath();let st=false;
+    for(let k=1;k<HALF;k++){if(R.f[k]<120||R.f[k]>fHi)continue;const x=xOf(R.f[k]),y=yOf(R.diff[k]);if(!st){g.moveTo(x,y);st=true;}else g.lineTo(x,y);}g.stroke(); };
+  line(A,'#1f7cb8'); line(B,'#e8932e');
+  if(LAST){ for(const r of LAST.results){ const x=xOf(r.fA);
+    if(r.label==='held'){ g.strokeStyle='#e5484d';g.lineWidth=1.5*dpr;g.setLineDash([5*dpr,3*dpr]);g.beginPath();g.moveTo(x,yT);g.lineTo(x,yB);g.stroke();g.setLineDash([]);
+      g.fillStyle='#e5484d';g.font='bold '+(11*dpr)+'px Helvetica,Arial';g.textAlign='center';g.textBaseline='top';g.fillText(Math.round(r.fA)+' held',x,yT+1*dpr); }
+    else if(r.label==='forced'){ g.fillStyle='#9aa3ab';g.beginPath();g.arc(x,yOf(r.magA),3*dpr,0,2*Math.PI);g.fill();
+      if(r.partnerHz){const x2=xOf(r.partnerHz);g.strokeStyle='rgba(150,160,170,.6)';g.lineWidth=dpr;g.beginPath();g.moveTo(x,yOf(r.magA));g.lineTo(x2,yOf(r.magA));g.stroke();
+        g.fillStyle='#9aa3ab';g.beginPath();g.arc(x2,yOf(r.magA),2.4*dpr,0,2*Math.PI);g.fill();} }
+  } }
+}
+
+// ---------- load + record ----------
+let target='A';
+$('loadA').onclick=()=>{target='A';$('file').click();};
+$('loadB').onclick=()=>{target='B';$('file').click();};
+$('file').addEventListener('change',()=>{const fl=$('file').files&&$('file').files[0];$('file').value='';if(!fl)return;
+  const rd=new FileReader(); rd.onload=()=>{const r=parseWAV(rd.result);
+    if(r.err){$('stat'+target).textContent='cut '+target+' — load failed: '+r.err;return;}
+    SLOT[target].x=r.samples; SLOT[target].sr=r.sr;
+    const nm=fl.name||''; const mR=nm.match(/(\d{3,5})\s*rpm/i), mZ=nm.match(/[_-]z(\d+)/i), mD=nm.match(/[_-]d(\d+(?:\.\d+)?)/i);
+    if(mR)$('rpm'+target).value=mR[1]; if(mZ)$('z').value=mZ[1]; if(mD)$('dia').value=mD[1];
+    if(r.meta&&r.meta.inputs){const I=r.meta.inputs;if(I.ncur)$('rpm'+target).value=I.ncur;if(I.flutes)$('z').value=I.flutes;if(I.dia)$('dia').value=I.dia;}
+    analyzeAll();
+  }; rd.readAsArrayBuffer(fl);});
+
+let micCtx,micStream,micSrc,micNode,recording=false,recSlot=null,recBuf=[],recLen=0,SRlive=48000,t0=0,raf=null;
+async function micStart(onChunk){
+  micCtx=new (window.AudioContext||window.webkitAudioContext)(); await micCtx.resume();
+  micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});
+  micSrc=micCtx.createMediaStreamSource(micStream);
+  const sink=micCtx.createGain(); sink.gain.value=0; sink.connect(micCtx.destination);
+  if(micCtx.audioWorklet){
+    const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
+    const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await micCtx.audioWorklet.addModule(url);
+    micNode=new AudioWorkletNode(micCtx,'cap'); micNode.port.onmessage=e=>onChunk(e.data); micSrc.connect(micNode); micNode.connect(sink);
+  } else { micNode=micCtx.createScriptProcessor(2048,1,1); micNode.onaudioprocess=e=>onChunk(new Float32Array(e.inputBuffer.getChannelData(0))); micSrc.connect(micNode); micNode.connect(sink); }
+  return micCtx.sampleRate;
+}
+function micStop(){ try{if(micNode){micNode.onaudioprocess=null;if(micNode.port)micNode.port.onmessage=null;micNode.disconnect();}}catch(e){}
+  try{micSrc&&micSrc.disconnect();}catch(e){} try{micStream&&micStream.getTracks().forEach(t=>t.stop());}catch(e){} try{micCtx&&micCtx.close();}catch(e){}
+  micCtx=micStream=micSrc=micNode=null; }
+function onChunk(ch){ if(!recording) return; if(recLen<SRlive*180){ recBuf.push(ch); recLen+=ch.length; } }
+function tick(){ if(!recording) return; $('stat'+recSlot).textContent='● recording '+((performance.now()-t0)/1000).toFixed(0)+'s — keep a short air gap before/after the cut'; raf=requestAnimationFrame(tick); }
+async function recStart(slot){
+  recSlot=slot; recBuf=[]; recLen=0;
+  try{ SRlive=await micStart(onChunk); }catch(err){ $('stat'+slot).textContent='mic error: '+(err.name||err)+' — allow microphone access'; return; }
+  recording=true; t0=performance.now();
+  $('rec'+slot).textContent='■ Stop '+slot; $('rec'+slot).classList.add('blink'); $('state').className='badge rec'; $('state').textContent='● REC '+slot;
+  raf=requestAnimationFrame(tick);
+}
+function recStop(){ const slot=recSlot; recording=false; if(raf)cancelAnimationFrame(raf); micStop();
+  $('rec'+slot).textContent='● Record '+slot; $('rec'+slot).classList.remove('blink');
+  if(recLen>FFT){ const all=new Float32Array(recLen); let o=0; for(const c of recBuf){all.set(c,o);o+=c.length;} SLOT[slot].x=all; SLOT[slot].sr=SRlive; setTimeout(analyzeAll,10); }
+  else { $('stat'+slot).textContent='cut '+slot+' — too short'; }
+}
+$('recA').onclick=()=>{ if(recording) recStop(); else recStart('A'); };
+$('recB').onclick=()=>{ if(recording) recStop(); else recStart('B'); };
+['z','dia','sens','rpmA','rpmB'].forEach(id=>$(id).addEventListener('input',()=>{ if(!recording) analyzeAll(); }));
+window.addEventListener('resize',draw);
+draw();
+
+// expose for tests (harmless)
+if(typeof window!=='undefined') window.__twrpm={classify,peaks,residualOf,suggestRPM,freqs,parseWAV};
+</script>
+</body>
+</html>
