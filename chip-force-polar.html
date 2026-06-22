@@ -87,6 +87,9 @@
   .vbar{height:12px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
   .vbar i{display:block;height:100%}
   .vrow .pc{font-family:monospace;text-align:right;font-weight:700;font-size:12px}
+  .slbn{width:78px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;font:13px monospace;text-align:right;color:var(--txt)}
+  .slbn:focus{outline:none;border-color:var(--accent)}
+  .hint{font-size:11px;color:var(--dim);font-weight:400}
 </style>
 </head>
 <body>
@@ -131,12 +134,12 @@
       <button data-m="up" onclick="setMode('up')">Conv. (up)</button>
       <button data-m="slot" onclick="setMode('slot')">Slot</button>
     </div>
-    <div class="sllbl" style="margin-top:9px"><label style="margin:0">Radial a<sub>e</sub> (mm)</label><b id="aeOut"></b></div>
-    <input type="range" id="ae" min="0" max="10" step="0.1" value="1" oninput="run()">
-    <div class="sllbl"><label style="margin:0">Axial a<sub>p</sub> (mm)</label><b id="apOut"></b></div>
-    <input type="range" id="ap" min="0.1" max="40" step="0.1" value="5" oninput="run()">
-    <div class="sllbl"><label style="margin:0">Feed/tooth f<sub>z</sub> (mm)</label><b id="fzOut"></b></div>
-    <input type="range" id="fz" min="0.005" max="0.25" step="0.005" value="0.04" oninput="run()">
+    <div class="sllbl" style="margin-top:9px"><label style="margin:0">Radial a<sub>e</sub> (mm) <span class="hint" id="aeOut"></span></label><input type="number" id="aeN" class="slbn" step="0.05" min="0" onchange="setAe(this.value)"></div>
+    <input type="range" id="ae" min="0" max="10" step="0.05" value="1" oninput="setAe(this.value)">
+    <div class="sllbl"><label style="margin:0">Axial a<sub>p</sub> (mm) <span class="hint" id="apOut"></span></label><input type="number" id="apN" class="slbn" step="0.5" min="0.1" onchange="setAp(this.value)"></div>
+    <input type="range" id="ap" min="0.1" max="40" step="0.1" value="5" oninput="setAp(this.value)">
+    <div class="sllbl"><label style="margin:0">Feed/tooth f<sub>z</sub> (mm) <span class="hint" id="fzOut"></span></label><input type="number" id="fzN" class="slbn" step="0.005" min="0.001" onchange="setFz(this.value)"></div>
+    <input type="range" id="fz" min="0.005" max="0.25" step="0.005" value="0.04" oninput="setFz(this.value)">
 
     <div class="hex"><span class="lab">h<sub>ex</sub> max chip</span><span class="val" id="hexHead">—</span></div>
 
@@ -202,8 +205,6 @@
 
     <h2 class="mt">Tool bending &amp; forces &mdash; front view</h2>
     <canvas id="front" width="760" height="480"></canvas>
-    <div class="balance" id="balanceBox"></div>
-    <canvas id="aebar" width="760" height="34"></canvas>
     <div id="regenPanel" style="display:none">
       <div class="row3" style="margin-top:10px">
         <div><label>Chatter f<sub>c</sub> (Hz)</label><input type="number" id="fc" value="1100" step="10" oninput="run()"></div>
@@ -247,8 +248,8 @@
     <div class="res"><span>MRR</span><span id="rMrr"></span></div>
 
     <h2 class="mt">Tool bending</h2>
-    <div class="res big"><span>Tip deflection &delta; (mean)</span><span id="rDelta"></span></div>
-    <div class="res"><span>&delta; peak (worst tooth)</span><span id="rDeltaPk"></span></div>
+    <div class="res big"><span>Tip deflection &delta;</span><span id="rDelta"></span></div>
+    <div class="res"><span>Tool stress (breakage)</span><span id="rStress"></span></div>
     <div class="res"><span>&delta; vs f<sub>z</sub></span><span id="rDfz"></span></div>
     <div class="note" id="flagNote"></div>
 
@@ -334,6 +335,10 @@ function onRpm(){syncVcFromRpm();run();}
 function onVc(){const n=rpmFromVc();if(n>0)$('rpm').value=Math.round(n);run();}
 function onD(){syncVcFromRpm();run();}
 function onHolder(){holder=$('holder').value;$('holderPic').innerHTML=HOLDERS[holder].svg;$('holderNote').innerHTML=HOLDERS[holder].name+'. '+HOLDERS[holder].note;run();}
+// slider <-> number-box two-way sync (type an exact value or drag)
+function setAe(v){let x=+v;if(!isFinite(x))return;const D=+$('D').value||x;x=Math.max(0,Math.min(x,D));$('ae').value=x;$('aeN').value=+$('ae').value;run();}
+function setAp(v){let x=+v;if(!isFinite(x))return;$('ap').value=Math.max(0.001,x);$('apN').value=+$('ap').value;run();}
+function setFz(v){let x=+v;if(!isFinite(x))return;$('fz').value=Math.max(0.001,x);$('fzN').value=+$('fz').value;run();}
 
 function chipGeom(D,ae,mode){
   let aeD=Math.min(Math.max(ae/D,0),1);
@@ -375,6 +380,8 @@ function compute(){
         meanT=Tq.reduce((a,b)=>a+b,0)/N, power=meanT*(2*Math.PI*rpm/60),
         vf=fz*z*rpm, mrr=g.aeD*D*ap*vf/1000, zc=Zc.reduce((a,b)=>a+b,0)/N;
   const deff=deffR*D, Im=Math.PI*Math.pow(deff,4)/64, kBend=Math.pow(L,3)/(3*E*Im), delta=peakR*kBend, deltaMean=meanR*kBend;
+  // breakage check: worst-tooth bending stress at the clamp (load centroid ~a_p/2 above the tip) vs carbide transverse rupture strength
+  const apE=Math.min(Math.max(ap,0.001),L), TRS=3500, sigBend=peakR*(L-apE/2)*(deff/2)/Im, stressFrac=sigBend/TRS;
   const Fa=peakFt*Math.tan(helix*Math.PI/180);   // axial / pull-out tendency
   let iFx=0,iFy=0;
   for(let j=0;j<z;j++){let phi=((theta-j*pitch)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
@@ -392,15 +399,15 @@ function compute(){
   const nearest=sweet.length?sweet.reduce((a,b)=>Math.abs(b.ae-ae)<Math.abs(a.ae-ae)?b:a):null;
   const fE=z*rpm/60, fc=+$('fc').value, wavesPerTooth=fc/fE, frac=wavesPerTooth-Math.floor(wavesPerTooth);
   const eps=2*Math.PI*frac, regStable=Math.min(frac,1-frac)<0.12;
-  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deltaMean,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
+  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deltaMean,stressFrac,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
 }
 
 function fmt(x,d=0){return (x).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});}
 let LAST=null;
 function run(){
-  $('aeOut').textContent=(+$('ae').value).toFixed(1)+' mm ('+((+$('ae').value)/(+$('D').value)*100).toFixed(0)+'% D)';
-  $('apOut').textContent=(+$('ap').value).toFixed(1)+' mm';
-  $('fzOut').textContent=(+$('fz').value).toFixed(3)+' mm';
+  $('aeN').value=(+$('ae').value); $('aeOut').textContent='('+((+$('ae').value)/(+$('D').value||1)*100).toFixed(0)+'% of Ø)';
+  $('apN').value=(+$('ap').value); $('apOut').textContent='('+((+$('ap').value)/(+$('D').value||1)).toFixed(1)+'×D)';
+  $('fzN').value=(+$('fz').value); $('fzOut').textContent='';
   $('ae').max=$('D').value;
   const r=compute(); LAST=r;
   $('hexHead').textContent=r.hmax.toFixed(4)+' mm';
@@ -426,14 +433,16 @@ function run(){
   $('rPow').textContent=fmt(r.power)+' W ('+(r.power/1000).toFixed(2)+' kW)';
   $('rVf').textContent=fmt(r.vf)+' mm/min';
   $('rMrr').textContent=r.mrr.toFixed(1)+' cm³/min';
-  const dum=r.deltaMean*1000, dumPk=r.delta*1000;
+  const dum=r.deltaMean*1000;
   let cls='g',msg='comfortable';
   if(dum>75){cls='b';msg='excessive — reduce a_p, f_z, or stickout';}
   else if(dum>25){cls='a';msg='watch surface/tolerance';}
   $('rDelta').innerHTML='<span class="pill '+cls+'">'+fmt(dum,dum<10?1:0)+' µm</span>';
-  $('rDeltaPk').textContent=fmt(dumPk,dumPk<10?1:0)+' µm';
+  const sp=r.stressFrac*100;
+  const scls=sp<=60?'g':(sp<=100?'a':'b'), smsg=sp<=60?'safe':(sp<=100?'high load':'OVERLOAD — would chip/snap');
+  $('rStress').innerHTML='<span class="pill '+scls+'">'+sp.toFixed(0)+'% · '+smsg+'</span>';
   $('rDfz').textContent=(dum/1000/r.fz*100).toFixed(0)+'% of f_z';
-  $('flagNote').innerHTML='Bending on the <b>mean</b> resultant (steady bending, comparable to a Sandvik BENDL): <b>'+msg+'</b>. Peak is the worst single-tooth instant. δ ∝ L³ — at L='+r.L+' mm.';
+  $('flagNote').innerHTML='δ is the steady bend on the <b>mean</b> resultant (comparable to a Sandvik BENDL). Tool stress = worst-tooth bending stress vs carbide rupture strength; over 100% the tool chips or snaps. δ ∝ L³ — at L='+r.L+' mm.';
   if(regen){
     $('phasePill').className='pill '+(r.regStable?'g':'b');
     $('phasePill').textContent=r.regStable?'in-phase ≈ stable':'out-of-phase ≈ chatter';
@@ -443,15 +452,8 @@ function run(){
   const mv=MAT[mat].vc, D=+$('D').value;
   const nLo=Math.round(mv[0]*1000/(Math.PI*D)), nHi=Math.round(mv[1]*1000/(Math.PI*D));
   $('startVals').innerHTML='Sandvik solid-carbide start: V<sub>c</sub> <b>'+mv[0]+'–'+mv[1]+'</b> m/min → at Ø'+D+' that is <b>'+fmt(nLo)+'–'+fmt(nHi)+'</b> rpm. ISO-S start band, verify in CoroPlus.';
-  // flutes in cut (with helix) + ae sweet-spot for force balance
-  let bp='g',bt='smooth';
-  if(r.NcutH<0.85){bp='b';bt='pulsing (<1 flute)';}
-  else if(r.balFrac>0.28){bp='b';bt='uneven';}
-  else if(r.balFrac>0.14){bp='a';bt='fair';}
-  const sweetTxt=r.sweet.length? r.sweet.map(s=>'<b>'+s.ae.toFixed(2)+'</b> ('+s.k+'z)').join(', ') : 'none ≤ Ø';
-  $('balanceBox').innerHTML='Avg teeth in cut <b>'+r.NcutH.toFixed(2)+'</b> = radial '+r.zc.toFixed(2)+' + helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'° (can exceed z when the helix wraps far). Force balance <span class="pill '+bp+'">'+bt+'</span>. Sweet-spot a<sub>e</sub> for whole-tooth engagement: '+sweetTxt+(r.nearest?'; nearest to yours <b>'+r.nearest.ae.toFixed(2)+' mm</b>':'')+'. More helix → more wrap → sweet spot moves to lower a<sub>e</sub>.';
   verdict(r);
-  draw(r); drawFront(r); drawAebar(r); drawPT();
+  draw(r); drawFront(r); drawPT();
 }
 
 // ===================== BINDING LIMIT VERDICT =====================
@@ -471,9 +473,11 @@ function verdict(r){
   const dum=r.deltaMean*1000;                   // bind on steady MEAN bending (Sandvik-style BENDL), not worst-tooth peak
   const utilDef=dLim>0? dum/dLim : null;
   const utilChip=hLim>0? r.hmax/hLim : null;    // h_ex vs material/tool max chip
+  const utilStr=(r.stressFrac!=null&&isFinite(r.stressFrac))? r.stressFrac : null;  // 1.0 = carbide fracture (worst tooth)
   const items=[
     {key:'sp',  name:'Spindle'+(utilSp!=null?' ('+spLabel+')':''), util:utilSp},
     {key:'def', name:'Deflection', util:utilDef},
+    {key:'str', name:'Tool stress', util:utilStr},
     {key:'chip',name:'Chip load',  util:utilChip}
   ];
   const valid=items.filter(i=>i.util!=null&&isFinite(i.util));
@@ -491,16 +495,18 @@ function verdict(r){
   const hard=[];
   if(utilSp!=null) hard.push({u:utilSp,name:'spindle '+spLabel});
   if(utilDef!=null) hard.push({u:utilDef,name:'deflection'});
+  if(utilStr!=null) hard.push({u:utilStr,name:'tool stress'});
   let apMax=null, note='';
   if(hard.length){
     const worst=hard.reduce((a,b)=>b.u>a.u?b:a);
     apMax=worst.u>0? r.ap/worst.u : Infinity;
     note='Max a<sub>p</sub> &asymp; <b>'+(isFinite(apMax)?apMax.toFixed(2):'&mdash;')+' mm</b> before '+worst.name+' binds (now '+r.ap.toFixed(2)+' mm). ';
   }
+  if(utilStr!=null&&utilStr>1) note='<b style="color:var(--bad)">Tool overload: bending stress exceeds carbide strength, the tool would chip or snap. Cut a_p, f_z, or stickout.</b> '+note;
   if(utilChip!=null&&utilChip>1) note+='Chip load over max &mdash; lower f<sub>z</sub> (more a_p will not change h<sub>ex</sub>). ';
   note+='Budgets are seeds: set &delta; to your tolerance and h<sub>ex</sub> to the tool/material max, then calibrate from your cuts.';
   $('verdictNote').innerHTML=note;
-  if(typeof window!=='undefined') window.__verdict={utilSp,utilDef,utilChip,apMax,binding:binding?binding.key:null};
+  if(typeof window!=='undefined') window.__verdict={utilSp,utilDef,utilChip,utilStr,apMax,binding:binding?binding.key:null};
 }
 function barRow(name,util,isBind){
   let col='#ccc',w=0,pc='—';
@@ -559,6 +565,10 @@ function draw(r){
    const ex=cx+rr*Math.cos(a1), ey=cy+rr*Math.sin(a1), tg=a1+(ccw?Math.PI/2:-Math.PI/2);
    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-8*Math.cos(tg-0.4),ey-8*Math.sin(tg-0.4));ctx.lineTo(ex-8*Math.cos(tg+0.4),ey-8*Math.sin(tg+0.4));ctx.closePath();ctx.fillStyle='#9a9a9a';ctx.fill();
    ctx.fillStyle='#9a9a9a';ctx.font='11px monospace';ctx.fillText('n',cx-3,cy-rr-3);}
+  ctx.textAlign='left';ctx.fillStyle='#1a1a1a';ctx.font='bold 14px monospace';
+  ctx.fillText((r.ae/r.D*100).toFixed(0)+'% of Ø',6,18);
+  ctx.fillStyle=cDim;ctx.font='10px monospace';
+  ctx.fillText('material engagement · arc '+((r.g.phex-r.g.phst)*180/Math.PI).toFixed(0)+'°',6,31);
   $('thOut').textContent=(theta*180/Math.PI).toFixed(0)+'°';
 }
 
@@ -588,7 +598,7 @@ function drawFront(r){
   ctx.beginPath();ctx.rect(wpX, yBot-apPx, Math.max(8,W-wpX-12), apPx);ctx.fill();ctx.stroke();
   ctx.fillStyle='#9aa6ad';ctx.font='10px monospace';ctx.fillText('workpiece', wpX+6, yBot-apPx-5);
   // deflection
-  const dum=r.delta*1000, tipPx=Math.max(0,Math.min(toolLenPx*0.16, dum*0.4));   // proportional bend, capped ~16% so it never bananas
+  const dum=r.deltaMean*1000, tipPx=Math.max(0,Math.min(toolLenPx*0.16, dum*0.4));   // steady (mean) bend, capped ~16% so it never bananas
   const off=t=>tipPx*(t*t*(3-t))/2;
   ctx.fillStyle='rgba(201,206,212,.30)';ctx.fillRect(cx-w/2,yTop,w,toolLenPx);
   ctx.beginPath();
