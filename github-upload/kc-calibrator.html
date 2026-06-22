@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatter.calc &middot; k_c Calibrator</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--ink:#e8eaed;--mut:#9aa0aa;--line:#262b35;--accent:#6aa9ff;--good:#37c871;--warn:#ffb454;--bad:#ff6b6b;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,Segoe UI,Roboto,Arial,sans-serif;padding:0 0 60px}
+  .back{display:inline-block;margin:8px 0 10px;font:800 14px Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;text-decoration:none;color:#1a1a1a;background:#f5c518;border:1px solid #d9a900;border-radius:8px;padding:11px 18px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .back:hover{background:#ffd83a}
+  .back:active{transform:translateY(1px)}
+  header{padding:6px 20px 14px;border-bottom:1px solid var(--line)}
+  h1{margin:6px 0 2px;font-size:19px}
+  .sub{color:var(--mut);font-size:13px;max-width:760px}
+  .wrap{padding:16px 20px;max-width:920px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+  .row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end}
+  label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mut)}
+  input,select{background:#0f1218;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 9px;font-size:14px;width:96px}
+  input.w5{width:74px}
+  select{width:120px}
+  .cuts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.cuts{grid-template-columns:1fr}}
+  .out{font-size:15px}
+  .big{font-size:30px;font-weight:700}
+  .kpair{display:flex;gap:34px;flex-wrap:wrap;margin:6px 0 10px}
+  .kpair small{display:block;color:var(--mut);font-size:12px;font-weight:400}
+  .muted{color:var(--mut)}
+  .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  code{background:#0f1218;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+  table{border-collapse:collapse;margin-top:8px;font-size:13px}
+  td,th{border:1px solid var(--line);padding:5px 10px;text-align:right}
+  th{color:var(--mut);font-weight:600}
+  .note{color:var(--mut);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&lsaquo; All apps</a>
+<header>
+  <h1>Chatter.calc &middot; k<sub>c</sub> Calibrator</h1>
+  <div class="sub">Back out <b>kc<sub>1.1</sub></b> and <b>m<sub>c</sub></b> from <b>two cuts</b> on a known material, using spindle power. Same Kienzle pair the Lobes and Chip&middot;Force pages use. Make both cuts on the same tool and engagement, changing only the feed.</div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Shared</h2>
+    <div class="row">
+      <label class="f">material<input id="mat" value="316L" style="width:120px"></label>
+      <label class="f">&Oslash; dia mm<input id="dia" class="w5" type="number" value="12.7" step="0.1"></label>
+      <label class="f">flutes z<input id="z" class="w5" type="number" value="4" step="1"></label>
+      <label class="f">ae mm<input id="ae" class="w5" type="number" value="3.18" step="0.1"></label>
+      <label class="f">cut<select id="dir"><option value="down" selected>down</option><option value="up">up</option><option value="slot">slot</option></select></label>
+      <label class="f">drivetrain &eta;<input id="eff" class="w5" type="number" value="0.85" step="0.05" title="cutting power / spindle motor power, ~0.8-0.9"></label>
+      <label class="f">power unit<select id="unit"><option value="kw" selected>kW</option><option value="pct">load %</option></select></label>
+      <label class="f">rated kW<input id="rated" class="w5" type="number" value="15" step="0.5" title="spindle rated power, only used when unit = load %"></label>
+    </div>
+  </div>
+
+  <div class="cuts">
+    <div class="card">
+      <h2>Cut A &middot; lighter feed</h2>
+      <div class="row">
+        <label class="f">ap mm<input id="apA" class="w5" type="number" value="4" step="0.5"></label>
+        <label class="f">fz mm/tooth<input id="fzA" class="w5" type="number" value="0.04" step="0.005"></label>
+        <label class="f">rpm<input id="rpmA" type="number" value="3000" step="100"></label>
+        <label class="f">power in cut<input id="pcA" class="w5" type="number" value="1.04" step="0.05"></label>
+        <label class="f">power idle<input id="piA" class="w5" type="number" value="0.5" step="0.1"></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Cut B &middot; heavier feed</h2>
+      <div class="row">
+        <label class="f">ap mm<input id="apB" class="w5" type="number" value="4" step="0.5"></label>
+        <label class="f">fz mm/tooth<input id="fzB" class="w5" type="number" value="0.10" step="0.005"></label>
+        <label class="f">rpm<input id="rpmB" type="number" value="3000" step="100"></label>
+        <label class="f">power in cut<input id="pcB" class="w5" type="number" value="1.60" step="0.05"></label>
+        <label class="f">power idle<input id="piB" class="w5" type="number" value="0.5" step="0.1"></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card out" id="out"></div>
+  <div class="note">Method: cutting power P<sub>c</sub> = (power in cut &minus; idle) &times; &eta;. Specific force k<sub>c</sub> = 6&times;10<sup>7</sup>&middot;P<sub>c</sub>[kW] / (ap&middot;ae&middot;v<sub>f</sub>[mm/min]) at the cut's mean chip thickness h<sub>m</sub>. Two h<sub>m</sub> points give m<sub>c</sub> (slope) and kc<sub>1.1</sub> (value at h=1mm). K<sub>r</sub> (radial ratio) needs a radial-force or deflection measurement; keep the material default for now.</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value);
+
+function meanChip(fz,ae,dia,dir){
+  const r=Math.min(1,Math.max(0,ae/dia));
+  const e=Math.acos(Math.max(-1,Math.min(1,1-2*r)));
+  let s,x;
+  if(dir==='up'){s=0;x=e;} else if(dir==='down'){s=Math.PI-e;x=Math.PI;} else {s=0;x=Math.PI;}
+  const arc=x-s;
+  return arc>1e-6 ? fz*(Math.cos(s)-Math.cos(x))/arc : fz;
+}
+
+function cutKc(ap,ae,fz,z,rpm,pc,pi){
+  const vf=fz*z*rpm;                       // mm/min
+  if(!(vf>0)||!(ap>0)||!(ae>0)) return {err:'fill ap, fz, rpm'};
+  let net=pc-pi;
+  if($('unit').value==='pct') net = net/100*num('rated');   // % -> kW
+  const eff=num('eff')||0.85;
+  const Pc=net*eff;                        // kW cutting power
+  if(!(Pc>0)) return {err:'power in cut must exceed idle'};
+  const kc=60000000*Pc/(ap*ae*vf);         // N/mm^2  (Pc in kW; kc in N/mm^2 = mJ/mm^3)
+  return {kc, Pc, vf, hm:meanChip(fz,ae,dia(),dir())};
+}
+const dia=()=>num('dia'), dir=()=>$('dir').value;
+
+function fmt(n,d){ return (isFinite(n)?n.toFixed(d):'—'); }
+
+function calc(){
+  const ae=num('ae'), z=Math.max(1,Math.round(num('z')));
+  const A=cutKc(num('apA'),ae,num('fzA'),z,num('rpmA'),num('pcA'),num('piA'));
+  const B=cutKc(num('apB'),ae,num('fzB'),z,num('rpmB'),num('pcB'),num('piB'));
+  const out=$('out');
+  if(A.err||B.err){ out.innerHTML='<span class="warn">'+(A.err||B.err)+'</span>'; return; }
+  if(Math.abs(Math.log(A.hm)-Math.log(B.hm))<0.05){
+    out.innerHTML='<span class="warn">Cut A and B have nearly the same chip thickness. Use clearly different feeds (e.g. fz 0.04 vs 0.10) so m<sub>c</sub> can be found.</span>';
+    return;
+  }
+  const mc=(Math.log(A.kc)-Math.log(B.kc))/(Math.log(B.hm)-Math.log(A.hm));
+  const kc11=A.kc*Math.pow(A.hm,mc);
+  let flag='';
+  if(mc<0) flag='<div class="bad">m<sub>c</sub> came out negative &mdash; the heavier-feed cut drew <i>more</i> specific force, which is backwards. Re-check the power and idle readings.</div>';
+  else if(mc<0.10||mc>0.45) flag='<div class="warn">m<sub>c</sub> is outside the usual 0.10&ndash;0.45 band &mdash; usable, but double-check the power readings.</div>';
+  out.innerHTML=
+    '<div class="kpair">'+
+      '<div><div class="big">'+Math.round(kc11)+'</div><small>kc<sub>1.1</sub> &nbsp;N/mm&sup2;</small></div>'+
+      '<div><div class="big">'+fmt(mc,3)+'</div><small>m<sub>c</sub></small></div>'+
+    '</div>'+
+    '<div class="muted">Paste these into the material picker (set it to <b>custom</b>, type kc<sub>1.1</sub> and m<sub>c</sub>). They came from your machine, so they override the literature seed for <b>'+($('mat').value||'this material')+'</b>.</div>'+
+    flag+
+    '<table><tr><th></th><th>cutting kW</th><th>h<sub>m</sub> mm</th><th>k<sub>c</sub> N/mm&sup2;</th></tr>'+
+      '<tr><th>Cut A</th><td>'+fmt(A.Pc,2)+'</td><td>'+fmt(A.hm,4)+'</td><td>'+Math.round(A.kc)+'</td></tr>'+
+      '<tr><th>Cut B</th><td>'+fmt(B.Pc,2)+'</td><td>'+fmt(B.hm,4)+'</td><td>'+Math.round(B.kc)+'</td></tr>'+
+    '</table>';
+}
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>

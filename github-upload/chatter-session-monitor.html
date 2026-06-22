@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Chatter.calc · Session</title>
+<style>
+  :root{
+    --bg:#fafafa; --card:#ffffff; --border:#e3e3e3; --ink:#333; --muted:#8a8a8a;
+    --grid:#ededed; --grid2:#e0e0e0;
+    --yellow:#f5c518; --yellow-ink:#b89400;
+    --blue:#4ab3f0; --blue-ink:#1f7cb8;
+    --green:#1f9d57; --orange:#e8932e; --red:#e5484d; --purple:#9b7fe0;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%; overflow:hidden;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column;
+    padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));
+    gap:9px;
+  }
+  header{display:flex; align-items:baseline; justify-content:space-between; flex:0 0 auto;}
+  header h1{font-size:16px; font-weight:700; margin:0; letter-spacing:.2px;}
+  header h1 span{color:var(--yellow-ink);}
+  header .sub{font-size:11px; color:var(--muted);}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px;}
+
+  .controls{padding:8px 10px; display:flex; gap:8px; align-items:center; flex:0 0 auto;}
+  .btn{border:0; border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; background:var(--ink); color:#fff;}
+  .btn.rec{background:var(--red);}
+  .btn.ghost{background:#fff; color:var(--muted); border:1px solid var(--border);}
+  .btn:disabled{opacity:.4;}
+  .controls .spacer{flex:1 1 auto;}
+  .controls .stat{font-size:11px; color:var(--muted); text-align:right; line-height:1.2;}
+
+  .tapewrap{padding:6px 6px 4px; flex:0 0 auto;}
+  .tapewrap canvas{display:block; width:100%; height:120px; touch-action:none;}
+
+  .selbar{padding:6px 10px; display:flex; gap:8px; align-items:center; flex:0 0 auto;}
+  .seg{display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden;}
+  .seg button{border:0; background:#fff; color:var(--muted); padding:7px 13px; font-size:13px; font-weight:700; cursor:pointer;}
+  .seg button.a.active{background:var(--blue); color:#06354f;}
+  .seg button.b.active{background:var(--orange); color:#5a3500;}
+  .selbar .hint{font-size:11px; color:var(--muted); flex:1 1 auto;}
+
+  .stage{flex:1 1 auto; position:relative; min-height:0; display:flex; align-items:center; justify-content:center;}
+  .stage canvas{display:block; touch-action:none;}
+  .emptyhint{position:absolute; font-size:12px; color:var(--muted); text-align:center; pointer-events:none; padding:0 20px;}
+
+  .readout{padding:8px 10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; flex:0 0 auto;}
+  .ro{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .ro .k{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
+  .ro .v{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ro .v small{font-weight:500; color:var(--muted); font-size:10px;}
+  .dotA{color:var(--blue-ink);} .dotB{color:var(--orange);}
+
+  footer{font-size:10px; color:var(--muted); text-align:center; flex:0 0 auto; line-height:1.4;}
+</style>
+</head>
+<body>
+<a href="./index.html" style="display:inline-block;margin:8px 0 10px 0;font:800 14px Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;text-decoration:none;color:#1a1a1a;background:#f5c518;border:1px solid #d9a900;border-radius:8px;padding:11px 18px;box-shadow:0 1px 3px rgba(0,0,0,.12)">&#8249; All apps</a>
+
+<header>
+  <h1>Chatter<span>.calc</span> · Session</h1>
+  <div class="sub" id="sub">record · scrub · overlay</div>
+</header>
+
+<div class="card controls">
+  <button id="rec" class="btn rec">Record</button>
+  <button id="demo" class="btn ghost">Demo</button>
+  <button id="clear" class="btn ghost">Clear</button>
+  <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;">rpm
+    <input id="rpm" type="number" value="8500" min="100" step="100" style="width:64px;padding:5px 6px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;color:var(--ink);text-align:right;">
+  </label>
+  <div class="spacer"></div>
+  <div class="stat" id="stat">idle</div>
+</div>
+
+<div class="card tapewrap">
+  <canvas id="tape"></canvas>
+</div>
+
+<div class="card selbar">
+  <div class="seg">
+    <button id="selA" class="a active">A</button>
+    <button id="selB" class="b">B</button>
+  </div>
+  <div class="hint" id="selhint">drag on the timeline to pick a stretch</div>
+  <button id="clrsel" class="btn ghost" style="padding:6px 10px;font-size:12px;">reset A/B</button>
+</div>
+
+<div class="stage">
+  <canvas id="polar"></canvas>
+  <div class="emptyhint" id="emptyhint">Record or load the demo, then drag a stretch of the timeline to see its rosette. Drag a second stretch on B to overlay and compare.</div>
+</div>
+
+<div class="card readout">
+  <div class="ro"><span class="k"><span class="dotA">A</span> · sync / imbalance</span><span class="v" id="roA">—</span></div>
+  <div class="ro"><span class="k"><span class="dotB">B</span> · sync / imbalance</span><span class="v" id="roB">—</span></div>
+  <div class="ro"><span class="k">B − A change</span><span class="v" id="roD">—</span></div>
+</div>
+
+<footer id="foot">
+  Tape shape: flat tops = in cut · sloped sides = entering / leaving · low gaps = repositioning. Tint = auto-grouped by load (a suggestion). Your A/B selection overrides it.
+</footer>
+
+<script>
+"use strict";
+/* Chatter.calc — Session monitor.
+   Records a cut, lays it out as an RMS tape, and lets you drag-select stretches
+   to overlay their spindle-phase rosettes and compare. No baseline tare — the
+   quietest stretch sets the display floor; everything is relative change.
+   Reuses the self-clocked fold, synchronicity and tooth-imbalance maths.        */
+
+const $ = id => document.getElementById(id);
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ui = {
+  rec:$('rec'), demo:$('demo'), clear:$('clear'), stat:$('stat'), sub:$('sub'),
+  tape:$('tape'), polar:$('polar'), emptyhint:$('emptyhint'),
+  selA:$('selA'), selB:$('selB'), selhint:$('selhint'), clrsel:$('clrsel'),
+  roA:$('roA'), roB:$('roB'), roD:$('roD'), foot:$('foot'), rpm:$('rpm')
+};
+
+// ── constants ──
+const SR_DEMO = 44100;
+const NBINS = 180;
+const FFTSIZE = 8192;
+let SR = 44100;
+let WINSAMP = Math.round(0.15*SR);     // window length (samples)
+
+// ── per-sample working state ──
+let SPR = SR/(8500/60);                 // tracked samples / revolution
+let phaseAccum = 0;
+const fftBuf = new Float32Array(FFTSIZE); let fftPos = 0;
+const reBuf = new Float32Array(FFTSIZE), imBuf = new Float32Array(FFTSIZE), hann = new Float32Array(FFTSIZE);
+for (let i=0;i<FFTSIZE;i++) hann[i]=0.5*(1-Math.cos(2*Math.PI*i/(FFTSIZE-1)));
+const envSm = new Float32Array(FFTSIZE), csum = new Float64Array(FFTSIZE+1), acArr = new Float64Array(FFTSIZE);
+const spec = new Float32Array(FFTSIZE/2);
+let winSumSq = new Float64Array(NBINS), winCnt = new Int32Array(NBINS), winSamp = 0;
+let winRaw = new Float32Array(WINSAMP);     // current window's raw samples (for per-window auto-focus)
+let sampleClock = 0;
+
+// ── recording store (one entry per window) ──
+let recT=[], recRms=[], recS=[], recImb=[], recEnergy=[], recBand=[], recMs=[];   // recMs[i] = Float32Array(NBINS) mean-square per bin
+let recording=false, recRpmSeed=8500;
+
+// ── selections ──
+let selActive='A';
+let selA=null, selB=null;               // {i0,i1} window-index ranges
+let flags=[];                           // {i,text}
+let bands=[];                           // band index per in-cut window
+let floorRms=0, peakRms=1;
+
+// ── DSP (ported, verified) ──────────────────────────────────────────────────
+function fft(re,im){const N=re.length;for(let i=1,j=0;i<N;i++){let bit=N>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){const t=re[i];re[i]=re[j];re[j]=t;const u=im[i];im[i]=im[j];im[j]=u;}}
+ for(let len=2;len<=N;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);for(let i=0;i<N;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const ur=re[i+k],ui=im[i+k],vr=re[i+k+len/2]*cr-im[i+k+len/2]*ci,vi=re[i+k+len/2]*ci+im[i+k+len/2]*cr;re[i+k]=ur+vr;im[i+k]=ui+vi;re[i+k+len/2]=ur-vr;im[i+k+len/2]=ui-vi;const nc=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nc;}}}}
+
+function trackPeriod(){
+  const Z=zCount(), N=FFTSIZE;
+  for(let i=0;i<N;i++){const idx=(fftPos+i)%FFTSIZE;envSm[i]=Math.abs(fftBuf[idx]);}
+  csum[0]=0;for(let i=0;i<N;i++)csum[i+1]=csum[i]+envSm[i];
+  const H=7;let mean=0;
+  for(let i=0;i<N;i++){const a=i-H<0?0:i-H,b=i+H+1>N?N:i+H+1;envSm[i]=(csum[b]-csum[a])/(b-a);mean+=envSm[i];}mean/=N;
+  for(let i=0;i<N;i++)envSm[i]-=mean;
+  const ts=SPR/Z;let lo=Math.max(8,Math.floor(ts*0.75)),hi=Math.min(N-2,Math.ceil(ts*1.25));if(hi<=lo+2)return;
+  const M=Math.min(4500,N-hi-1);if(M<=lo*2)return;let z=0;for(let i=0;i<M;i++){const v=envSm[i];z+=v*v;}if(z<=0)return;
+  let m=0,bi=0,bv=-Infinity;for(let L=lo;L<=hi;L++){let s=0;for(let i=0;i<M;i++)s+=envSm[i]*envSm[i+L];acArr[m]=s;if(s>bv){bv=s;bi=m;}m++;}
+  let off=0;if(bi>0&&bi<m-1){const a=acArr[bi-1],b=acArr[bi],c=acArr[bi+1],d=a-2*b+c;if(d!==0)off=0.5*(a-c)/d;}
+  const tau=lo+bi+off,q0=bv/z,sprDet=Z*tau,jump=Math.abs(sprDet/SPR-1);
+  if((jump<0.06&&q0>0.85)||(jump<0.30&&q0>0.92))SPR=SPR*0.85+sprDet*0.15;
+}
+function synchronicity(){
+  for(let i=0;i<FFTSIZE;i++){const idx=(fftPos+i)%FFTSIZE;reBuf[i]=fftBuf[idx]*hann[i];imBuf[i]=0;}
+  fft(reBuf,imBuf);
+  const binHz=SR/FFTSIZE,loB=Math.max(2,Math.floor(80/binHz)),hiB=Math.min(FFTSIZE/2-1,Math.floor(6500/binHz));
+  for(let k=loB;k<=hiB;k++)spec[k]=reBuf[k]*reBuf[k]+imBuf[k]*imBuf[k];
+  const Z=zCount(),TPF=(SR/SPR)*Z,tol=Math.max(2,Math.round(8/binHz));
+  let total=0,sync=0;const isS=new Uint8Array(FFTSIZE/2);
+  for(let h=1;h*TPF<6500;h++){const c=Math.round(h*TPF/binHz);for(let d=-tol;d<=tol;d++){const b=c+d;if(b>=0&&b<isS.length)isS[b]=1;}}
+  for(let k=loB;k<=hiB;k++){const p=spec[k];total+=p;if(isS[k])sync+=p;}
+  return total>0?sync/total:1;
+}
+function imbalanceOf(ros){
+  const Z=zCount(),half=Math.max(1,Math.floor(NBINS/(2*Z))),steps=Math.max(1,Math.floor(NBINS/Z));
+  let best=-1,bo=0;
+  for(let o=0;o<steps;o++){let sc=0;for(let k=0;k<Z;k++){const b=((Math.round(o+k*NBINS/Z))%NBINS+NBINS)%NBINS;sc+=ros[b];}if(sc>best){best=sc;bo=o;}}
+  const v=[];for(let k=0;k<Z;k++){const c=Math.round(bo+k*NBINS/Z);let s=0,n=0;for(let d=-half;d<=half;d++){const b=((c+d)%NBINS+NBINS)%NBINS;s+=ros[b];n++;}v.push(s/n);}
+  const sorted=v.slice().sort((a,b)=>a-b);const med=sorted[Math.floor(sorted.length/2)]||0;const mx=sorted[sorted.length-1];
+  return {imb: med>0?100*(mx/med-1):0, off:bo};
+}
+function zCount(){ return 4; }     // 4-flute assumption for the demo / default
+
+// Per-window auto-focus: a 0.15 s window is only ~15 revolutions, so the fold
+// stays sharp only if the period is right to ~0.04 %. The spindle tracker holds
+// ~1-3 %, which smears the lobes and washes out per-tooth imbalance. So each
+// window re-finds its own period by maximising fold contrast around the seed.
+function foldAt(raw,L,spr){
+  const acc=new Float64Array(NBINS),cnt=new Int32Array(NBINS); let ph=0;
+  for(let i=0;i<L;i++){ ph+=1/spr; if(ph>=1)ph-=1; let b=(ph*NBINS)|0; if(b>=NBINS)b=NBINS-1; acc[b]+=raw[i]*raw[i]; cnt[b]++; }
+  const ros=new Float32Array(NBINS); for(let b=0;b<NBINS;b++) ros[b]=cnt[b]>0?Math.sqrt(acc[b]/cnt[b]):0; return ros;
+}
+function contrastOf(ros){ let mn=Infinity,mx=0,s=0; for(let b=0;b<NBINS;b++){ const v=ros[b]; if(v<mn)mn=v; if(v>mx)mx=v; s+=v; } const m=s/NBINS; return m>1e-9?(mx-mn)/m:0; }
+function autoFocus(raw,L,seed){
+  let best=seed,bc=-1;
+  const lo=seed*0.88,hi=seed*1.12,steps=49;
+  for(let i=0;i<steps;i++){ const spr=lo+(hi-lo)*i/(steps-1); const c=contrastOf(foldAt(raw,L,spr)); if(c>bc){bc=c;best=spr;} }
+  const lo2=best*0.985,hi2=best*1.015;
+  for(let i=0;i<25;i++){ const spr=lo2+(hi2-lo2)*i/24; const c=contrastOf(foldAt(raw,L,spr)); if(c>bc){bc=c;best=spr;} }
+  return {spr:best, ros:foldAt(raw,L,best), contrast:bc};
+}
+
+// ── per-sample feed + window finalize ──
+function feed(s){
+  fftBuf[fftPos++]=s; if(fftPos>=FFTSIZE)fftPos=0;
+  if(winSamp<winRaw.length) winRaw[winSamp]=s;
+  winSamp++; sampleClock++;
+  if(winSamp>=WINSAMP) finalizeWindow();
+}
+function finalizeWindow(){
+  const L=Math.min(winSamp, winRaw.length);
+  const af=autoFocus(winRaw, L, SPR);
+  if(af.contrast>0.8) SPR=af.spr;          // only carry a confident lock; air/noise windows keep the seed
+  const S=synchronicity();                 // uses fftBuf + current SPR
+  const ros=af.ros, ms=new Float32Array(NBINS); let e=0;
+  for(let i=0;i<L;i++) e+=winRaw[i]*winRaw[i];
+  const rms=Math.sqrt(e/Math.max(1,L));
+  for(let b=0;b<NBINS;b++) ms[b]=ros[b]*ros[b];
+  const r=imbalanceOf(ros);
+  recT.push(sampleClock/SR); recRms.push(rms); recS.push(S); recImb.push(r.imb);
+  recEnergy.push(rms*rms); recMs.push(ms); recBand.push(-1);
+  winSamp=0; dirty=true;
+}
+
+// ── analysis over the whole recording (banding + change flags) ────────────────
+function analyseRecording(){
+  const n=recRms.length; bands=new Array(n).fill(-1); flags=[];
+  if(n<2){ floorRms=0; peakRms=1; return; }
+  const sorted=recRms.slice().sort((a,b)=>a-b);
+  floorRms = sorted[Math.floor(n*0.12)];
+  peakRms  = sorted[Math.floor(n*0.98)] || sorted[n-1] || 1;
+  const inThresh = floorRms + 0.22*(peakRms-floorRms);
+  // leader clustering on RMS for in-cut windows
+  const centers=[];
+  for(let i=0;i<n;i++){
+    if(recRms[i]<inThresh){ bands[i]=-1; continue; }
+    let j=-1;
+    for(let c=0;c<centers.length;c++){ if(Math.abs(recRms[i]/centers[c]-1)<0.12){ j=c; break; } }
+    if(j<0){ centers.push(recRms[i]); j=centers.length-1; }
+    else centers[j]=0.9*centers[j]+0.1*recRms[i];
+    bands[i]=j;
+  }
+  // change flags — detected WITHIN each recurring band (same engagement), so a
+  // change in engagement between cuts can never masquerade as a flag.
+  const byBand={};
+  for(let i=0;i<n;i++){ if(bands[i]>=0){ (byBand[bands[i]]=byBand[bands[i]]||[]).push(i); } }
+  const S100=recS.map(v=>v*100), En=recEnergy.map(v=>Math.sqrt(v));
+  for(const b in byBand){ const idxs=byBand[b]; if(idxs.length<8) continue;
+    pushStep(idxs, recImb, 'tooth imbalance', 8, 'pp', 'imb');
+    pushStep(idxs, S100, 'synchronicity', 10, 'sg', 'sync');
+    pushStep(idxs, En, 'tooth energy', 0, 'rel', 'energy'); }
+  // merge flags of the same metric that point at the same event (within 2 s); keep the larger
+  flags.sort((a,b)=>a.i-b.i);
+  const dd=[];
+  for(const f of flags){ let merged=false;
+    for(const g of dd){ if(g.key===f.key && Math.abs(recT[g.i]-recT[f.i])<3.0){ if(f.mag>g.mag){ g.text=f.text; g.i=f.i; g.mag=f.mag; } merged=true; break; } }
+    if(!merged) dd.push(f); }
+  flags = dd.sort((a,b)=>a.i-b.i).slice(0,6);
+}
+function pushStep(idxs, series, label, thr, mode, key){
+  const m=idxs.length, win=Math.max(2,Math.min(5,Math.floor(m/3)));
+  let bI=-1,bMag=0,bBef=0,bAft=0;
+  for(let p=win;p<=m-win;p++){
+    const before=median(idxs.slice(p-win,p).map(i=>series[i]));
+    const after =median(idxs.slice(p,p+win).map(i=>series[i]));
+    const d=after-before; let mag;
+    if(mode==='rel'){ if(before<=1e-6)continue; mag=Math.abs(d)/before*100; if(mag<=25)continue; }
+    else { mag=Math.abs(d); if(mag<=thr)continue; }
+    if(mag>bMag){ bMag=mag; bI=idxs[p]; bBef=before; bAft=after; }
+  }
+  if(bI<0)return;
+  let txt;
+  if(mode==='pp') txt=label+' +'+Math.round(bAft-bBef)+'%';
+  else if(mode==='sg') txt=label+' '+(bAft-bBef>=0?'+':'')+Math.round(bAft-bBef)+'%';
+  else txt=label+' '+(bAft-bBef>=0?'+':'-')+Math.round(bMag)+'%';
+  flags.push({i:bI,text:txt,key,mag:bMag});
+}
+function median(a){ const s=a.slice().sort((x,y)=>x-y); const m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+
+// ── band tint palette (faint) ──
+const BANDCOL = ['#f5c518','#4ab3f0','#1f9d57','#9b7fe0','#e8932e','#e57bb0','#7fb3d6'];
+function bandTint(j){ return j<0 ? '#dddddd' : BANDCOL[j%BANDCOL.length]; }
+
+// ── tape rendering ────────────────────────────────────────────────────────────
+let dpr=1, dirty=true;
+function sizeCanvases(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  const t=ui.tape; t.width=Math.round((t.clientWidth||320)*dpr); t.height=Math.round((t.clientHeight||120)*dpr);
+  const stage=ui.polar.parentElement.getBoundingClientRect();
+  const side=Math.max(120,Math.min(stage.width, stage.height));
+  ui.polar.style.width=side+'px'; ui.polar.style.height=side+'px';
+  ui.polar.width=Math.round(side*dpr); ui.polar.height=Math.round(side*dpr);
+  dirty=true;
+}
+function tapeGeom(){ const w=ui.tape.width,h=ui.tape.height; return {w,h,xL:4*dpr,xR:w-4*dpr,yT:14*dpr,yB:h-16*dpr}; }
+function xOfIdx(i){ const g=tapeGeom(); const n=Math.max(1,recRms.length-1); return g.xL+(i/n)*(g.xR-g.xL); }
+function idxOfX(x){ const g=tapeGeom(); const n=Math.max(1,recRms.length-1); return Math.round((x-g.xL)/(g.xR-g.xL)*n); }
+
+function drawTape(){
+  const c=ui.tape.getContext('2d'); const g=tapeGeom(); c.clearRect(0,0,g.w,g.h);
+  const n=recRms.length;
+  c.fillStyle=cssVar('--muted'); c.font='600 '+Math.round(11*dpr)+'px -apple-system,Helvetica,Arial'; c.textBaseline='alphabetic'; c.textAlign='left';
+  c.fillText('cut load (RMS) over session', g.xL, 11*dpr);
+  if(n<2){ c.textAlign='center'; c.fillStyle=cssVar('--grid2'); c.fillText('—', g.w/2, (g.yT+g.yB)/2); return; }
+  const yOf=v=>g.yB-Math.min(1,Math.max(0,(v-0)/(peakRms||1)))*(g.yB-g.yT);
+  // band ribbon
+  const rib=g.yB+4*dpr;
+  const dx=(g.xR-g.xL)/(n-1);
+  for(let i=0;i<n;i++){ const x=xOfIdx(i); c.fillStyle = bands[i]<0 ? 'rgba(0,0,0,0.05)' : hexA(bandTint(bands[i]),0.55);
+    c.fillRect(x-dx/2, rib, Math.max(1*dpr,dx), 7*dpr); }
+  // filled RMS area, tinted per band
+  for(let i=1;i<n;i++){ const x0=xOfIdx(i-1),x1=xOfIdx(i); const y0=yOf(recRms[i-1]),y1=yOf(recRms[i]);
+    c.beginPath(); c.moveTo(x0,g.yB); c.lineTo(x0,y0); c.lineTo(x1,y1); c.lineTo(x1,g.yB); c.closePath();
+    const b=bands[i]; c.fillStyle = b<0 ? 'rgba(140,140,140,0.18)' : hexA(bandTint(b),0.30); c.fill(); }
+  // RMS line
+  c.beginPath(); for(let i=0;i<n;i++){ const x=xOfIdx(i),y=yOf(recRms[i]); i===0?c.moveTo(x,y):c.lineTo(x,y); }
+  c.strokeStyle=cssVar('--ink'); c.lineWidth=1.3*dpr; c.lineJoin='round'; c.stroke();
+  // selections
+  drawSel(c,g,selA,'--blue'); drawSel(c,g,selB,'--orange');
+  // change flags
+  c.textAlign='center';
+  for(const f of flags){ const x=xOfIdx(f.i);
+    c.strokeStyle=hexA(cssVar('--red'),0.5); c.lineWidth=1*dpr; c.setLineDash([3*dpr,3*dpr]);
+    c.beginPath(); c.moveTo(x,g.yT); c.lineTo(x,g.yB); c.stroke(); c.setLineDash([]);
+    c.fillStyle=cssVar('--red'); c.font='700 '+Math.round(10.5*dpr)+'px -apple-system,Helvetica,Arial';
+    const tx=Math.min(Math.max(x, g.xL+40*dpr), g.xR-40*dpr);
+    c.fillText(f.text, tx, g.yT-3*dpr); }
+}
+function drawSel(c,g,sel,varname){ if(!sel) return; const x0=xOfIdx(Math.min(sel.i0,sel.i1)), x1=xOfIdx(Math.max(sel.i0,sel.i1));
+  c.fillStyle=hexA(cssVar(varname),0.16); c.fillRect(x0,g.yT,Math.max(2*dpr,x1-x0),g.yB-g.yT);
+  c.strokeStyle=cssVar(varname); c.lineWidth=1.5*dpr; c.strokeRect(x0,g.yT,Math.max(2*dpr,x1-x0),g.yB-g.yT); }
+
+// ── polar (lens) rendering ────────────────────────────────────────────────────
+// Each window was auto-focused independently, so its rosette has an arbitrary
+// phase origin. Cross-correlate every window's rosette onto the first selected
+// one and circular-shift before averaging, else the overlay smears. (For a
+// balanced selection the Z-fold ambiguity is harmless; for a worn tooth the
+// asymmetry gives a unique alignment.)
+function selRosette(sel){
+  if(!sel) return null; const i0=Math.max(0,Math.min(sel.i0,sel.i1)), i1=Math.min(recRms.length-1,Math.max(sel.i0,sel.i1));
+  if(i1<i0) return null;
+  const ref=new Float32Array(NBINS); { const ms=recMs[i0]; for(let b=0;b<NBINS;b++) ref[b]=Math.sqrt(ms[b]); }
+  const sum=new Float32Array(NBINS), m2=new Float32Array(NBINS); let cnt=0, sS=0, rmsAvg=0;
+  for(let i=i0;i<=i1;i++){
+    const ms=recMs[i]; const r=new Float32Array(NBINS); for(let b=0;b<NBINS;b++) r[b]=Math.sqrt(ms[b]);
+    let bs=0,bv=-Infinity;
+    for(let d=0;d<NBINS;d++){ let acc=0; for(let b=0;b<NBINS;b++) acc+=r[(b+d)%NBINS]*ref[b]; if(acc>bv){bv=acc;bs=d;} }
+    for(let b=0;b<NBINS;b++){ const v=r[(b+bs)%NBINS]; sum[b]+=v; m2[b]+=v*v; }
+    cnt++; sS+=recS[i]; rmsAvg+=recRms[i];
+  }
+  const mean=new Float32Array(NBINS), std=new Float32Array(NBINS);
+  for(let b=0;b<NBINS;b++){ mean[b]=sum[b]/cnt; const v=m2[b]/cnt-mean[b]*mean[b]; std[b]=v>0?Math.sqrt(v):0; }
+  const r=imbalanceOf(mean);
+  return {mean,std,off:r.off,imb:r.imb,S:sS/cnt,rms:rmsAvg/cnt,i0,i1};
+}
+function ptX(cx,r,a){return cx+r*Math.sin(a);} function ptY(cy,r,a){return cy-r*Math.cos(a);}
+function drawPolar(){
+  const c=ui.polar.getContext('2d'); const w=ui.polar.width,h=ui.polar.height; c.clearRect(0,0,w,h);
+  const cx=w/2, cy=h/2, maxR=Math.min(cx,cy)-8*dpr, innerR=maxR*0.12;
+  const A=selRosette(selA), B=selRosette(selB);
+  ui.emptyhint.style.display = (A||B)?'none':'block';
+  // grid
+  c.strokeStyle=cssVar('--grid'); c.lineWidth=1*dpr;
+  for(let gx=1;gx<=4;gx++){ c.beginPath(); c.arc(cx,cy,innerR+(maxR-innerR)*gx/4,0,2*Math.PI); c.stroke(); }
+  c.strokeStyle=cssVar('--grid2');
+  for(let a=0;a<360;a+=30){ const r=a*Math.PI/180; c.beginPath(); c.moveTo(ptX(cx,innerR,r),ptY(cy,innerR,r)); c.lineTo(ptX(cx,maxR,r),ptY(cy,maxR,r)); c.stroke(); }
+  if(!A&&!B) return;
+  let G=1e-9; if(A) for(let b=0;b<NBINS;b++) G=Math.max(G,A.mean[b]+A.std[b]); if(B) for(let b=0;b<NBINS;b++) G=Math.max(G,B.mean[b]);
+  const rOf=v=>innerR+Math.min(1,v/G)*(maxR-innerR);
+  const single = (A?1:0)+(B?1:0)===1;
+  // A
+  if(A){ if(single){ c.beginPath();
+      for(let b=0;b<=NBINS;b++){const bb=b%NBINS,a=(b/NBINS)*2*Math.PI,r=rOf(A.mean[bb]+A.std[bb]);const x=ptX(cx,r,a),y=ptY(cy,r,a);b===0?c.moveTo(x,y):c.lineTo(x,y);}
+      for(let b=NBINS;b>=0;b--){const bb=b%NBINS,a=(b/NBINS)*2*Math.PI,r=rOf(Math.max(0,A.mean[bb]-A.std[bb]));c.lineTo(ptX(cx,r,a),ptY(cy,r,a));}
+      c.closePath(); c.fillStyle=hexA(cssVar('--blue'),0.14); c.fill(); }
+    polarCurve(c,cx,cy,A.mean,rOf,'--blue'); }
+  if(B){ polarCurve(c,cx,cy,B.mean,rOf,'--orange'); }
+  // center synchronicity (single shows that selection; dual shows A)
+  const showS = single ? (A?A.S:B.S) : (A?A.S:0);
+  const col = (single&&B&&!A)?'--orange':'--blue';
+  c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=cssVar(col);
+  c.font='800 '+Math.round(maxR*0.24)+'px -apple-system,Helvetica,Arial';
+  c.fillText(Math.round(showS*100)+'%', cx, cy-maxR*0.02);
+  c.fillStyle=cssVar('--muted'); c.font='600 '+Math.round(maxR*0.08)+'px -apple-system,Helvetica,Arial';
+  c.fillText('synchronous', cx, cy+maxR*0.15);
+}
+function polarCurve(c,cx,cy,mean,rOf,varname){
+  c.beginPath();
+  for(let b=0;b<=NBINS;b++){const bb=b%NBINS,a=(b/NBINS)*2*Math.PI,r=rOf(mean[bb]),x=ptX(cx,r,a),y=ptY(cy,r,a);b===0?c.moveTo(x,y):c.lineTo(x,y);}
+  c.closePath(); c.strokeStyle=cssVar(varname); c.lineWidth=2.2*dpr; c.lineJoin='round'; c.stroke();
+}
+
+// ── readout ──
+function updateReadout(){
+  const A=selRosette(selA), B=selRosette(selB);
+  ui.roA.innerHTML = A ? Math.round(A.S*100)+'<small>% · </small>'+Math.round(A.imb)+'<small>% imb</small>' : '—';
+  ui.roB.innerHTML = B ? Math.round(B.S*100)+'<small>% · </small>'+Math.round(B.imb)+'<small>% imb</small>' : '—';
+  if(A&&B){ const dS=Math.round((B.S-A.S)*100), dI=Math.round(B.imb-A.imb);
+    ui.roD.innerHTML = (dS>=0?'+':'')+dS+'<small>% sync · </small>'+(dI>=0?'+':'')+dI+'<small>% imb</small>'; }
+  else ui.roD.innerHTML='—';
+}
+
+function hexA(hex,a){hex=hex.trim();const n=parseInt(hex.slice(1),16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+
+// ── render loop (redraw only when dirty) ──
+function render(){ if(dirty){ analyseRecording(); drawTape(); drawPolar(); updateReadout(); dirty=false; } requestAnimationFrame(render); }
+
+// ── drag-select on the tape ──
+let dragging=false, dragStart=0;
+function tapeXfromEvent(e){ const rect=ui.tape.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-rect.left; return cx*(ui.tape.width/rect.width); }
+ui.tape.addEventListener('pointerdown',e=>{ if(recRms.length<2)return; dragging=true; dragStart=idxOfX(tapeXfromEvent(e)); ui.tape.setPointerCapture(e.pointerId); setSel(dragStart,dragStart); });
+ui.tape.addEventListener('pointermove',e=>{ if(!dragging)return; setSel(dragStart, idxOfX(tapeXfromEvent(e))); });
+ui.tape.addEventListener('pointerup',e=>{ if(!dragging)return; dragging=false; setSel(dragStart, idxOfX(tapeXfromEvent(e)), true); });
+function setSel(i0,i1,commit){
+  const n=recRms.length; i0=Math.max(0,Math.min(n-1,i0)); i1=Math.max(0,Math.min(n-1,i1));
+  const sel={i0,i1};
+  if(selActive==='A') selA=sel; else selB=sel;
+  dirty=true;
+  if(commit && selActive==='A' && !selB){ selActive='B'; refreshSelBtns(); }
+}
+function refreshSelBtns(){ ui.selA.classList.toggle('active',selActive==='A'); ui.selB.classList.toggle('active',selActive==='B');
+  ui.selhint.textContent = selActive==='A' ? 'drag to set A' : 'drag to set B (overlays on A)'; }
+ui.selA.onclick=()=>{ selActive='A'; refreshSelBtns(); };
+ui.selB.onclick=()=>{ selActive='B'; refreshSelBtns(); };
+ui.clrsel.onclick=()=>{ selA=null; selB=null; selActive='A'; refreshSelBtns(); dirty=true; };
+
+// ── live mic ──
+let ctx=null,stream=null,srcNode=null,capNode=null,scriptNode=null,silentGain=null;
+async function startLive(){
+  ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume();
+  SR=ctx.sampleRate; WINSAMP=Math.round(0.15*SR); winRaw=new Float32Array(WINSAMP); SPR=SR/((parseFloat(ui.rpm.value)||8500)/60);
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false,channelCount:1},video:false});
+  srcNode=ctx.createMediaStreamSource(stream); silentGain=ctx.createGain(); silentGain.gain.value=0; silentGain.connect(ctx.destination);
+  if(ctx.audioWorklet){
+    const code="class Cap extends AudioWorkletProcessor{process(i){const ch=i[0][0];if(ch&&ch.length)this.port.postMessage(ch.slice(0));return true;}}registerProcessor('cap',Cap);";
+    const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'})); await ctx.audioWorklet.addModule(url);
+    capNode=new AudioWorkletNode(ctx,'cap'); capNode.port.onmessage=e=>{const f=e.data;for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(capNode); capNode.connect(silentGain);
+  } else {
+    scriptNode=ctx.createScriptProcessor(2048,1,1); scriptNode.onaudioprocess=e=>{const f=e.inputBuffer.getChannelData(0);for(let i=0;i<f.length;i++)feed(f[i]);}; srcNode.connect(scriptNode); scriptNode.connect(silentGain);
+  }
+}
+function stopLive(){ try{if(capNode){capNode.port.onmessage=null;capNode.disconnect();}}catch(e){} try{if(scriptNode){scriptNode.onaudioprocess=null;scriptNode.disconnect();}}catch(e){}
+  try{if(srcNode)srcNode.disconnect();}catch(e){} try{if(silentGain)silentGain.disconnect();}catch(e){}
+  try{if(stream)stream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(ctx)ctx.close();}catch(e){}
+  ctx=stream=srcNode=capNode=scriptNode=silentGain=null; }
+
+function resetRecording(){ recT=[];recRms=[];recS=[];recImb=[];recEnergy=[];recBand=[];recMs=[]; bands=[];flags=[];
+  selA=null;selB=null;selActive='A';refreshSelBtns(); if(winRaw.length!==WINSAMP)winRaw=new Float32Array(WINSAMP); winRaw.fill(0); winSamp=0;sampleClock=0;fftBuf.fill(0);fftPos=0; dirty=true; }
+
+ui.rec.onclick=async()=>{
+  if(!recording){
+    resetRecording();
+    try{ await startLive(); }catch(err){ ui.stat.textContent='mic error: '+(err.name||'?'); return; }
+    recording=true; ui.rec.textContent='Stop'; ui.demo.disabled=true; ui.stat.textContent='● recording…'; ui.sub.textContent='live · self-clocked';
+  } else {
+    recording=false; stopLive(); ui.rec.textContent='Record'; ui.demo.disabled=false;
+    ui.stat.textContent=recRms.length+' windows · '+ (recT.length?recT[recT.length-1].toFixed(1):'0')+' s'; dirty=true;
+  }
+};
+ui.clear.onclick=()=>{ if(recording)return; resetRecording(); ui.stat.textContent='idle'; };
+
+// ── demo: synthesize a 10-cut session with a chip at exit 6, run the real pipeline ──
+ui.demo.onclick=()=>{
+  if(recording) return;
+  SR=SR_DEMO; WINSAMP=Math.round(0.15*SR); ui.rpm.value=6000; resetRecording(); SPR=SR/(6000/60);
+  ui.stat.textContent='building demo…';
+  setTimeout(()=>{ buildDemo(); ui.stat.textContent=recRms.length+' windows · '+recT[recT.length-1].toFixed(1)+' s (demo)'; ui.sub.textContent='demo · 10 cuts + chip'; dirty=true; }, 20);
+};
+function buildDemo(){
+  const Z=4, frev=6000/60, Trev=1/frev, toothT=Trev/Z, pw=0.5*toothT;
+  const roB=[1.015,0.98,1.01,0.995];
+  const segs=[{d:1.0,L:0,w:0,hf:0,burst:0}];
+  for(let i=1;i<=10;i++){ const ch=i>=7; segs.push({d:0.22,L:0,w:0,hf:0,burst:0}); segs.push({d:0.15,L:0.5,w:0,hf:0,burst:0}); segs.push({d:0.6,L:1.0,w:ch?0.30:0,hf:ch?0.06:0,burst:0}); segs.push({d:0.15,L:0.5,w:0,hf:0,burst:(i===6?1:0)}); }
+  let gi=0;
+  for(const s of segs){ const n=Math.round(s.d*SR); const ro=roB.slice(); if(s.w>0)ro[0]*=(1+s.w);
+    for(let k2=0;k2<n;k2++){ const t=gi/SR; let tin=t-Math.floor(t/Trev)*Trev; let v=0;
+      for(let k=0;k<Z;k++){ let dt=tin-k*toothT; if(dt<0)dt+=Trev; if(dt<pw) v+=ro[k]*0.5*(1-Math.cos(2*Math.PI*dt/pw)); }
+      v*=s.L; v+=0.03*(Math.random()*2-1); if(s.L>0) v+=0.05*s.L*(Math.random()*2-1);
+      if(s.hf>0&&s.L>0) v+=s.hf*s.L*Math.sin(2*Math.PI*3500*t);
+      if(s.burst){ const bn=Math.round(0.04*SR); if(k2<bn) v+=0.6*Math.sin(2*Math.PI*4200*t)*Math.exp(-k2/(0.01*SR)); }
+      feed(v); gi++; }
+  }
+  if(winSamp>0){ finalizeWindow(); }
+}
+
+window.addEventListener('resize', sizeCanvases);
+window.addEventListener('orientationchange', ()=>setTimeout(sizeCanvases,300));
+refreshSelBtns(); sizeCanvases(); requestAnimationFrame(render);
+</script>
+</body>
+</html>
