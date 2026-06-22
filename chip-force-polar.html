@@ -223,7 +223,9 @@
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
     <div class="res"><span>Max chip h<sub>ex</sub></span><span id="rHmax"></span></div>
     <div class="res"><span>Chip thinning h<sub>ex</sub>/f<sub>z</sub></span><span id="rThin"></span></div>
-    <div class="res"><span>Teeth in cut (avg)</span><span id="rZc"></span></div>
+    <div class="res"><span>Teeth in cut &mdash; radial z<sub>i</sub></span><span id="rZi"></span></div>
+    <div class="res"><span>Edges in cut &mdash; total (+ helix)</span><span id="rZtot"></span></div>
+    <div class="res"><span>Time in cut / tooth t<sub>i</sub></span><span id="rTi"></span></div>
 
     <h2 class="mt">Force</h2>
     <div class="res"><span>Peak F<sub>t</sub> / tooth</span><span id="rFt"></span></div>
@@ -391,7 +393,8 @@ function compute(){
   const nearest=sweet.length?sweet.reduce((a,b)=>Math.abs(b.ae-ae)<Math.abs(a.ae-ae)?b:a):null;
   const fE=z*rpm/60, fc=($('fc')?+$('fc').value:0), wavesPerTooth=fE>0?fc/fE:0, frac=wavesPerTooth-Math.floor(wavesPerTooth);
   const eps=2*Math.PI*frac, regStable=Math.min(frac,1-frac)<0.12;
-  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deltaMean,stressFrac,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,balFrac,sweet,nearest};
+  const ti=(rpm>0)?(g.phex-g.phst)*60000/(2*Math.PI*rpm):0;   // time one tooth is engaged per rev (ms)
+  return {D,z,ae,ap,fz,rpm,L,helix,Kr,g,peakFt,peakFr,peakR,meanR,meanT,power,vf,mrr,zc,delta,deltaMean,stressFrac,deff,hm,hmax,thin,Fa,iFx,iFy,fE,fc,wavesPerTooth,frac,eps,regStable,psiH,arc,NcutH,ti,balFrac,sweet,nearest};
 }
 
 function fmt(x,d=0){return (x).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});}
@@ -409,7 +412,9 @@ function run(){
   $('rHm').textContent=r.hm.toFixed(4)+' mm';
   $('rHmax').textContent=r.hmax.toFixed(4)+' mm';
   $('rThin').textContent=r.thin.toFixed(2)+'  (a_e/D '+(r.ae/r.D*100).toFixed(0)+'%)';
-  $('rZc').textContent=r.zc.toFixed(2);
+  $('rZi').textContent=r.zc.toFixed(2)+' / section';
+  $('rZtot').textContent=r.NcutH.toFixed(2)+'  (helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'°)';
+  $('rTi').textContent=r.ti.toFixed(2)+' ms';
   $('rFt').textContent=fmt(r.peakFt)+' N';
   $('rFr').textContent=fmt(r.peakFr)+' N';
   $('rPeak').innerHTML='<b>'+fmt(r.peakR)+' N</b>';
@@ -629,7 +634,7 @@ function drawFront(r){
   ctx.fillStyle='#888';ctx.font='9px monospace';ctx.fillText('x',txx+22,tyy+3);ctx.fillText('z',txx-3,tyy-22);ctx.fillText('y',txx+13,tyy+18);
   // header labels
   ctx.fillStyle='#1a1a1a';ctx.font='bold 12px monospace';ctx.fillText('δ '+(dum<10?dum.toFixed(1):Math.round(dum))+' µm',6,16);
-  ctx.fillStyle='#777';ctx.font='10px monospace';ctx.fillText('L '+(+$('L').value)+'  Ø'+(+$('D').value)+'  ('+(L/D).toFixed(1)+'×D)  ·  avg teeth '+r.NcutH.toFixed(1),6,30);
+  ctx.fillStyle='#777';ctx.font='10px monospace';ctx.fillText('L '+(+$('L').value)+'  Ø'+(+$('D').value)+'  ('+(L/D).toFixed(1)+'×D)  ·  edges in cut '+r.NcutH.toFixed(1),6,30);
   ctx.strokeStyle='#bbb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(12,yTop);ctx.lineTo(12,yBot);ctx.stroke();
   ctx.beginPath();ctx.moveTo(9,yTop);ctx.lineTo(15,yTop);ctx.moveTo(9,yBot);ctx.lineTo(15,yBot);ctx.stroke();
 }
