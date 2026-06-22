@@ -77,6 +77,15 @@
   #ptchart{width:100%;height:236px;border:1px solid var(--line)}
   .ptlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);margin-top:6px}
   .ptlegend i{display:inline-block;width:14px;height:0;border-top-width:2px;border-top-style:solid;margin-right:4px;vertical-align:3px}
+  .verdict{font-size:12px}
+  .vhead{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .vextra{font-size:11px;color:var(--dim)}
+  .vrow{display:grid;grid-template-columns:90px 1fr 40px;gap:8px;align-items:center;margin:5px 0}
+  .vrow .nm{color:var(--dim);font-weight:700;font-size:11.5px}
+  .vrow .nm.bind{color:var(--txt)}
+  .vbar{height:12px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .vbar i{display:block;height:100%}
+  .vrow .pc{font-family:monospace;text-align:right;font-weight:700;font-size:12px}
 </style>
 </head>
 <body>
@@ -206,7 +215,15 @@
 
   <!-- ============ RESULTS ============ -->
   <div class="card">
-    <h2>Cut geometry</h2>
+    <h2>Binding limit</h2>
+    <div id="verdictBox" class="verdict"></div>
+    <div class="row" style="margin-top:9px">
+      <div><label>&delta; budget (&micro;m)</label><input type="number" id="dLim" value="25" step="5" oninput="run()"></div>
+      <div><label>max h<sub>ex</sub> (mm)</label><input type="number" id="hLim" value="0.08" step="0.01" oninput="run()"></div>
+    </div>
+    <div class="note" id="verdictNote"></div>
+
+    <h2 class="mt">Cut geometry</h2>
     <div class="res"><span>Engagement &phi;<sub>c</sub></span><span id="rPhc"></span></div>
     <div class="res"><span>Entry &rarr; exit</span><span id="rArc"></span></div>
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
@@ -279,6 +296,8 @@ const MAT = {
   inc:{name:'Inconel 718-AG', kc11:2900, mc:0.27, Kr:0.48, vc:[25,55],
       ref:`<b>ISO S &mdash; HRSA, aged.</b> Datasheet (aged): UTS <b>1240&ndash;1380 MPa</b>, hardness <b>&le;40 HRC</b>, E <b>~200 GPa</b>. Cutting band k<sub>c1.1</sub> &asymp; 2400&ndash;3100, m<sub>c</sub> &asymp; 0.27, F<sub>r</sub>/F<sub>t</sub> &asymp; 0.48.`}
 };
+// Seed max chip thickness h_ex per material (solid carbide). Editable in UI — set to the tool/material rating, then calibrate.
+const HEXMAX={c45:0.12,alloy:0.10,ss316:0.08,ci:0.15,alu:0.20,hard:0.06,ti:0.10,inc:0.08};
 // Holder library: small icon + clamping suitability (Sandvik SRT) + pull-out rank (5 best)
 const HOLDERS = {
   er:{name:'ER collet', pull:2,
@@ -301,7 +320,8 @@ let mat='inc', mode='down', regen=false, playing=false, theta=20*Math.PI/180, ra
 const $=id=>document.getElementById(id);
 
 function setMat(m){mat=m;document.querySelectorAll('.matbtn button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-  $('kc11').value=MAT[m].kc11;$('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;run();}
+  $('kc11').value=MAT[m].kc11;$('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;
+  if($('hLim')&&HEXMAX[m]!=null)$('hLim').value=HEXMAX[m];run();}
 function setMode(m){mode=m;[...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===m));run();}
 
 // ---- vc <-> rpm (ported from test-lobe-tune) ----
@@ -427,7 +447,62 @@ function run(){
   else if(r.balFrac>0.14){bp='a';bt='fair';}
   const sweetTxt=r.sweet.length? r.sweet.map(s=>'<b>'+s.ae.toFixed(2)+'</b> ('+s.k+'z)').join(', ') : 'none ≤ Ø';
   $('balanceBox').innerHTML='Avg teeth in cut <b>'+r.NcutH.toFixed(2)+'</b> = radial '+r.zc.toFixed(2)+' + helix wrap '+(r.psiH*180/Math.PI).toFixed(0)+'° (can exceed z when the helix wraps far). Force balance <span class="pill '+bp+'">'+bt+'</span>. Sweet-spot a<sub>e</sub> for whole-tooth engagement: '+sweetTxt+(r.nearest?'; nearest to yours <b>'+r.nearest.ae.toFixed(2)+' mm</b>':'')+'. More helix → more wrap → sweet spot moves to lower a<sub>e</sub>.';
+  verdict(r);
   draw(r); drawFront(r); drawAebar(r); drawPT();
+}
+
+// ===================== BINDING LIMIT VERDICT =====================
+// Power & torque share one spindle envelope, so they are ONE limit (torque-limited below base speed, power-limited above).
+// Deflection and chip load are the other two. Forces/torque/power/deflection all scale linearly with a_p, so the safe a_p
+// before a hard limit binds = a_p / (worst spindle|deflection utilisation). Chip load (h_ex) is f_z-driven, not a_p-driven.
+function verdict(r){
+  const KW=+$('mKW').value, NM=+$('mNm').value, n0=r.rpm;
+  const dLim=+$('dLim').value||0, hLim=+$('hLim').value||0;
+  let utilSp=null, spLabel='power';
+  if(KW>0&&NM>0&&n0>0){
+    const nb=9550*KW/NM;                       // base / corner speed
+    const capP=(n0<=nb)? NM*n0/9550 : KW;      // kW available @100% duty at this rpm
+    utilSp=(r.power/1000)/capP;
+    spLabel=(n0<nb)?'torque':'power';
+  }
+  const dum=r.delta*1000;                       // tip deflection µm
+  const utilDef=dLim>0? dum/dLim : null;
+  const utilChip=hLim>0? r.hmax/hLim : null;    // h_ex vs material/tool max chip
+  const items=[
+    {key:'sp',  name:'Spindle'+(utilSp!=null?' ('+spLabel+')':''), util:utilSp},
+    {key:'def', name:'Deflection', util:utilDef},
+    {key:'chip',name:'Chip load',  util:utilChip}
+  ];
+  const valid=items.filter(i=>i.util!=null&&isFinite(i.util));
+  const binding=valid.length? valid.reduce((a,b)=>b.util>a.util?b:a):null;
+  let html='';
+  if(binding){
+    const u=binding.util, cls=u<=0.8?'g':(u<=1?'a':'b');
+    const txt=u<=0.8?'headroom':(u<=1?'near limit':'OVER limit');
+    const extra=u<=1? Math.round((1-u)*100)+'% to spare':Math.round((u-1)*100)+'% over';
+    html+='<div class="vhead"><span class="pill '+cls+'">'+binding.name.replace(/ \(.*/,'')+' '+txt+'</span><span class="vextra">'+extra+'</span></div>';
+  }
+  for(const it of items) html+=barRow(it.name,it.util,binding&&binding.key===it.key);
+  $('verdictBox').innerHTML=html;
+  // safe a_p before a hard (a_p-scaled) limit binds
+  const hard=[];
+  if(utilSp!=null) hard.push({u:utilSp,name:'spindle '+spLabel});
+  if(utilDef!=null) hard.push({u:utilDef,name:'deflection'});
+  let apMax=null, note='';
+  if(hard.length){
+    const worst=hard.reduce((a,b)=>b.u>a.u?b:a);
+    apMax=worst.u>0? r.ap/worst.u : Infinity;
+    note='Max a<sub>p</sub> &asymp; <b>'+(isFinite(apMax)?apMax.toFixed(2):'&mdash;')+' mm</b> before '+worst.name+' binds (now '+r.ap.toFixed(2)+' mm). ';
+  }
+  if(utilChip!=null&&utilChip>1) note+='Chip load over max &mdash; lower f<sub>z</sub> (more a_p will not change h<sub>ex</sub>). ';
+  note+='Budgets are seeds: set &delta; to your tolerance and h<sub>ex</sub> to the tool/material max, then calibrate from your cuts.';
+  $('verdictNote').innerHTML=note;
+  if(typeof window!=='undefined') window.__verdict={utilSp,utilDef,utilChip,apMax,binding:binding?binding.key:null};
+}
+function barRow(name,util,isBind){
+  let col='#ccc',w=0,pc='—';
+  if(util!=null&&isFinite(util)){w=Math.min(100,util*100);col=util<=0.8?'var(--good)':(util<=1?'var(--warn)':'var(--bad)');pc=Math.round(util*100)+'%';}
+  return '<div class="vrow"><span class="nm'+(isBind?' bind':'')+'">'+name+'</span><span class="vbar"><i style="width:'+w+'%;background:'+col+'"></i></span><span class="pc">'+pc+'</span></div>';
 }
 
 // ===================== TOP VIEW (polar) =====================
