@@ -34,8 +34,8 @@
   .seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
   .seg button{flex:1;background:#fff;border:0;color:var(--dim);padding:7px 4px;font-size:12px;cursor:pointer;font-weight:700}
   .seg button.on{background:var(--accent);color:#1a1a1a}
-  .matbtn{display:flex;gap:8px;margin-bottom:6px}
-  .matbtn button{flex:1;background:#fff;border:1px solid var(--line);color:var(--txt);padding:9px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700}
+  .matbtn{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+  .matbtn button{min-width:0;background:#fff;border:1px solid var(--line);color:var(--txt);padding:9px 6px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;line-height:1.15;text-align:center}
   .matbtn button.on{border-color:var(--accent);background:#fffdf2;box-shadow:0 0 0 1px var(--accent) inset}
   .sllbl{display:flex;justify-content:space-between;align-items:baseline}
   .sllbl b{color:var(--txt);font:13px monospace}
