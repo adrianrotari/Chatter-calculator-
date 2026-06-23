@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trochoidal milling — CHATTER.CALC</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{--accent:#f5c518;--bg:#fafafa;--panel:#fff;--panel2:#f4f4f4;--line:#e0e0e0;--txt:#1a1a1a;--dim:#777;--good:#2e9e3f;--warn:#c98a00;--bad:#d62828;--blue:#1167b1}
+  html,body{background:var(--bg);color:var(--txt);font-family:'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  header{padding:12px 16px;border-bottom:2px solid var(--accent);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;max-width:1180px;margin:0 auto}
+  .back{display:inline-block;font:800 14px Helvetica,Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase;text-decoration:none;color:#1a1a1a;background:#f5c518;border:1px solid #d9a900;border-radius:8px;padding:10px 16px}
+  .brand{font-size:21px;font-weight:900;letter-spacing:-.4px}.brand b{color:var(--accent)}
+  .sub{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+  .calcbar{max-width:1180px;margin:0 auto;padding:11px 14px 0;display:flex;gap:24px;flex-wrap:wrap}
+  .calcgrp{display:flex;flex-direction:column;gap:6px}.calcgrp .glab{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+  .chip.on{border-color:var(--accent);background:#fffdf2;box-shadow:0 0 0 1px var(--accent) inset}
+  .chip.soon{color:#b0b0b0;cursor:default;border-style:dashed}
+  .wrap{display:grid;grid-template-columns:340px 1fr;gap:14px;padding:14px;align-items:start;max-width:1180px;margin:0 auto}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:13px 14px;margin-bottom:14px}
+  .card h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:0 0 10px;font-weight:700}
+  .card h2.mt{margin-top:14px}
+  label{display:block;font-size:12px;color:var(--dim);margin:9px 0 3px;font-weight:700}
+  input[type=number],select{width:100%;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:6px 8px;font:13px monospace}
+  select{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .sllbl{display:flex;justify-content:space-between;align-items:baseline}.sllbl b{color:var(--txt);font:13px monospace}
+  .res{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px;padding:3px 0;border-bottom:1px solid #f0f0f0}
+  .res span:first-child{color:var(--dim)}.res span:last-child{font-family:monospace;text-align:right;font-weight:600}
+  .res.big span:last-child{font-size:15px}
+  .recbtn{width:100%;margin-top:10px;background:var(--blue);color:#fff;border:0;border-radius:6px;padding:10px;font-size:13px;font-weight:800;cursor:pointer}
+  .recnote{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.55;background:var(--panel2);border-radius:5px;padding:7px 9px;display:none}.recnote.show{display:block}.recnote b{color:var(--txt);font-family:monospace}
+  .note{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.55}.note b{color:var(--txt)}
+  .hbrow{display:flex;align-items:baseline;justify-content:space-between;margin-top:9px}.hbrow b{color:var(--txt);font:13px monospace}
+  #trochSvg{width:100%;max-width:520px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">&lsaquo; All apps</a>
+  <div class="brand">CHATTER<b>.</b>CALC</div>
+  <span class="sub">Trochoidal milling &mdash; small radial bite, deep slots</span>
+</header>
+<nav class="calcbar">
+  <div class="calcgrp">
+    <span class="glab">Milling / hole making</span>
+    <div class="chips">
+      <a class="chip" href="chip-force-polar.html">Power / torque</a>
+      <a class="chip" href="chip-force-polar.html">Q &amp; h<sub>ex</sub></a>
+      <span class="chip on">Trochoidal</span>
+      <span class="chip soon">Helical / circular</span>
+      <span class="chip soon">Pocket</span>
+      <span class="chip soon">Feed in corner</span>
+      <span class="chip soon">Rest milling</span>
+      <span class="chip soon">Cusp 5-axis</span>
+      <span class="chip soon">Turn milling</span>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div>
+    <div class="card">
+      <h2>Material &amp; tool</h2>
+      <select id="matSel" onchange="onMat()"></select>
+      <div class="hbrow"><label>Hardness</label><b id="hbOut">&mdash; HB</b></div>
+      <input type="range" id="hb" min="80" max="650" step="5" value="200" oninput="run()">
+      <div class="row">
+        <div><label>Tool &Oslash; D<sub>c</sub> (mm)</label><input type="number" id="Dc" value="10" step="0.5" oninput="run()"></div>
+        <div><label>Teeth z</label><input type="number" id="z" value="4" step="1" oninput="run()"></div>
+      </div>
+      <button class="recbtn" id="recBtn" onclick="recommendCD()">&#9733; Recommend f<sub>z</sub> &amp; v<sub>c</sub></button>
+      <div class="recnote" id="recNote"></div>
+    </div>
+    <div class="card">
+      <h2>Trochoidal cut</h2>
+      <div class="row">
+        <div><label>Channel width W<sub>j</sub> (mm)</label><input type="number" id="Wj" value="16" step="0.5" oninput="run()"></div>
+        <div><label>Axial a<sub>p</sub> (mm)</label><input type="number" id="ap" value="20" step="0.5" oninput="run()"></div>
+      </div>
+      <div class="sllbl" style="margin-top:9px"><label style="margin:0">Radial bite a<sub>e</sub> (mm) <span id="aeOut" class="note" style="margin:0"></span></label><b id="aeB">1.0</b></div>
+      <input type="range" id="ae" min="0.1" max="10" step="0.1" value="1" oninput="run()">
+      <div class="row" style="margin-top:6px">
+        <div><label>Advance / loop S<sub>t</sub> (mm)</label><input type="number" id="St" value="1" step="0.1" oninput="run()"></div>
+        <div><label>Target h<sub>ex</sub> (mm)</label><input type="number" id="hexT" value="0.08" step="0.01" oninput="run()"></div>
+      </div>
+      <div class="row">
+        <div><label>Feed/tooth f<sub>z</sub> (mm)</label><input type="number" id="fz" value="0.05" step="0.005" oninput="run()"></div>
+        <div><label>Spindle n (rpm)</label><input type="number" id="n" value="3000" step="50" oninput="run()"></div>
+      </div>
+      <div class="note">Trochoidal = small a<sub>e</sub> with deep a<sub>p</sub> and looping path. The small bite thins the chip, so raise f<sub>z</sub> to hold h<sub>ex</sub>.</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Engagement &amp; chip</h2>
+      <div class="res"><span>Radial engagement a<sub>e</sub>/D<sub>c</sub></span><span id="rAeD"></span></div>
+      <div class="res"><span>Engagement angle &kappa;<sub>r</sub></span><span id="rKr"></span></div>
+      <div class="res"><span>Chip thinning h<sub>ex</sub>/f<sub>z</sub></span><span id="rRct"></span></div>
+      <div class="res big"><span>Max chip h<sub>ex</sub></span><span id="rHex"></span></div>
+      <div class="res big"><span>f<sub>z</sub> to hold target h<sub>ex</sub></span><span id="rFzHold"></span></div>
+      <h2 class="mt">Loop &amp; rate</h2>
+      <div class="res"><span>Loop side span W<sub>j</sub>&minus;D<sub>c</sub></span><span id="rSide"></span></div>
+      <div class="res"><span>Tool feed V<sub>f</sub></span><span id="rVfTool"></span></div>
+      <div class="res"><span>Net forward feed V<sub>f,net</sub></span><span id="rVfNet"></span></div>
+      <div class="res"><span>MRR (net, clears channel)</span><span id="rMrrNet"></span></div>
+      <div class="res"><span>MRR (instantaneous in cut)</span><span id="rMrrInst"></span></div>
+      <div class="res"><span>Time / 100 mm channel</span><span id="rT100"></span></div>
+    </div>
+    <div class="card">
+      <h2>Trochoidal path &mdash; top view</h2>
+      <div id="trochSvg"></div>
+      <div class="note">Tool loops side to side across the channel and steps forward S<sub>t</sub> each loop. Only the leading edge cuts a<sub>e</sub> deep.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- cutting-data engine (CoroMill Dura, versatile 1-2xD) ----
+const CUTDATA=(function(){
+  const DC=[1,2,3,4,6,6.35,8,9.525,10,12,12.7,14,15.875,16,19.05,20,25,25.4];
+  const FZ={F01:[0.008,0.012,0.016,0.021,0.029,0.030,0.037,0.044,0.046,0.054,0.057,0.062,0.070,0.071,0.083,0.087,0.108,0.110],
+    F02:[0.008,0.011,0.015,0.018,0.025,0.026,0.032,0.037,0.038,0.045,0.047,0.052,0.058,0.058,0.069,0.072,0.089,0.090],
+    F03:[0.020,0.027,0.033,0.040,0.053,0.055,0.066,0.076,0.079,0.092,0.097,0.105,0.118,0.118,0.138,0.145,0.177,0.180],
+    F04:[0.020,0.025,0.029,0.034,0.044,0.045,0.053,0.060,0.062,0.072,0.075,0.081,0.090,0.091,0.105,0.110,0.133,0.135],
+    F05:[0.020,0.023,0.027,0.030,0.037,0.039,0.044,0.050,0.051,0.058,0.061,0.065,0.072,0.072,0.083,0.086,0.104,0.105],
+    F06:[0.022,0.028,0.035,0.041,0.054,0.057,0.067,0.077,0.080,0.093,0.098,0.106,0.118,0.119,0.139,0.145,0.177,0.180],
+    F07:[0.020,0.025,0.031,0.036,0.047,0.049,0.057,0.065,0.068,0.079,0.082,0.089,0.099,0.100,0.116,0.121,0.148,0.150]};
+  const CASES={A:{ae:1.0},B:{ae:0.5},C:{ae:0.1}};
+  const ROWS=[
+    {iso:'P',key:'unalloyed',cmc:'01.2',desc:'Unalloyed steel',hb:190,A:['F01',145],B:['F04',175],C:['F06',290]},
+    {iso:'P',key:'low',cmc:'02.2',desc:'Low-alloyed steel',hb:240,A:['F01',110],B:['F04',135],C:['F06',230]},
+    {iso:'P',key:'high',cmc:'03.21',desc:'High-alloyed steel',hb:380,A:['F02',80],B:['F05',100],C:['F06',200]},
+    {iso:'M',key:'ferritic',cmc:'05.11',desc:'Ferritic/martensitic stainless',hb:200,A:['F02',80],B:['F05',90],C:['F04',150]},
+    {iso:'M',key:'austenitic',cmc:'05.21',desc:'Austenitic stainless',hb:200,A:['F01',70],B:['F04',80],C:['F06',120]},
+    {iso:'M',key:'duplex',cmc:'05.51',desc:'Duplex stainless',hb:260,A:['F02',60],B:['F05',70],C:['F04',90]},
+    {iso:'K',key:'grey',cmc:'08.2',desc:'Grey cast iron',hb:180,A:['F01',150],B:['F04',180],C:['F06',250]},
+    {iso:'K',key:'nodular',cmc:'09.2',desc:'Nodular cast iron',hb:215,A:['F01',160],B:['F04',190],C:['F06',270]},
+    {iso:'N',key:'alu',cmc:'30.12',desc:'Aluminium alloy',hb:100,A:['F03',680],B:['F03',835],C:['F03',950]},
+    {iso:'S',key:'nickel',cmc:'20.22',desc:'Nickel-based superalloy',hb:350,A:['F02',25],B:['F05',30],C:['F07',40]},
+    {iso:'S',key:'titanium',cmc:'23.22',desc:'Titanium-based alloy',hb:320,A:['F02',40],B:['F05',50],C:['F07',70]}];
+  function fzAt(Fc,Dc){const a=FZ[Fc];if(!a)return null;if(Dc<=DC[0])return a[0];if(Dc>=DC[DC.length-1])return a[a.length-1];
+    for(let i=0;i<DC.length-1;i++){if(Dc>=DC[i]&&Dc<=DC[i+1]){const t=(Dc-DC[i])/(DC[i+1]-DC[i]);return +(a[i]+t*(a[i+1]-a[i])).toFixed(4);}}return a[a.length-1];}
+  function pickCase(ae,Dc){const r=Dc>0?ae/Dc:1;let b='A',d=9;for(const c of['A','B','C']){const dd=Math.abs(r-CASES[c].ae);if(dd<d){d=dd;b=c;}}return b;}
+  function rowForLib(iso,name){const n=(name||'').toLowerCase(),has=(...k)=>k.some(x=>n.includes(x)),bk=k=>ROWS.find(r=>r.key===k);
+    if(iso==='P'){if(has('high','tool'))return bk('high');if(has('low'))return bk('low');return bk('unalloyed');}
+    if(iso==='M'){if(has('duplex','precip'))return bk('duplex');if(has('austenit'))return bk('austenitic');return bk('ferritic');}
+    if(iso==='K'){if(has('nodular'))return bk('nodular');return bk('grey');}
+    if(iso==='N')return bk('alu'); if(iso==='S'){if(has('titan'))return bk('titanium');return bk('nickel');}
+    if(iso==='H')return bk('high'); return ROWS.find(r=>r.iso===iso)||null;}
+  function recommend(o){const row=rowForLib(o.iso,o.name);if(!row)return null;const c=pickCase(o.ae,o.Dc);
+    const Fc=row[c][0],vcB=row[c][1],fz=fzAt(Fc,o.Dc);const f=Math.max(0.4,Math.min(1.6,Math.pow(row.hb/(o.hb||row.hb),0.6)));
+    return{desc:row.desc,cmc:row.cmc,hbRef:row.hb,caseUsed:c,Fclass:Fc,fz:fz,vc:Math.round(vcB*f)};}
+  return{rowForLib,recommend,ROWS};
+})();
+
+// ---- trochoidal math ----
+function troch(o){
+  const Dc=Math.max(0.1,o.Dc),z=Math.max(1,Math.round(o.z)),ae=Math.max(0,Math.min(o.ae,Dc)),Wj=Math.max(Dc,o.Wj),ap=Math.max(0,o.ap),fz=Math.max(0,o.fz),n=Math.max(0,o.n),St=Math.max(0.001,o.St);
+  const aeD=ae/Dc,c=1-2*aeD,RCT=Math.sqrt(Math.max(0,1-c*c)),kr=Math.acos(Math.max(-1,Math.min(1,c))),hex=fz*RCT;
+  const fzHold=(o.hexTarget&&RCT>1e-6)?o.hexTarget/RCT:null,side=Math.max(0,Wj-Dc),vfTool=fz*z*n,loopLen=Math.PI*side+2*St;
+  const vfNet=loopLen>0?St*vfTool/loopLen:vfTool,mrrNet=Wj*ap*vfNet/1000,mrrInst=ae*ap*vfTool/1000,tPer100=vfNet>0?100/vfNet:0;
+  return{Dc,z,ae,aeD,Wj,ap,fz,n,St,RCT,kr,krDeg:kr*180/Math.PI,hex,fzHold,side,vfTool,loopLen,vfNet,mrrNet,mrrInst,tPer100};
+}
+
+// ---- material library (fetch with fallback) ----
+let MAT={}, mat=null;
+const FALLBACK=[{no:'06',iso:'P',name:'Low-alloyed steel',kc11:1775,mc:0.24,hb:200},
+  {no:'14',iso:'M',name:'Stainless austenitic',kc11:2150,mc:0.20,hb:200},
+  {no:'15',iso:'K',name:'Grey cast iron',kc11:1150,mc:0.20,hb:200},
+  {no:'21',iso:'N',name:'Aluminium',kc11:700,mc:0.25,hb:100},
+  {no:'33',iso:'S',name:'Nickel-based HRSA',kc11:3300,mc:0.24,hb:350},
+  {no:'37',iso:'S',name:'Titanium Ti-6Al-4V',kc11:2110,mc:0.22,hb:320}];
+function fillMat(list){const sel=document.getElementById('matSel');sel.innerHTML='';let og=null,cur=null;
+  list.forEach(m=>{MAT[m.no]={iso:m.iso,name:m.name,kc11:m.kc11,mc:m.mc,hb:m.hb};
+    if(m.iso!==cur){cur=m.iso;og=document.createElement('optgroup');og.label=m.iso;sel.appendChild(og);}
+    const op=document.createElement('option');op.value=m.no;op.textContent='No.'+m.no+'  '+m.name;og.appendChild(op);});
+  mat=list[0]?list[0].no:null; if(mat){sel.value=mat;onMat(true);} }
+function loadMats(){
+  fetch('materials_library.json').then(r=>r.json()).then(d=>{
+    const list=[]; d.iso_groups.forEach(g=>g.materials.forEach(m=>list.push({no:m.no,iso:g.iso,name:m.name,kc11:m.kc1_1_Nmm2,mc:m.mc,hb:m.Kr?null:null,hbDef:(CUTDATA.rowForLib(g.iso,m.name)||{}).hb})));
+    list.forEach(m=>m.hb=m.hbDef||200); fillMat(list);
+  }).catch(()=>fillMat(FALLBACK));
+}
+function onMat(keepHb){const m=MAT[document.getElementById('matSel').value]; if(!m)return; mat=document.getElementById('matSel').value;
+  const ref=CUTDATA.rowForLib(m.iso,m.name); const hb=ref?ref.hb:(m.hb||200);
+  if(!keepHb)document.getElementById('hb').value=hb; run();}
+
+function $(id){return document.getElementById(id);}
+function recommendCD(){const m=MAT[mat],note=$('recNote');if(!m)return;
+  const Dc=+$('Dc').value,ae=+$('ae').value,hb=+$('hb').value;
+  const r=CUTDATA.recommend({iso:m.iso,name:m.name,Dc:Dc,ae:ae,hb:hb});
+  if(!r){note.className='recnote show';note.innerHTML='No CoroMill Dura row for this material.';return;}
+  $('fz').value=r.fz;$('n').value=Math.round(r.vc*1000/(Math.PI*Dc));run();
+  note.className='recnote show';
+  note.innerHTML='Based on <b>CoroMill Dura</b>: f<sub>z</sub> <b>'+r.fz+'</b> mm/tooth, v<sub>c</sub> <b>'+r.vc+'</b> m/min (n '+Math.round(r.vc*1000/(Math.PI*Dc))+' rpm). '+r.desc+', CMC '+r.cmc+', case '+r.caseUsed+', class '+r.Fclass+'. Table '+r.hbRef+' HB vs '+hb+'.';}
+
+function fmt(x,d=0){return (+x).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});}
+function run(){
+  $('ae').max=$('Dc').value; $('aeB').textContent=(+$('ae').value).toFixed(1);
+  $('aeOut').textContent='('+((+$('ae').value)/(+$('Dc').value||1)*100).toFixed(0)+'% Ø)';
+  if($('hbOut'))$('hbOut').textContent=(+$('hb').value)+' HB';
+  const r=troch({Dc:+$('Dc').value,z:+$('z').value,Wj:+$('Wj').value,ae:+$('ae').value,ap:+$('ap').value,St:+$('St').value,fz:+$('fz').value,n:+$('n').value,hexTarget:+$('hexT').value});
+  $('rAeD').textContent=(r.aeD*100).toFixed(0)+' %';
+  $('rKr').textContent=r.krDeg.toFixed(0)+'°';
+  $('rRct').textContent=r.RCT.toFixed(2);
+  $('rHex').innerHTML='<b>'+r.hex.toFixed(4)+' mm</b>';
+  $('rFzHold').innerHTML=r.fzHold?('<b>'+r.fzHold.toFixed(3)+' mm</b>'):'—';
+  $('rSide').textContent=fmt(r.side,1)+' mm';
+  $('rVfTool').textContent=fmt(r.vfTool)+' mm/min';
+  $('rVfNet').textContent=fmt(r.vfNet)+' mm/min';
+  $('rMrrNet').textContent=fmt(r.mrrNet,2)+' cm³/min';
+  $('rMrrInst').textContent=fmt(r.mrrInst,2)+' cm³/min';
+  $('rT100').textContent=fmt(r.tPer100,2)+' min';
+  drawTroch(r);
+}
+function drawTroch(r){
+  const W=520,H=190,L=20,R=W-20, midY=H/2, scale=Math.min(6,(R-L)/40);
+  const Dc=r.Dc, chanH=Math.min(120,Math.max(30,r.Wj*scale)), toolR=Dc*scale/2;
+  const top=midY-chanH/2, bot=midY+chanH/2, side=(r.side)*scale;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Trochoidal path top view">`;
+  s+=`<rect x="${L}" y="${top}" width="${R-L}" height="${chanH}" fill="#f1f2f4" stroke="#d8dade"/>`;
+  s+=`<text x="${L+4}" y="${top-4}" font-size="11" fill="#777">channel W_j ${r.Wj} mm</text>`;
+  // loop path: sine across (side) advancing
+  const stepPx=Math.max(8,r.St*scale), amp=side/2, cy=midY; let d='M';
+  for(let x=L+toolR;x<=R-toolR;x+=2){ const ph=(x-L)/Math.max(1,stepPx)*Math.PI; const y=cy+amp*Math.sin(ph); d+=(d==='M'?'':' L')+x.toFixed(1)+','+y.toFixed(1);}
+  s+=`<path d="${d}" fill="none" stroke="#1167b1" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+  // tool circles at a few loop positions
+  for(let k=0;k<4;k++){ const x=L+toolR+k*stepPx*2; if(x>R-toolR)break; const ph=(x-L)/Math.max(1,stepPx)*Math.PI; const y=cy+amp*Math.sin(ph);
+    s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${toolR.toFixed(1)}" fill="#fff" fill-opacity="0.5" stroke="#aab0b6" stroke-width="1.3"/>`;
+    if(k===1){ s+=`<path d="M${x.toFixed(1)},${(y-toolR).toFixed(1)} A${toolR.toFixed(1)},${toolR.toFixed(1)} 0 0 1 ${x.toFixed(1)},${(y+toolR).toFixed(1)}" fill="none" stroke="#c98a00" stroke-width="3"/>`;}
+  }
+  s+=`<text x="${R-4}" y="${bot+14}" font-size="11" text-anchor="end" fill="#777">a_e bite ${r.ae.toFixed(1)} mm · S_t ${r.St} mm/loop</text>`;
+  return $('trochSvg').innerHTML=s+`</svg>`;
+}
+loadMats();
+</script>
+</body>
+</html>
