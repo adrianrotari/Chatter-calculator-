@@ -90,6 +90,22 @@
   .slbn{width:78px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;font:13px monospace;text-align:right;color:var(--txt)}
   .slbn:focus{outline:none;border-color:var(--accent)}
   .hint{font-size:11px;color:var(--dim);font-weight:400}
+  .calcbar{max-width:1320px;margin:0 auto;padding:11px 14px 0;display:flex;gap:24px;flex-wrap:wrap}
+  .calcgrp{display:flex;flex-direction:column;gap:6px}
+  .calcgrp .glab{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:700}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer}
+  .chip.on{border-color:var(--accent);background:#fffdf2;box-shadow:0 0 0 1px var(--accent) inset}
+  .chip.soon{color:#b0b0b0;cursor:default;border-style:dashed}
+  .recbtn{width:100%;margin-top:10px;background:#1167b1;color:#fff;border:0;border-radius:6px;padding:10px;font-size:13px;font-weight:800;letter-spacing:.3px;cursor:pointer}
+  .recbtn:hover{background:#0d558f} .recbtn:active{transform:translateY(1px)}
+  .recnote{font-size:11.5px;color:var(--dim);margin-top:7px;line-height:1.55;background:var(--panel2);border-radius:5px;padding:7px 9px;display:none}
+  .recnote.show{display:block} .recnote b{color:var(--txt);font-family:monospace}
+  .matref,.startvals{display:none}
+  @keyframes recblink{0%,100%{opacity:1}50%{opacity:.5}}
+  .recbtn.stale{background:#c98a00;animation:recblink 1s ease-in-out infinite}
+  .hbrow{display:flex;align-items:baseline;justify-content:space-between;margin-top:9px}
+  .hbrow label{margin:0} .hbrow b{color:var(--txt);font:13px monospace}
 </style>
 </head>
 <body>
@@ -99,12 +115,39 @@
   <span class="sub">Chip &middot; Force &middot; Polar &nbsp;&mdash;&nbsp; carbide, Ti6Al4V &amp; Inconel 718-AG</span>
 </header>
 
+<nav class="calcbar">
+  <div class="calcgrp">
+    <span class="glab">Milling / hole making</span>
+    <div class="chips">
+      <button class="chip on" data-calc="pt" onclick="setCalc('pt')">Power / torque</button>
+      <button class="chip on" data-calc="qhex" onclick="setCalc('qhex')">Q &amp; h<sub>ex</sub></button>
+      <button class="chip soon">Trochoidal</button>
+      <button class="chip soon">Helical / circular</button>
+      <button class="chip soon">Pocket</button>
+      <button class="chip soon">Feed in corner</button>
+      <button class="chip soon">Rest milling</button>
+      <button class="chip soon">Cusp 5-axis</button>
+      <button class="chip soon">Turn milling</button>
+    </div>
+  </div>
+  <div class="calcgrp">
+    <span class="glab">Turning</span>
+    <div class="chips">
+      <button class="chip soon">SCL</button>
+      <button class="chip soon">Grooving</button>
+      <button class="chip soon">Trochoidal turn</button>
+    </div>
+  </div>
+</nav>
+
 <div class="wrap">
 
   <!-- ============ INPUTS ============ -->
   <div class="card">
     <h2>Material</h2>
     <select id="matSel" class="matsel" onchange="setMat(this.value)"></select>
+    <div class="hbrow"><label>Hardness <span class="hint">(adjust)</span></label><b id="hbOut">&mdash; HB</b></div>
+    <input type="range" id="hb" min="80" max="650" step="5" value="350" oninput="onHb()">
     <div class="matref" id="matref"></div>
     <div class="startvals" id="startVals"></div>
 
@@ -133,6 +176,9 @@
     <input type="range" id="fz" min="0.005" max="0.25" step="0.005" value="0.04" oninput="setFz(this.value)">
 
     <div class="hex"><span class="lab">h<sub>ex</sub> max chip</span><span class="val" id="hexHead">—</span></div>
+
+    <button class="recbtn" id="recBtn" onclick="recommendCD()">&#9733; Recommend f<sub>z</sub> &amp; v<sub>c</sub></button>
+    <div class="recnote" id="recNote"></div>
 
     <h2 class="mt">Speeds &amp; holder</h2>
     <div class="row">
@@ -172,30 +218,32 @@
 
   <!-- ============ DIAGRAMS ============ -->
   <div class="card">
-    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
-      <div>
-        <h2>Chip thickness &mdash; top view</h2>
-        <canvas id="polar" width="460" height="460"></canvas>
-      </div>
-      <div style="flex:1;min-width:190px">
+    <div class="views">
+      <div class="col" style="flex:1 1 240px;min-width:220px">
+        <h2>1 &middot; Engagement &mdash; top (z teeth)</h2>
+        <div id="polarSvg"></div>
         <div class="ctl">
-          <button id="playBtn" onclick="togglePlay()">&#9654; Rotate</button>
+          <button id="playBtn" onclick="togglePlay()">&#9654; Rotate tooth</button>
           <span style="font-size:12px;color:var(--dim)">&theta; <b id="thOut" style="font-family:monospace;color:var(--txt)">0&deg;</b></span>
-          <input type="range" id="theta" min="0" max="360" step="1" value="20" oninput="manualTheta()" style="flex:1;min-width:80px">
+          <input type="range" id="theta" min="0" max="360" step="1" value="20" oninput="manualTheta()" style="flex:1;min-width:70px">
         </div>
-        <div class="legend">
-          <span><i style="background:#2b8de0"></i>chip h=f<sub>z</sub>&middot;sin&phi;</span>
-          <span><i style="background:#eef0f2;border:1px solid #c4c4c4"></i>tool body</span>
-          <span><i style="background:#e8a400"></i>engaged tooth</span>
-          <span><i style="background:#d62828"></i>resultant</span>
-        </div>
-        <div class="note" style="margin-top:8px">Front view maps the tool loads: <b style="color:#2b8de0">F&perp;</b> radial (bends the tool), <b style="color:#2e9e3f">F<sub>a</sub></b> axial (pull-out), <b style="color:#d62828">F</b> resultant, <b style="color:#b9860b">F<sub>t</sub></b> tangential/tooth, plus the cutting edges in cut (C1&hellip;Cn).</div>
+        <canvas id="aebar" width="760" height="34"></canvas>
+      </div>
+      <div class="col" style="flex:1 1 200px;min-width:180px">
+        <div id="cutGeoHost"></div>
       </div>
     </div>
-
-    <h2 class="mt">Tool bending &amp; forces &mdash; front view</h2>
-    <canvas id="front" width="760" height="480"></canvas>
-    <canvas id="aebar" width="760" height="34"></canvas>
+    <div class="views" style="margin-top:10px">
+      <div class="col" style="flex:1 1 230px;min-width:200px">
+        <h2>2 &middot; Forces on the tool</h2>
+        <div id="forceToolSvg"></div>
+      </div>
+      <div class="col" style="flex:1 1 190px;min-width:170px">
+        <h2>3 &middot; Force magnitudes</h2>
+        <div id="forceBarsSvg"></div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:8px"><b style="color:#c98a00">F<sub>t</sub></b> tangential, <b style="color:#2b8de0">F<sub>r</sub></b> radial (bends tool), <b style="color:#2e9e3f">F<sub>a</sub></b> axial (pull-out), <b style="color:#d62828">F&#8869;</b> resultant. Deflection &delta; drawn &times;20. Panels 2&ndash;3 repeat for every operation.</div>
   </div>
 
   <!-- ============ RESULTS ============ -->
@@ -208,7 +256,7 @@
     </div>
     <div class="note" id="verdictNote"></div>
 
-    <h2 class="mt">Cut geometry</h2>
+    <div id="cutGeoBlock"><h2 class="mt">Cut geometry</h2>
     <div class="res"><span>Engagement &phi;<sub>c</sub></span><span id="rPhc"></span></div>
     <div class="res"><span>Entry &rarr; exit</span><span id="rArc"></span></div>
     <div class="res"><span>Mean chip h<sub>m</sub></span><span id="rHm"></span></div>
@@ -216,7 +264,7 @@
     <div class="res"><span>Chip thinning h<sub>ex</sub>/f<sub>z</sub></span><span id="rThin"></span></div>
     <div class="res"><span>Teeth in cut &mdash; radial z<sub>i</sub></span><span id="rZi"></span></div>
     <div class="res"><span>Edges in cut &mdash; total (+ helix)</span><span id="rZtot"></span></div>
-    <div class="res"><span>Time in cut / tooth t<sub>i</sub></span><span id="rTi"></span></div>
+    <div class="res"><span>Time in cut / tooth t<sub>i</sub></span><span id="rTi"></span></div></div>
 
     <h2 class="mt">Force</h2>
     <div class="res"><span>Peak F<sub>t</sub> / tooth</span><span id="rFt"></span></div>
@@ -266,6 +314,199 @@
 </div>
 
 <script>
+// ===== Sandvik CoroMill Dura cutting-data engine (source: SRT_E, versatile 1-2xD) =====
+(function(root){
+  const DC=[1,2,3,4,6,6.35,8,9.525,10,12,12.7,14,15.875,16,19.05,20,25,25.4];
+  const FZ={
+    F01:[0.008,0.012,0.016,0.021,0.029,0.030,0.037,0.044,0.046,0.054,0.057,0.062,0.070,0.071,0.083,0.087,0.108,0.110],
+    F02:[0.008,0.011,0.015,0.018,0.025,0.026,0.032,0.037,0.038,0.045,0.047,0.052,0.058,0.058,0.069,0.072,0.089,0.090],
+    F03:[0.020,0.027,0.033,0.040,0.053,0.055,0.066,0.076,0.079,0.092,0.097,0.105,0.118,0.118,0.138,0.145,0.177,0.180],
+    F04:[0.020,0.025,0.029,0.034,0.044,0.045,0.053,0.060,0.062,0.072,0.075,0.081,0.090,0.091,0.105,0.110,0.133,0.135],
+    F05:[0.020,0.023,0.027,0.030,0.037,0.039,0.044,0.050,0.051,0.058,0.061,0.065,0.072,0.072,0.083,0.086,0.104,0.105],
+    F06:[0.022,0.028,0.035,0.041,0.054,0.057,0.067,0.077,0.080,0.093,0.098,0.106,0.118,0.119,0.139,0.145,0.177,0.180],
+    F07:[0.020,0.025,0.031,0.036,0.047,0.049,0.057,0.065,0.068,0.079,0.082,0.089,0.099,0.100,0.116,0.121,0.148,0.150],
+    F08:[0.030,0.038,0.046,0.053,0.069,0.072,0.085,0.096,0.100,0.116,0.121,0.131,0.146,0.147,0.171,0.178,0.217,0.220]
+  };
+  const CASES={A:{ae:1.0,ap:0.5},B:{ae:0.5,ap:1.0},C:{ae:0.1,ap:1.5}};
+  const ROWS=[
+    {iso:'P',key:'unalloyed',cmc:'01.2',desc:'Unalloyed steel',hb:190,A:['F01',145],B:['F04',175],C:['F06',290]},
+    {iso:'P',key:'low',cmc:'02.2',desc:'Low-alloyed steel',hb:240,A:['F01',110],B:['F04',135],C:['F06',230]},
+    {iso:'P',key:'high',cmc:'03.21',desc:'High-alloyed steel',hb:380,A:['F02',80],B:['F05',100],C:['F06',200]},
+    {iso:'M',key:'ferritic',cmc:'05.11',desc:'Ferritic/martensitic stainless',hb:200,A:['F02',80],B:['F05',90],C:['F04',150]},
+    {iso:'M',key:'austenitic',cmc:'05.21',desc:'Austenitic stainless',hb:200,A:['F01',70],B:['F04',80],C:['F06',120]},
+    {iso:'M',key:'duplex',cmc:'05.51',desc:'Duplex stainless',hb:260,A:['F02',60],B:['F05',70],C:['F04',90]},
+    {iso:'K',key:'malleable',cmc:'07.2',desc:'Malleable cast iron',hb:200,A:['F01',150],B:['F04',180],C:['F06',250]},
+    {iso:'K',key:'grey',cmc:'08.2',desc:'Grey cast iron',hb:180,A:['F01',150],B:['F04',180],C:['F06',250]},
+    {iso:'K',key:'nodular',cmc:'09.2',desc:'Nodular cast iron',hb:215,A:['F01',160],B:['F04',190],C:['F06',270]},
+    {iso:'N',key:'alu_soft',cmc:'30.12',desc:'Aluminium alloy (soft)',hb:100,A:['F03',680],B:['F03',835],C:['F09',950]},
+    {iso:'N',key:'alu_cast',cmc:'30.21',desc:'Aluminium alloy (cast)',hb:75,A:['F03',230],B:['F03',305],C:['F09',410]},
+    {iso:'N',key:'alu_hi_si',cmc:'30.42',desc:'Aluminium alloy (high Si)',hb:130,A:['F03',100],B:['F03',130],C:['F09',195]},
+    {iso:'N',key:'copper',cmc:'33.2',desc:'Copper and copper alloys',hb:90,A:['F03',130],B:['F03',170],C:['F09',245]},
+    {iso:'S',key:'nickel',cmc:'20.22',desc:'Nickel-based superalloy',hb:350,A:['F02',25],B:['F05',30],C:['F07',40]},
+    {iso:'S',key:'titanium',cmc:'23.22',desc:'Titanium-based alloy',hb:320,A:['F02',40],B:['F05',50],C:['F07',70]}
+  ];
+  function fzAt(Fc,Dc){let a=FZ[Fc]; if(!a){if(Fc==='F09'){a=FZ.F08.map(v=>+(v*1.25).toFixed(4));}else return null;}
+    if(Dc<=DC[0])return a[0]; if(Dc>=DC[DC.length-1])return a[a.length-1];
+    for(let i=0;i<DC.length-1;i++){if(Dc>=DC[i]&&Dc<=DC[i+1]){const t=(Dc-DC[i])/(DC[i+1]-DC[i]);return +(a[i]+t*(a[i+1]-a[i])).toFixed(4);}}return a[a.length-1];}
+  function pickCase(ae,Dc){const r=Dc>0?ae/Dc:1;let b='A',d=1e9;for(const c of ['A','B','C']){const dd=Math.abs(r-CASES[c].ae);if(dd<d){d=dd;b=c;}}return b;}
+  function vcForHardness(vc,hbRef,hb){if(!hb||!hbRef)return vc;const f=Math.max(0.4,Math.min(1.6,Math.pow(hbRef/hb,0.6)));return Math.round(vc*f);}
+  function byKey(k){return ROWS.find(r=>r.key===k);}
+  function rowForLib(iso,name){const n=(name||'').toLowerCase(),has=(...k)=>k.some(x=>n.includes(x));
+    if(iso==='P'){if(has('high','tool'))return byKey('high');if(has('low'))return byKey('low');return byKey('unalloyed');}
+    if(iso==='M'){if(has('duplex','precip'))return byKey('duplex');if(has('austenit'))return byKey('austenitic');return byKey('ferritic');}
+    if(iso==='K'){if(has('nodular'))return byKey('nodular');if(has('malleable'))return byKey('malleable');return byKey('grey');}
+    if(iso==='N'){if(has('copper','brass'))return byKey('copper');if(has('>12','high si','cast'))return byKey('alu_hi_si');return byKey('alu_soft');}
+    if(iso==='S'){if(has('titan'))return byKey('titanium');return byKey('nickel');}
+    if(iso==='H'){return byKey('high');}
+    return ROWS.find(r=>r.iso===iso)||null;}
+  function recommend(o){const row=o.row||rowForLib(o.iso,o.name);if(!row)return null;const c=pickCase(o.ae,o.Dc);
+    const Fc=row[c][0],vcB=row[c][1],fz=fzAt(Fc,o.Dc),vc=vcForHardness(vcB,row.hb,o.hb||row.hb);
+    return {row:row.key,desc:row.desc,cmc:row.cmc,hbRef:row.hb,caseUsed:c,ae_x:CASES[c].ae,ap_x:CASES[c].ap,Fclass:Fc,fz:fz,vc:vc,vcBase:vcB,approx:Fc==='F09'};}
+  root.CUTDATA={DC,FZ,CASES,ROWS,fzAt,pickCase,vcForHardness,rowForLib,recommend};
+})(window);
+
+// ===== Reusable SVG panels (engagement / deflection / forces) =====
+(function(root){
+  const C={rad:'#2b8de0',ax:'#2e9e3f',tan:'#c98a00',res:'#d62828'};
+  const TXT='var(--dim)', TXT2='#9aa0a6', TXP='var(--txt)', SURF='#ffffff', SURF2='#f1f2f4', LINE='#aab0b6', LINE2='#d8dade';
+  const defs=`<defs>
+    <marker id="aR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.res}"/></marker>
+    <marker id="aB" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.rad}"/></marker>
+    <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.ax}"/></marker>
+    <marker id="aY" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.tan}"/></marker>
+    <marker id="aD" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="${TXT2}"/></marker></defs>`;
+  const r1=n=>Math.round(n), r2=n=>Math.round(n*100)/100;
+  const polar=(cx,cy,R,a)=>[cx+R*Math.cos(a), cy-R*Math.sin(a)];
+  function engagement(o){
+    const W=300,H=250, cx=120,cy=120, R=78;
+    const D=o.D||10, aeD=Math.max(0,Math.min(1,o.aeD!=null?o.aeD:(o.ae/D)));
+    const phst=o.phst||0, phex=o.phex!=null?o.phex:Math.PI, theta=o.theta||0;
+    const wx=cx+R-2*aeD*R;
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Top view of tool engagement">${defs}`;
+    s+=`<rect x="${r1(wx)}" y="${cy-R-6}" width="${r1(W-wx-6)}" height="${2*R+12}" fill="${SURF2}" stroke="${LINE2}"/>`;
+    s+=`<text x="${r1((wx+W-6)/2)}" y="${cy+R+2}" font-size="11" text-anchor="middle" fill="${TXT2}">workpiece</text>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${SURF}" stroke="${LINE}" stroke-width="1.5"/>`;
+    const [ax,ay]=polar(cx,cy,R,phst),[bx,by]=polar(cx,cy,R,phex), large=(phex-phst)>Math.PI?1:0;
+    s+=`<path d="M${r2(ax)},${r2(ay)} A${R},${R} 0 ${large} 0 ${r2(bx)},${r2(by)}" fill="none" stroke="${C.res}" stroke-width="4" stroke-linecap="round"/>`;
+    s+=`<path d="M${cx-26},${cy-16} A30 30 0 1 1 ${cx-26},${cy+16}" fill="none" stroke="${TXT2}" stroke-width="1.3" marker-end="url(#aD)"/>`;
+    s+=`<text x="${cx}" y="${cy+4}" font-size="11" text-anchor="middle" fill="${TXT2}">n</text>`;
+    const [tx,ty]=polar(cx,cy,R,theta);
+    s+=`<circle cx="${r2(tx)}" cy="${r2(ty)}" r="4" fill="${C.tan}"/>`;
+    if(o.iFx!=null && (o.iFx||o.iFy)){ const fs=(0.8*R)/Math.max(o.peakR||1,1), fx=cx+o.iFx*fs, fy=cy-o.iFy*fs;
+      s+=`<line x1="${cx}" y1="${cy}" x2="${r2(fx)}" y2="${r2(fy)}" stroke="${C.res}" stroke-width="2" marker-end="url(#aR)"/>`;
+      s+=`<text x="${r2(fx)+4}" y="${r2(fy)}" font-size="10.5" fill="${C.res}">F</text>`; }
+    s+=`<line x1="${cx-30}" y1="${cy-R-14}" x2="${cx+16}" y2="${cy-R-14}" stroke="${TXT}" stroke-width="1.3" marker-end="url(#aD)"/>`;
+    s+=`<text x="${cx-7}" y="${cy-R-18}" font-size="11" text-anchor="middle" fill="${TXT}">feed</text>`;
+    s+=`<text x="${cx}" y="${H-8}" font-size="11" text-anchor="middle" fill="${TXT}">a&#8345; ${r1(aeD*100)}% of &#216; &middot; ${o.mode||'climb'}</text>`;
+    return s+`</svg>`;
+  }
+  function deflection(o){
+    const W=300,H=250, D=o.D||10, L=o.L||40, ap=o.ap||1, delta=o.delta||0;
+    const cx=120, top=42, maxLen=168, ld=Math.max(0.5,Math.min(8,L/D));
+    const toolLen=Math.min(maxLen,26*ld), bot=top+toolLen, hw=15;
+    const apFrac=Math.max(0.04,Math.min(1,ap/L)), apTop=bot-apFrac*toolLen;
+    const bend=Math.min(28, delta*20 + (delta>0?6:0));
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Side view of tool deflection">${defs}`;
+    s+=`<path d="M${cx-40},10 H${cx+40} L${cx+28},${top} H${cx-28} Z" fill="${SURF2}" stroke="${LINE}" stroke-width="1.4"/>`;
+    s+=`<text x="${cx}" y="28" font-size="10.5" text-anchor="middle" fill="${TXT2}">holder</text>`;
+    s+=`<rect x="${cx-hw}" y="${top}" width="${2*hw}" height="${r1(toolLen)}" rx="3" fill="${SURF}" stroke="${LINE}" stroke-width="1.4"/>`;
+    s+=`<path d="M${cx-hw+4},${top+8} Q${cx+hw},${r1(top+toolLen/2)} ${cx-hw+4},${r1(bot-8)} M${cx+hw-4},${top+8} Q${cx-hw},${r1(top+toolLen/2)} ${cx+hw-4},${r1(bot-8)}" fill="none" stroke="${LINE2}" stroke-width="1"/>`;
+    s+=`<rect x="${cx-hw}" y="${r1(apTop)}" width="${2*hw}" height="${r1(bot-apTop)}" fill="${C.rad}" fill-opacity="0.16" stroke="${C.rad}" stroke-opacity="0.5" stroke-width="1"/>`;
+    s+=`<text x="${cx+hw+6}" y="${r1((apTop+bot)/2)}" font-size="11" fill="${C.rad}">a&#7770;</text>`;
+    s+=`<rect x="${cx+hw}" y="${r1(bot-12)}" width="150" height="36" fill="${SURF2}" stroke="${LINE2}"/>`;
+    s+=`<text x="${cx+hw+78}" y="${r1(bot+18)}" font-size="11" text-anchor="middle" fill="${TXT2}">workpiece</text>`;
+    s+=`<line x1="${cx}" y1="${top}" x2="${cx}" y2="${r1(bot)}" stroke="${TXT2}" stroke-width="1" stroke-dasharray="3 3"/>`;
+    s+=`<path d="M${cx},${top} Q${cx},${r1(top+toolLen*0.6)} ${r1(cx+bend)},${r1(bot)}" fill="none" stroke="${C.res}" stroke-width="2.2"/>`;
+    s+=`<line x1="${cx}" y1="${r1(bot+10)}" x2="${r1(cx+bend)}" y2="${r1(bot+10)}" stroke="${C.res}" stroke-width="1.5" marker-end="url(#aR)"/>`;
+    s+=`<text x="${r1(cx+bend)+6}" y="${r1(bot+14)}" font-size="11" fill="${C.res}">&#948; ${r1(delta*1000)} &#181;m (&#215;20)</text>`;
+    s+=`<text x="20" y="${top+12}" font-size="10.5" fill="${TXT2}">L ${r1(L)}</text><text x="20" y="${top+26}" font-size="10.5" fill="${TXT2}">&#216;${r1(D)}</text>`;
+    return s+`</svg>`;
+  }
+  function forces(o){
+    const W=300,H=250, ox=110,oy=92, Ft=o.Ft||0,Fr=o.Fr||0,Fa=o.Fa||0, Fres=o.Fres!=null?o.Fres:Math.hypot(Ft,Fr), mx=Math.max(Ft,Fr,Fa,Fres,1), L=58;
+    const ln=(x2,y2,col,mk)=>`<line x1="${ox}" y1="${oy}" x2="${r1(x2)}" y2="${r1(y2)}" stroke="${col}" stroke-width="2.4" marker-end="url(#${mk})"/>`;
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Force free-body and bars">${defs}`;
+    s+=ln(ox,oy-L*(Fa/mx)-8,C.ax,'aG')+`<text x="${ox+6}" y="${r1(oy-L*(Fa/mx)-10)}" font-size="11" fill="${C.ax}">F&#7734; ${r1(Fa)} N</text>`;
+    s+=ln(ox-L*(Fr/mx)-8,oy,C.rad,'aB')+`<text x="14" y="${oy-4}" font-size="11" fill="${C.rad}">F&#7523; ${r1(Fr)} N</text>`;
+    s+=ln(ox,oy+L*(Ft/mx)+8,C.tan,'aY')+`<text x="${ox+6}" y="${r1(oy+L*(Ft/mx)+10)}" font-size="11" fill="${C.tan}">F&#8348; ${r1(Ft)} N</text>`;
+    s+=ln(ox-L*(Fr/mx)*0.8,oy+L*(Ft/mx)*0.8,C.res,'aR')+`<text x="14" y="${r1(oy+L*(Ft/mx)*0.8+4)}" font-size="11" font-weight="500" fill="${C.res}">F&#8869; ${r1(Fres)} N</text>`;
+    s+=`<circle cx="${ox}" cy="${oy}" r="3.5" fill="${TXP}"/>`;
+    const bars=[['Ft',Ft,C.tan],['F⊥',Fres,C.res],['Fa',Fa,C.ax],['Fr',Fr,C.rad]]; let by=170;
+    s+=`<text x="14" y="${by-8}" font-size="11" fill="${TXP}">force magnitudes (N)</text>`;
+    bars.forEach(b=>{ const w=Math.round(150*b[1]/mx);
+      s+=`<text x="14" y="${by+8}" font-size="11" fill="${TXT}">${b[0]}</text><rect x="46" y="${by}" width="${w}" height="9" fill="${b[2]}"/><text x="${50+w}" y="${by+8}" font-size="11" fill="${TXT}">${r1(b[1])}</text>`; by+=20; });
+    return s+`</svg>`;
+  }
+  root.SVGPANELS={engagement,deflection,forces};
+})(window);
+
+// ===== SVG panels v2 (z teeth + forces-on-tool + bars) overrides the above =====
+(function(root){
+  const C={rad:'#2b8de0',ax:'#2e9e3f',tan:'#c98a00',res:'#d62828'};
+  const TXT='#777', TXT2='#9aa0a6', TXP='#1a1a1a', SURF='#ffffff', SURF2='#f1f2f4', LINE='#aab0b6', LINE2='#d8dade';
+  const defs=`<defs>
+    <marker id="aR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.res}"/></marker>
+    <marker id="aB" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.rad}"/></marker>
+    <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.ax}"/></marker>
+    <marker id="aY" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9Z" fill="${C.tan}"/></marker>
+    <marker id="aD" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="${TXT2}"/></marker></defs>`;
+  const r1=n=>Math.round(n), r2=n=>Math.round(n*100)/100, PT=(cx,cy,R,a)=>[cx+R*Math.cos(a), cy-R*Math.sin(a)];
+  function engagement(o){
+    const W=300,H=250, cx=120,cy=118, R=80;
+    const D=o.D||10, z=Math.max(1,Math.round(o.z||4)), aeD=Math.max(0,Math.min(1,o.aeD!=null?o.aeD:(o.ae/D)));
+    const phst=o.phst||0, phex=o.phex!=null?o.phex:Math.PI, theta=o.theta||0, wx=cx+R-2*aeD*R;
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Top view, ${z} teeth">${defs}`;
+    s+=`<rect x="${r1(wx)}" y="${cy-R-6}" width="${r1(W-wx-6)}" height="${2*R+12}" fill="${SURF2}" stroke="${LINE2}"/>`;
+    s+=`<text x="${r1((wx+W-6)/2)}" y="${cy+R-2}" font-size="11" text-anchor="middle" fill="${TXT2}">workpiece</text>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="${SURF}" stroke="${LINE}" stroke-width="1.5"/>`;
+    s+=`<circle cx="${cx}" cy="${cy}" r="12" fill="${SURF2}" stroke="${LINE2}"/>`;
+    for(let k=0;k<z;k++){ const a=theta+k*2*Math.PI/z, inAng=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI), eng=inAng>=phst&&inAng<=phex;
+      const [ex,ey]=PT(cx,cy,R,a),[ix,iy]=PT(cx,cy,12,a),[mx,my]=PT(cx,cy,R*0.62,a+0.32);
+      s+=`<path data-fl d="M${r2(ix)},${r2(iy)} Q${r2(mx)},${r2(my)} ${r2(ex)},${r2(ey)}" fill="none" stroke="${eng?C.tan:LINE}" stroke-width="${eng?2.6:1.4}" stroke-linecap="round"/>`;
+      if(eng) s+=`<circle cx="${r2(ex)}" cy="${r2(ey)}" r="3.4" fill="${C.tan}"/>`; }
+    const [ax,ay]=PT(cx,cy,R,phst),[bx,by]=PT(cx,cy,R,phex), large=(phex-phst)>Math.PI?1:0;
+    s+=`<path d="M${r2(ax)},${r2(ay)} A${R},${R} 0 ${large} 0 ${r2(bx)},${r2(by)}" fill="none" stroke="${C.res}" stroke-width="4" stroke-linecap="round"/>`;
+    if(o.iFx!=null&&(o.iFx||o.iFy)){ const fs=(0.78*R)/Math.max(o.peakR||1,1), fx=cx+o.iFx*fs, fy=cy-o.iFy*fs;
+      s+=`<line x1="${cx}" y1="${cy}" x2="${r2(fx)}" y2="${r2(fy)}" stroke="${C.res}" stroke-width="2" marker-end="url(#aR)"/><text x="${r2(fx)+4}" y="${r2(fy)}" font-size="10.5" fill="${C.res}">F</text>`; }
+    s+=`<line x1="${cx-30}" y1="${cy-R-13}" x2="${cx+16}" y2="${cy-R-13}" stroke="${TXT}" stroke-width="1.3" marker-end="url(#aD)"/><text x="${cx-7}" y="${cy-R-17}" font-size="11" text-anchor="middle" fill="${TXT}">feed</text>`;
+    s+=`<text x="${cx}" y="${H-6}" font-size="11" text-anchor="middle" fill="${TXT}">z ${z} teeth &middot; a&#8345; ${r1(aeD*100)}% &#216; &middot; ${o.mode||'climb'}</text>`;
+    return s+`</svg>`;
+  }
+  function forceTool(o){
+    const W=300,H=320, cx=118, D=o.D||10,L=o.L||40,ap=o.ap||1,delta=o.delta||0;
+    const top=44, maxLen=190, ld=Math.max(0.6,Math.min(8,L/D)), toolLen=Math.min(maxLen,30*ld), bot=top+toolLen, hw=18;
+    const apFrac=Math.max(0.05,Math.min(1,ap/L)), apTop=bot-apFrac*toolLen, bend=Math.min(26,delta*20+(delta>0?5:0));
+    const Ft=o.Ft||0,Fr=o.Fr||0,Fa=o.Fa||0, mx=Math.max(Ft,Fr,Fa,1);
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Forces on the end mill">${defs}`;
+    s+=`<path d="M${cx-44},10 H${cx+44} L${cx+30},${top} H${cx-30} Z" fill="${SURF2}" stroke="${LINE}" stroke-width="1.4"/><text x="${cx}" y="28" font-size="10.5" text-anchor="middle" fill="${TXT2}">holder</text>`;
+    s+=`<rect x="${cx-hw}" y="${top}" width="${2*hw}" height="${r1(toolLen)}" rx="3" fill="${SURF}" stroke="${LINE}" stroke-width="1.4"/>`;
+    for(let i=0;i<4;i++){const y=top+12+i*((toolLen-20)/4); s+=`<line x1="${cx-hw+3}" y1="${r1(y)}" x2="${cx+hw-3}" y2="${r1(y+16)}" stroke="${C.tan}" stroke-opacity="0.55" stroke-width="2"/>`;}
+    s+=`<path d="M${cx-hw},${r1(bot-9)} q0,9 9,9 h${2*hw-18} q9,0 9,-9" fill="${SURF}" stroke="${LINE}" stroke-width="1.4"/>`;
+    s+=`<rect x="${cx-hw}" y="${r1(apTop)}" width="${2*hw}" height="${r1(bot-apTop)}" fill="${C.rad}" fill-opacity="0.14" stroke="${C.rad}" stroke-opacity="0.45" stroke-width="1"/>`;
+    s+=`<rect x="${cx+hw}" y="${r1(bot-10)}" width="150" height="34" fill="${SURF2}" stroke="${LINE2}"/><text x="${cx+hw+78}" y="${r1(bot+30)}" font-size="11" text-anchor="middle" fill="${TXT2}">workpiece</text>`;
+    s+=`<line x1="${cx}" y1="${top}" x2="${cx}" y2="${r1(bot)}" stroke="${TXT2}" stroke-width="1" stroke-dasharray="3 3"/>`;
+    s+=`<path d="M${cx},${top} Q${cx},${r1(top+toolLen*0.6)} ${r1(cx+bend)},${r1(bot)}" fill="none" stroke="${C.res}" stroke-width="2" stroke-dasharray="5 3"/><text x="${r1(cx+bend)+4}" y="${r1(bot+2)}" font-size="10.5" fill="${C.res}">&#948; ${r1(delta*1000)} &#181;m &#215;20</text>`;
+    const ex=cx, ey=bot-2, sc=46/mx;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${ex}" y2="${r1(ey-Fa*sc-8)}" stroke="${C.ax}" stroke-width="2.6" marker-end="url(#aG)"/><text x="${ex+6}" y="${r1(ey-Fa*sc-8)}" font-size="11" fill="${C.ax}">F&#7734; ${r1(Fa)}</text>`;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex-Fr*sc-8)}" y2="${ey}" stroke="${C.rad}" stroke-width="2.6" marker-end="url(#aB)"/><text x="6" y="${ey+4}" font-size="11" fill="${C.rad}">F&#7523; ${r1(Fr)}</text>`;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex+Ft*sc+8)}" y2="${r1(ey+18)}" stroke="${C.tan}" stroke-width="2.6" marker-end="url(#aY)"/><text x="${r1(ex+Ft*sc+10)}" y="${r1(ey+22)}" font-size="11" fill="${C.tan}">F&#8348; ${r1(Ft)}</text>`;
+    s+=`<circle cx="${ex}" cy="${ey}" r="3.4" fill="${TXP}"/>`;
+    s+=`<text x="${cx+46}" y="${top-4}" font-size="10.5" fill="${TXT}">clamped shank</text><line x1="${cx+30}" y1="${top+4}" x2="${cx+44}" y2="${top-8}" stroke="${LINE2}"/>`;
+    s+=`<text x="${cx+hw+8}" y="${r1(top+toolLen*0.4)}" font-size="10.5" fill="${TXT}">flute (helix &#946;)</text>`;
+    s+=`<text x="6" y="${r1(apTop)-2}" font-size="10.5" fill="${C.rad}">a&#7770; in cut</text>`;
+    return s+`</svg>`;
+  }
+  function forceBars(o){
+    const W=250,H=170, Ft=o.Ft||0,Fr=o.Fr||0,Fa=o.Fa||0, Fres=o.Fres!=null?o.Fres:Math.hypot(Ft,Fr), mx=Math.max(Ft,Fr,Fa,Fres,1);
+    let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Force magnitude bars"><text x="6" y="16" font-size="11" fill="${TXP}">force magnitudes (N)</text>`;
+    const bars=[['Ft',Ft,C.tan],['F⊥',Fres,C.res],['Fa',Fa,C.ax],['Fr',Fr,C.rad]]; let by=34;
+    bars.forEach(b=>{ const w=Math.round((W-95)*b[1]/mx);
+      s+=`<text x="6" y="${by+8}" font-size="11" fill="${TXT}">${b[0]}</text><rect x="40" y="${by}" width="${w}" height="11" fill="${b[2]}"/><text x="${44+w}" y="${by+9}" font-size="11" fill="${TXT}">${r1(b[1])}</text>`; by+=30; });
+    return s+`</svg>`;
+  }
+  root.SVGPANELS={engagement,forceTool,forceBars};
+})(window);
+
 // Material library: Sandvik workpiece-material classification (No.01-41).
 // kc1.1/mc = Sandvik specific-cutting-force table (verified). Kr/vc/hex = ISO-group seeds (Ti split out).
 // Master copy = materials_library.json in this folder; regenerate from there if it changes.
@@ -319,7 +560,7 @@ function matRef(o){return '<b>ISO '+o.iso+' &mdash; '+o.name+(o.cond?' ('+o.cond
 function buildMatLib(){
   const sel=$('matSel'); let og=null,cur=null;
   MAT_LIB.forEach(o=>{
-    MAT[o.no]={name:o.grp+' - '+o.name, kc11:o.kc11, mc:o.mc, Kr:o.Kr, vc:o.vc, ref:matRef(o)};
+    MAT[o.no]={name:o.grp+' - '+o.name, iso:o.iso, raw:o.name, kc11:o.kc11, mc:o.mc, Kr:o.Kr, vc:o.vc, ref:matRef(o)};
     HEXMAX[o.no]=o.hex;
     if(sel){
       if(o.iso!==cur){cur=o.iso; og=document.createElement('optgroup'); og.label=o.iso+' — '+o.grp; sel.appendChild(og);}
@@ -346,12 +587,38 @@ const HOLDERS = {
     note:'<b>Face / shell mill on the arbor face</b> via a centre screw. Large diameters.',
     svg:icoShell()}
 };
-let mat='04', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null, holder='shr';
+let mat='04', mode='down', regen=false, playing=false, theta=20*Math.PI/180, raf=null, holder='shr', baseKc=1700, hbRef=200, recSnap=null;
 const $=id=>document.getElementById(id);
 
 function setMat(m){if(!MAT[m])return;mat=m;if($('matSel'))$('matSel').value=m;
-  $('kc11').value=MAT[m].kc11;$('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;
-  if($('hLim')&&HEXMAX[m]!=null)$('hLim').value=HEXMAX[m];run();}
+  baseKc=MAT[m].kc11;
+  const row=window.CUTDATA&&CUTDATA.rowForLib(MAT[m].iso,MAT[m].raw); hbRef=row?row.hb:200;
+  if($('hb'))$('hb').value=hbRef;
+  $('mc').value=MAT[m].mc;$('Kr').value=MAT[m].Kr;$('matref').innerHTML=MAT[m].ref;
+  if($('hLim')&&HEXMAX[m]!=null)$('hLim').value=HEXMAX[m];
+  applyHardness();run();}
+function applyHardness(){const hb=+(($('hb')&&$('hb').value)||hbRef)||hbRef;
+  const f=Math.max(0.7,Math.min(1.5,Math.pow(hb/hbRef,0.3)));
+  if($('kc11'))$('kc11').value=Math.round(baseKc*f);
+  if($('hbOut'))$('hbOut').textContent=hb+' HB';}
+function onHb(){applyHardness();run();}
+function snapKey(){return [$('D').value,$('z').value,$('helix').value,$('rc').value,$('ae').value,$('ap').value,mode,mat,($('hb')?$('hb').value:'')].join('|');}
+function recStaleCheck(){const b=$('recBtn'); if(!b||!recSnap)return;
+  if(snapKey()!==recSnap){b.classList.add('stale');b.innerHTML='&#8635; Recalculate f<sub>z</sub> &amp; v<sub>c</sub>';}
+  else{b.classList.remove('stale');b.innerHTML='&#9733; Recommend f<sub>z</sub> &amp; v<sub>c</sub>';}}
+function recommendCD(){const m=MAT[mat],note=$('recNote'); if(!m||!window.CUTDATA)return;
+  const Dc=+$('D').value,ae=+$('ae').value,ap=+$('ap').value,hb=+$('hb').value;
+  const r=CUTDATA.recommend({iso:m.iso,name:m.raw,Dc:Dc,ae:ae,ap:ap,hb:hb});
+  if(!r){if(note){note.className='recnote show';note.innerHTML='No CoroMill Dura row maps to this material.';}return;}
+  const fzLo=+(r.fz*0.85).toFixed(3), fzHi=+(r.fz*1.15).toFixed(3), vcLo=Math.round(r.vc*0.9), vcHi=Math.round(r.vc*1.1);
+  recSnap=snapKey();
+  setFz(r.fz);$('vc').value=r.vc;onVc();
+  if(note){note.className='recnote show';
+    note.innerHTML='Recommendation based on <b>CoroMill Dura</b> &mdash; &Oslash;'+Dc+' mm, z'+$('z').value+', a<sub>e</sub>/a<sub>p</sub> from above.<br>'
+    +'f<sub>z</sub> <b>'+fzLo+'&ndash;'+fzHi+'</b> mm/tooth &nbsp;&middot;&nbsp; v<sub>c</sub> <b>'+vcLo+'&ndash;'+vcHi+'</b> m/min &nbsp;<span class="hint">(middle value applied)</span><br>'
+    +'<span class="hint">'+r.desc+', CMC '+r.cmc+', engagement case '+r.caseUsed+' (a<sub>e</sub>&asymp;'+r.ae_x+'&times;D, a<sub>p</sub>&asymp;'+r.ap_x+'&times;D), class '+r.Fclass+(r.approx?' approx':'')+', table '+r.hbRef+' HB vs yours '+hb+' HB.</span>';}
+  recStaleCheck();}
+function setCalc(c){if(c==='qhex'){const e=$('rMrr');if(e&&e.scrollIntoView)e.scrollIntoView({behavior:'smooth',block:'center'});}else{window.scrollTo({top:0,behavior:'smooth'});}}
 function setMode(m){mode=m;[...$('modeSeg').children].forEach(b=>b.classList.toggle('on',b.dataset.m===m));run();}
 
 // ---- vc <-> rpm (ported from test-lobe-tune) ----
@@ -771,11 +1038,19 @@ function icoShell(){return svgWrap(icoTop()+
   '<path d="M58,130 L65,130 L63,140 L60,140 Z" fill="#f5c518" stroke="#d9a900" stroke-width="1.6"/>');}
 function svgWrap(inner){return '<svg viewBox="0 0 100 184" xmlns="http://www.w3.org/2000/svg"><g fill="#e9ebee" stroke="#aab0b6" stroke-width="2" stroke-linejoin="round">'+inner+'</g></svg>';}
 
+function draw(r){ r=r||LAST; if(!r||!window.SVGPANELS)return; const el=$('polarSvg'); if(!el)return;
+  el.innerHTML=SVGPANELS.engagement({D:r.D,z:r.z,aeD:r.g.aeD,phst:r.g.phst,phex:r.g.phex,theta:theta,iFx:r.iFx,iFy:r.iFy,peakR:r.peakR,mode:mode});
+  if($('thOut'))$('thOut').textContent=Math.round(theta*180/Math.PI)+'°'; }
+function drawFront(r){ r=r||LAST; if(!r||!window.SVGPANELS)return;
+  const f=$('forceToolSvg'); if(f)f.innerHTML=SVGPANELS.forceTool({D:r.D,L:r.L,ap:r.ap,delta:r.delta,Ft:r.peakFt,Fr:r.peakFr,Fa:r.Fa});
+  const g2=$('forceBarsSvg'); if(g2)g2.innerHTML=SVGPANELS.forceBars({Ft:r.peakFt,Fr:r.peakFr,Fa:r.Fa,Fres:r.peakR}); }
+var _runOrig=run; run=function(){_runOrig.apply(this,arguments); try{recStaleCheck();}catch(e){}};
 // init
 buildMatLib();
 onHolder();
 setMat(mat);
 syncVcFromRpm();
+(function(){var c=$('cutGeoBlock'),h=$('cutGeoHost'); if(c&&h)h.appendChild(c);})();
 </script>
 </body>
 </html>
