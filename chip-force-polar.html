@@ -485,11 +485,11 @@
     s+=`<rect x="${cx-hw}" y="${r1(apTop)}" width="${2*hw}" height="${r1(bot-apTop)}" fill="${C.rad}" fill-opacity="0.14" stroke="${C.rad}" stroke-opacity="0.45" stroke-width="1"/>`;
     s+=`<rect x="${cx+hw}" y="${r1(bot-10)}" width="150" height="34" fill="${SURF2}" stroke="${LINE2}"/><text x="${cx+hw+78}" y="${r1(bot+30)}" font-size="11" text-anchor="middle" fill="${TXT2}">workpiece</text>`;
     s+=`<line x1="${cx}" y1="${top}" x2="${cx}" y2="${r1(bot)}" stroke="${TXT2}" stroke-width="1" stroke-dasharray="3 3"/>`;
-    s+=`<path d="M${cx},${top} Q${cx},${r1(top+toolLen*0.6)} ${r1(cx+bend)},${r1(bot)}" fill="none" stroke="${C.res}" stroke-width="2" stroke-dasharray="5 3"/><text x="${r1(cx+bend)+4}" y="${r1(bot+2)}" font-size="10.5" fill="${C.res}">&#948; ${r1(delta*1000)} &#181;m &#215;20</text>`;
+    s+=`<path d="M${cx},${top} Q${cx},${r1(top+toolLen*0.6)} ${r1(cx+bend)},${r1(bot)}" fill="none" stroke="${C.res}" stroke-width="2" stroke-dasharray="5 3"/><text x="6" y="${r1(bot+44)}" font-size="10.5" fill="${C.res}">&#948; ${r1(delta*1000)} &#181;m &#215;20</text>`;
     const ex=cx, ey=bot-2, sc=46/mx;
-    s+=`<line x1="${ex}" y1="${ey}" x2="${ex}" y2="${r1(ey-Fa*sc-8)}" stroke="${C.ax}" stroke-width="2.6" marker-end="url(#aG)"/><text x="${ex+6}" y="${r1(ey-Fa*sc-8)}" font-size="11" fill="${C.ax}">F&#7734; ${r1(Fa)}</text>`;
-    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex-Fr*sc-8)}" y2="${ey}" stroke="${C.rad}" stroke-width="2.6" marker-end="url(#aB)"/><text x="6" y="${ey+4}" font-size="11" fill="${C.rad}">F&#7523; ${r1(Fr)}</text>`;
-    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex+Ft*sc+8)}" y2="${r1(ey+18)}" stroke="${C.tan}" stroke-width="2.6" marker-end="url(#aY)"/><text x="${r1(ex+Ft*sc+10)}" y="${r1(ey+22)}" font-size="11" fill="${C.tan}">F&#8348; ${r1(Ft)}</text>`;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${ex}" y2="${r1(ey-Fa*sc-8)}" stroke="${C.ax}" stroke-width="2.6" marker-end="url(#aG)"/><text x="${ex+6}" y="${r1(ey-Fa*sc-8)}" font-size="11" fill="${C.ax}">F&#7734;</text>`;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex-Fr*sc-8)}" y2="${ey}" stroke="${C.rad}" stroke-width="2.6" marker-end="url(#aB)"/><text x="6" y="${ey+4}" font-size="11" fill="${C.rad}">F&#7523;</text>`;
+    s+=`<line x1="${ex}" y1="${ey}" x2="${r1(ex+Ft*sc+8)}" y2="${r1(ey+18)}" stroke="${C.tan}" stroke-width="2.6" marker-end="url(#aY)"/><text x="${r1(ex+Ft*sc+10)}" y="${r1(ey+22)}" font-size="11" fill="${C.tan}">F&#8348;</text>`;
     s+=`<circle cx="${ex}" cy="${ey}" r="3.4" fill="${TXP}"/>`;
     s+=`<text x="${cx+46}" y="${top-4}" font-size="10.5" fill="${TXT}">clamped shank</text><line x1="${cx+30}" y1="${top+4}" x2="${cx+44}" y2="${top-8}" stroke="${LINE2}"/>`;
     s+=`<text x="${cx+hw+8}" y="${r1(top+toolLen*0.4)}" font-size="10.5" fill="${TXT}">flute (helix &#946;)</text>`;
